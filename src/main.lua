@@ -4,7 +4,7 @@ local game = require('game')
 
 -- Love2D callback for initialization
 function love.load()
-    love.graphics.print("begin love.load...")
+    print("begin love.load")
     game.initialize()
 end
 
