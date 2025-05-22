@@ -6,6 +6,10 @@ local game = {}
 -- Card collections
 local board = {} -- Cards currently in play
 
+-- Game state
+local hintActive = false -- Track if hint mode is active
+local hintCards = {} -- Indices of cards in a valid set for hint
+
 -- Initialize the game state
 function game.initialize()
     -- Create and shuffle a new deck of Set cards
@@ -15,6 +19,10 @@ function game.initialize()
     game.dealInitialCards()
     -- Other one-off initializations
     love.graphics.setBackgroundColor(0.2, 0.3, 0.4) -- Dark blue
+    
+    -- Reset hint state
+    hintActive = false
+    hintCards = {}
 end
 
 -- Deal the initial cards to the board
@@ -28,6 +36,10 @@ function game.dealInitialCards()
             table.insert(board, card)
         end
     end
+    
+    -- Reset hint state
+    hintActive = false
+    hintCards = {}
 end
 
 -- Update function called from love.update
@@ -54,6 +66,9 @@ function game.drawDeckInfo()
     local cardsRemaining = deck.getCount()
     local infoText = "Cards remaining in deck: " .. cardsRemaining
     love.graphics.print(infoText, windowWidth - 250, 20)
+    
+    -- Display hint instructions
+    love.graphics.print("Press 'h' for a hint", 20, 20)
 end
 
 -- Draw the board of cards in a 4x3 pattern
@@ -77,12 +92,12 @@ function game.drawBoard()
         local x = startX + col * (cardWidth + marginX)
         local y = startY + row * (cardHeight + marginY)
         -- Draw the card
-        game.drawCard(card, x, y, cardWidth, cardHeight)
+        game.drawCard(card, x, y, cardWidth, cardHeight, i)
     end
 end
 
 -- Draw a single card
-function game.drawCard(card, x, y, width, height)
+function game.drawCard(card, x, y, width, height, index)
     -- Draw card background
     if card.selected then
         love.graphics.setColor(0.9, 0.9, 0.7) -- Slight yellow tint for selected cards
@@ -90,15 +105,20 @@ function game.drawCard(card, x, y, width, height)
         love.graphics.setColor(1, 1, 1) -- White background for normal cards
     end
     love.graphics.rectangle("fill", x, y, width, height, 8, 8) -- Rounded corners
+    
     -- Draw border
     if card.selected then
         love.graphics.setColor(1, 1, 0) -- Yellow highlight for selected cards
+        love.graphics.setLineWidth(4)
+    elseif hintActive and isInHint(index) then
+        love.graphics.setColor(0, 0.8, 0.8) -- Cyan highlight for hint cards
         love.graphics.setLineWidth(4)
     else
         love.graphics.setColor(0, 0, 0) -- Black border for normal cards
         love.graphics.setLineWidth(2)
     end
     love.graphics.rectangle("line", x, y, width, height, 8, 8)
+    
     -- Set text color based on card color
     if card.color == "red" then
         love.graphics.setColor(0.8, 0.2, 0.2)
@@ -109,9 +129,61 @@ function game.drawCard(card, x, y, width, height)
     end
     -- Draw card attributes as text
     love.graphics.setFont(love.graphics.newFont(14))
-    local label = string.format("%s %s\n%d %s", 
-        card.color, card.shape, card.number, card.fill)
+    local label = string.format("%d\n%s\n%s", 
+        card.number, card.shape, card.fill)
     love.graphics.printf(label, x + 10, y + height/2 - 30, width - 20, "center")
+end
+
+-- Helper function to check if a card index is part of the hint
+function isInHint(index)
+    for _, hintIndex in ipairs(hintCards) do
+        if hintIndex == index then
+            return true
+        end
+    end
+    return false
+end
+
+-- Find a valid set on the board (returns indices of 3 cards or nil if none found)
+function game.findValidSet()
+    -- Need at least 3 cards to form a set
+    if #board < 3 then
+        return nil
+    end
+    
+    -- Try all possible combinations of 3 cards
+    for i = 1, #board - 2 do
+        for j = i + 1, #board - 1 do
+            for k = j + 1, #board do
+                if game.isValidSet(board[i], board[j], board[k]) then
+                    return {i, j, k}
+                end
+            end
+        end
+    end
+    
+    -- No valid set found
+    return nil
+end
+
+-- Toggle hint mode
+function game.toggleHint()
+    -- If hint is already active, turn it off
+    if hintActive then
+        hintActive = false
+        hintCards = {}
+        return
+    end
+    
+    -- Try to find a valid set
+    local set = game.findValidSet()
+    if set then
+        hintActive = true
+        hintCards = set
+        print("Hint active: showing a valid set")
+    else
+        print("No valid sets found on the board!")
+    end
 end
 
 -- Clear a random number of cards from the board
@@ -132,6 +204,10 @@ function game.clearRandomCards(numCards)
         end
     end
     print("Board now has " .. #board .. " cards")
+    
+    -- Reset hint state when board changes
+    hintActive = false
+    hintCards = {}
 end
 
 -- Handle keyboard input
@@ -153,6 +229,12 @@ function game.keypressed(key)
         else
             print("Board is full (12 cards)")
         end
+        -- Reset hint state when board changes
+        hintActive = false
+        hintCards = {}
+    -- Toggle hint mode
+    elseif key == "h" then
+        game.toggleHint()
     end
 end
 
@@ -169,6 +251,10 @@ function game.mousepressed(x, y, button)
             if #selectedCards == 3 then
                 game.removeSelectedCards()
             end
+            
+            -- Disable hint mode when a card is selected
+            hintActive = false
+            hintCards = {}
         end
     end
 end
@@ -213,19 +299,61 @@ function game.getSelectedCards()
     return selected
 end
 
+-- Check if three cards form a valid Set
+function game.isValidSet(card1, card2, card3)
+    -- Helper function to check if all values are the same or all different
+    local function checkAttribute(attr1, attr2, attr3)
+        if attr1 == attr2 and attr2 == attr3 then
+            -- All three are the same
+            return true
+        elseif attr1 ~= attr2 and attr2 ~= attr3 and attr1 ~= attr3 then
+            -- All three are different
+            return true
+        else
+            -- Some are the same, some are different
+            return false
+        end
+    end
+    -- Check each attribute (color, shape, number, fill)
+    local colorValid = checkAttribute(card1.color, card2.color, card3.color)
+    local shapeValid = checkAttribute(card1.shape, card2.shape, card3.shape)
+    local numberValid = checkAttribute(card1.number, card2.number, card3.number)
+    local fillValid = checkAttribute(card1.fill, card2.fill, card3.fill)
+    -- It's a valid set only if ALL attributes pass the check
+    return colorValid and shapeValid and numberValid and fillValid
+end
+
 -- Remove selected cards from the board
 function game.removeSelectedCards()
     local selectedCards = game.getSelectedCards()
     if #selectedCards == 3 then
-        print("Removing 3 selected cards")
-        -- Sort in reverse order so we can remove from higher indices first
-        -- This prevents issues with indices changing as we remove cards
-        table.sort(selectedCards, function(a, b) return a > b end)
-        -- Remove the cards
-        for _, index in ipairs(selectedCards) do
-            table.remove(board, index)
+        -- Get the actual card objects
+        local card1 = board[selectedCards[1]]
+        local card2 = board[selectedCards[2]]
+        local card3 = board[selectedCards[3]]
+        
+        -- Check if they form a valid Set
+        if game.isValidSet(card1, card2, card3) then
+            print("Found a valid Set! Removing cards.")
+            -- Sort in reverse order so we can remove from higher indices first
+            -- This prevents issues with indices changing as we remove cards
+            table.sort(selectedCards, function(a, b) return a > b end)
+            -- Remove the cards
+            for _, index in ipairs(selectedCards) do
+                table.remove(board, index)
+            end
+            print("Board now has " .. #board .. " cards")
+            
+            -- Reset hint state when board changes
+            hintActive = false
+            hintCards = {}
+        else
+            print("Not a valid Set! Deselecting cards.")
+            -- Deselect all cards
+            for _, index in ipairs(selectedCards) do
+                board[index].selected = false
+            end
         end
-        print("Board now has " .. #board .. " cards")
     end
 end
 
