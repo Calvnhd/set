@@ -4,7 +4,6 @@ local game = require('game')
 
 -- Love2D callback for initialization
 function love.load()
-    print("begin love.load")
     game.initialize()
 end
 
@@ -30,5 +29,4 @@ end
 
 -- Love2D callback for mouse release events
 function love.mousereleased(x, y, button)
-    game.mousereleased(x, y, button)
 end
