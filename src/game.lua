@@ -31,13 +31,12 @@ function game.initialize()
     -- Deal initial cards to the board
     game.dealInitialCards()    -- Other one-off initializations
     love.graphics.setBackgroundColor(0.2, 0.3, 0.4) -- Dark blue
-    
-    -- Reset hint state
+      -- Reset hint state
     hintActive = false
     hintCards = {}
     
-    -- Reset score
-    score = 0
+    -- Reset score (ensure it's never below 0)
+    score = math.max(0, score)
     
     -- Reset discarded cards
     discardedCards = {}
@@ -873,17 +872,20 @@ function game.checkNoSetOnBoard()
                     for _, setIndex in ipairs(validSet) do
                         table.insert(discardedCards, board[setIndex])
                     end
-                    
-                    -- Remove the set cards from the board in reverse order
+                      -- Remove the set cards from the board in reverse order
                     -- to avoid index shifting problems
                     table.sort(validSet, function(a, b) return a > b end)
                     for _, setIndex in ipairs(validSet) do
                         table.remove(board, setIndex)
                     end
                     
-                    -- Reduce score by 1
-                    score = score - 1
-                    print("Player loses a point. New score: " .. score)
+                    -- Reduce score by 1, but ensure it doesn't go below 0
+                    if score > 0 then
+                        score = score - 1
+                        print("Player loses a point. New score: " .. score)
+                    else
+                        print("Score already at 0, no points deducted.")
+                    end
                     
                     -- Disable hint mode when board changes
                     hintActive = false
