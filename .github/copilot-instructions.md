@@ -1,7 +1,10 @@
-- if reading from a prompt file you must check for the section heading "FEATURE <number>"
-- if feature number headings are present, you MUST implement these features in the order specified from lowest to highest
-- treat low number features as highest priority
-- treat a feature as dependent on all features with a lower number
-- do not begin designing or implementing a subsequent feature until all previous features are implemented
-- do not begin designing or implementing a subsequent feature until I give approval
-- follow the feature spec very closely.  If you believe a better approach is possible or wish to tweak or clarify parts of the spec, ask for my approval first.
+# Code conventions
+- boolean variables must be prefixed with 'b'
+- boolean variables should be named such that they pose a question for which "true" or "false" are valid answers
+
+# Prompt guidlines
+- if reading from a prompt file you MUST check for the section heading "FEATURE <number>: <short-description>"
+- if a feature headings are present, you MUST implement these features in the order specified from lowest to highest
+- treat lower numbered features as higher priority
+- treat a given feature as dependent on all features with a lower number
+- do not begin designing or implementing a feature until all lower numbered features are implemented
