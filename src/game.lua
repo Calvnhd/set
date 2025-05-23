@@ -9,6 +9,7 @@ local board = {} -- Cards currently in play
 -- Game state
 local hintActive = false -- Track if hint mode is active
 local hintCards = {} -- Indices of cards in a valid set for hint
+local score = 0 -- Track player's score
 
 -- Card images
 local cardImages = {}
@@ -22,13 +23,15 @@ function game.initialize()
     deck.create()
     deck.shuffle()
     -- Deal initial cards to the board
-    game.dealInitialCards()
-    -- Other one-off initializations
+    game.dealInitialCards()    -- Other one-off initializations
     love.graphics.setBackgroundColor(0.2, 0.3, 0.4) -- Dark blue
     
     -- Reset hint state
     hintActive = false
     hintCards = {}
+    
+    -- Reset score
+    score = 0
 end
 
 -- Load all card images
@@ -82,17 +85,20 @@ function game.draw()
 end
 
 -- Draw deck information
-function game.drawDeckInfo() 
+function game.drawDeckInfo()
     -- Set text color to white
     love.graphics.setColor(1, 1, 1)
     -- Set font
-    love.graphics.setFont(love.graphics.newFont(16))
-    -- Get window dimensions
+    love.graphics.setFont(love.graphics.newFont(16))    -- Get window dimensions
     local windowWidth = love.graphics.getWidth()
+      -- Display score
+    local scoreText = "Score: " .. score
+    love.graphics.print(scoreText, windowWidth - 150, 20)
+    
     -- Display cards remaining
     local cardsRemaining = deck.getCount()
     local infoText = "Cards remaining in deck: " .. cardsRemaining
-    love.graphics.print(infoText, windowWidth - 250, 20)
+    love.graphics.print(infoText, windowWidth - 350, 45)
     
     -- Display hint instructions
     love.graphics.print("Press 'h' for a hint", 20, 20)
@@ -103,13 +109,13 @@ function game.drawBoard()
     -- Get window dimensions to calculate proportions
     local windowWidth, windowHeight = love.graphics.getDimensions()
     -- Calculate card dimensions based on screen size
-    local cardWidth = windowWidth * 0.23  -- Increased from 0.21 to 0.23 (larger cards)
-    local cardHeight = windowHeight * 0.29 -- Increased from 0.26 to 0.29
+    local cardWidth = windowWidth * 0.2 
+    local cardHeight = windowHeight * 0.2
     -- Calculate margins and starting position
-    local marginX = windowWidth * 0.012  -- Reduced margin to accommodate larger cards
-    local marginY = windowHeight * 0.015  -- Reduced margin
-    local startX = windowWidth * 0.03    -- Adjusted starting position
-    local startY = windowHeight * 0.06   -- Adjusted starting position
+    local marginX = cardWidth * 0.1
+    local marginY = cardHeight * 0.1
+    local startX = windowWidth * 0.05    -- Adjusted starting position
+    local startY = windowHeight * 0.15   -- Adjusted starting position
     -- Draw each card on the board
     for i, card in ipairs(board) do
         -- Calculate position in the grid (4 columns, 3 rows)
@@ -418,8 +424,7 @@ function game.removeSelectedCards()
         local card1 = board[selectedCards[1]]
         local card2 = board[selectedCards[2]]
         local card3 = board[selectedCards[3]]
-        
-        -- Check if they form a valid Set
+          -- Check if they form a valid Set
         if game.isValidSet(card1, card2, card3) then
             print("Found a valid Set! Removing cards.")
             -- Sort in reverse order so we can remove from higher indices first
@@ -429,6 +434,8 @@ function game.removeSelectedCards()
             for _, index in ipairs(selectedCards) do
                 table.remove(board, index)
             end
+            -- Increment score when a valid set is found
+            score = score + 1
             print("Board now has " .. #board .. " cards")
             
             -- Reset hint state when board changes
