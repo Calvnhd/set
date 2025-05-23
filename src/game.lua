@@ -10,8 +10,14 @@ local board = {} -- Cards currently in play
 local hintActive = false -- Track if hint mode is active
 local hintCards = {} -- Indices of cards in a valid set for hint
 
+-- Card images
+local cardImages = {}
+
 -- Initialize the game state
 function game.initialize()
+    -- Load card images
+    loadCardImages()
+    
     -- Create and shuffle a new deck of Set cards
     deck.create()
     deck.shuffle()
@@ -23,6 +29,27 @@ function game.initialize()
     -- Reset hint state
     hintActive = false
     hintCards = {}
+end
+
+-- Load all card images
+function loadCardImages()
+    cardImages = {
+        oval = {
+            solid = love.graphics.newImage("images/oval-fill-54x96.png"),
+            stripes = love.graphics.newImage("images/oval-stripes-54x96.png"),
+            empty = love.graphics.newImage("images/oval-empty-54x96.png")
+        },
+        diamond = {
+            solid = love.graphics.newImage("images/diamond-fill-54x96.png"),
+            stripes = love.graphics.newImage("images/diamond-stripes-54x96.png"),
+            empty = love.graphics.newImage("images/diamond-empty-54x96.png")
+        },
+        squiggle = {
+            solid = love.graphics.newImage("images/squiggle-fill-54x96.png"),
+            stripes = love.graphics.newImage("images/squiggle-stripe-54x96.png"),
+            empty = love.graphics.newImage("images/squiggle-empty-54x96.png")
+        }
+    }
 end
 
 -- Deal the initial cards to the board
@@ -76,13 +103,13 @@ function game.drawBoard()
     -- Get window dimensions to calculate proportions
     local windowWidth, windowHeight = love.graphics.getDimensions()
     -- Calculate card dimensions based on screen size
-    local cardWidth = windowWidth * 0.18  -- Approximately 18% of screen width
-    local cardHeight = windowHeight * 0.22 -- Approximately 22% of screen height
+    local cardWidth = windowWidth * 0.23  -- Increased from 0.21 to 0.23 (larger cards)
+    local cardHeight = windowHeight * 0.29 -- Increased from 0.26 to 0.29
     -- Calculate margins and starting position
-    local marginX = windowWidth * 0.02   -- 2% of screen width
-    local marginY = windowHeight * 0.03  -- 3% of screen height
-    local startX = windowWidth * 0.05    -- 5% from left edge
-    local startY = windowHeight * 0.1    -- 10% from top
+    local marginX = windowWidth * 0.012  -- Reduced margin to accommodate larger cards
+    local marginY = windowHeight * 0.015  -- Reduced margin
+    local startX = windowWidth * 0.03    -- Adjusted starting position
+    local startY = windowHeight * 0.06   -- Adjusted starting position
     -- Draw each card on the board
     for i, card in ipairs(board) do
         -- Calculate position in the grid (4 columns, 3 rows)
@@ -105,8 +132,7 @@ function game.drawCard(card, x, y, width, height, index)
         love.graphics.setColor(1, 1, 1) -- White background for normal cards
     end
     love.graphics.rectangle("fill", x, y, width, height, 8, 8) -- Rounded corners
-    
-    -- Draw border
+      -- Draw border
     if card.selected then
         love.graphics.setColor(1, 1, 0) -- Yellow highlight for selected cards
         love.graphics.setLineWidth(4)
@@ -118,20 +144,81 @@ function game.drawCard(card, x, y, width, height, index)
         love.graphics.setLineWidth(2)
     end
     love.graphics.rectangle("line", x, y, width, height, 8, 8)
-    
-    -- Set text color based on card color
+      -- Set color based on card color for tinting the white images
     if card.color == "red" then
-        love.graphics.setColor(0.8, 0.2, 0.2)
+        love.graphics.setColor(0.85, 0.15, 0.15) -- Slightly deeper red
     elseif card.color == "green" then
-        love.graphics.setColor(0.2, 0.8, 0.2)
+        love.graphics.setColor(0.15, 0.65, 0.25) -- Softer, more natural green
     elseif card.color == "blue" then
-        love.graphics.setColor(0.2, 0.2, 0.8)
+        love.graphics.setColor(0.15, 0.35, 0.75) -- Brighter, royal blue
     end
-    -- Draw card attributes as text
-    love.graphics.setFont(love.graphics.newFont(14))
-    local label = string.format("%d\n%s\n%s", 
-        card.number, card.shape, card.fill)
-    love.graphics.printf(label, x + 10, y + height/2 - 30, width - 20, "center")
+    
+    -- Get the image for this shape and fill
+    local image = cardImages[card.shape][card.fill]
+    if not image then
+        print("Warning: Missing image for " .. card.shape .. "-" .. card.fill)
+        return
+    end
+      -- Calculate image dimensions
+    local imgWidth = image:getWidth()
+    local imgHeight = image:getHeight()
+    
+    -- Calculate a consistent scale for all shapes regardless of card number
+    -- First, determine the worst-case scenario (3 shapes on a card)
+    local baseScale = 0.8  -- Default scale factor
+    
+    -- Calculate the maximum width needed for 3 shapes plus spacing
+    local maxShapesWidth = imgWidth * 3  -- Width of three shapes
+    local spacingWidth = imgWidth * 0.6  -- Total spacing between 3 shapes
+    local totalWidthNeeded = maxShapesWidth + spacingWidth
+    
+    -- Calculate the scale that would make 3 shapes fit on any card
+    local scaleForWidth = (width * 0.85) / totalWidthNeeded  -- 85% of card width
+    
+    -- Ensure the height also fits (55% of card height)
+    local scaleForHeight = (height * 0.55) / imgHeight
+    
+    -- Take the smaller scale to ensure both width and height fit
+    local scale = math.min(scaleForWidth, scaleForHeight, baseScale)
+    
+    -- Calculate scaled dimensions
+    local scaledWidth = imgWidth * scale
+    local scaledHeight = imgHeight * scale
+      -- Calculate positions for the symbols based on card.number and scaled size
+    local positions = {}
+    if card.number == 1 then
+        -- Single symbol centered
+        positions = {
+            {x + width/2, y + height/2}
+        }
+    elseif card.number == 2 then
+        -- Two symbols side by side
+        local spacing = scaledWidth * 0.15 -- Spacing between symbols
+        positions = {
+            {x + width/2 - spacing - scaledWidth/2, y + height/2},
+            {x + width/2 + spacing + scaledWidth/2, y + height/2}
+        }
+    elseif card.number == 3 then
+        -- Reduced spacing for three symbols to ensure they fit
+        local spacing = scaledWidth * 0.15 -- Reduced spacing between symbols
+        positions = {
+            {x + width/2 - spacing*2 - scaledWidth, y + height/2},
+            {x + width/2, y + height/2},
+            {x + width/2 + spacing*2 + scaledWidth, y + height/2}
+        }
+    end
+    
+    -- Draw the symbols at each position with the calculated scale
+    for _, pos in ipairs(positions) do
+        -- Center the image at the position
+        love.graphics.draw(
+            image, 
+            pos[1] - scaledWidth/2,  -- Center horizontally
+            pos[2] - scaledHeight/2, -- Center vertically
+            0,                       -- Rotation (none)
+            scale, scale             -- Apply the calculated scale
+        )
+    end
 end
 
 -- Helper function to check if a card index is part of the hint
@@ -264,13 +351,13 @@ function game.getCardAtPosition(x, y)
     -- Get window dimensions to calculate proportions
     local windowWidth, windowHeight = love.graphics.getDimensions()
     -- Calculate card dimensions based on screen size
-    local cardWidth = windowWidth * 0.18
-    local cardHeight = windowHeight * 0.22
+    local cardWidth = windowWidth * 0.23  -- Match the card width from drawBoard
+    local cardHeight = windowHeight * 0.29 -- Match the card height from drawBoard
     -- Calculate margins and starting position
-    local marginX = windowWidth * 0.02
-    local marginY = windowHeight * 0.03
-    local startX = windowWidth * 0.05
-    local startY = windowHeight * 0.1
+    local marginX = windowWidth * 0.012  -- Match the margin from drawBoard
+    local marginY = windowHeight * 0.015  -- Match the margin from drawBoard
+    local startX = windowWidth * 0.03    -- Match the start position from drawBoard
+    local startY = windowHeight * 0.06   -- Match the start position from drawBoard
     -- Check each card's position
     for i, card in ipairs(board) do
         -- Calculate position in the grid (4 columns, 3 rows)
