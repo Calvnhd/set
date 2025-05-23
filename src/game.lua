@@ -14,6 +14,12 @@ local score = 0 -- Track player's score
 -- Card images
 local cardImages = {}
 
+-- Track the discarded cards (never returned to deck until a new game)
+local discardedCards = {}
+
+-- Animation states for cards
+local animatingCards = {}
+
 -- Initialize the game state
 function game.initialize()
     -- Load card images
@@ -32,6 +38,9 @@ function game.initialize()
     
     -- Reset score
     score = 0
+    
+    -- Reset discarded cards
+    discardedCards = {}
 end
 
 -- Load all card images
@@ -74,14 +83,159 @@ end
 
 -- Update function called from love.update
 function game.update(dt)
+    -- Update animations
+    updateCardAnimations(dt)
+end
+
+-- Update card animations
+function updateCardAnimations(dt)
+    local animationsCompleted = {}
+    
+    -- Process each animating card
+    for i, anim in ipairs(animatingCards) do
+        -- Update the animation timer
+        anim.timer = anim.timer + dt
+        
+        -- Calculate progress (0 to 1)
+        local progress = math.min(anim.timer / anim.duration, 1)
+        
+        -- Update the card's animation properties based on progress
+        if anim.type == "burn" then
+            -- Red color intensity increases with progress
+            anim.redValue = math.min(1, progress * 2)  -- Start increasing red
+            
+            -- Opacity decreases in the second half of the animation, but at half the rate
+            if progress > 0.5 then
+                anim.opacity = 1 - (progress - 0.5)  -- Fade out more slowly (half as fast)
+            end
+        end
+        
+        -- Check if animation is complete
+        if progress >= 1 then
+            table.insert(animationsCompleted, i)
+            if anim.onComplete then
+                anim.onComplete()
+            end
+        end
+    end
+    
+    -- Remove completed animations in reverse order to avoid index issues
+    table.sort(animationsCompleted, function(a, b) return a > b end)
+    for _, index in ipairs(animationsCompleted) do
+        table.remove(animatingCards, index)
+    end
+end
+
+-- Function to animate a card burning
+function game.animateCardBurn(card, x, y, width, height, onComplete)
+    local anim = {
+        card = card,
+        x = x,
+        y = y,
+        width = width,
+        height = height,
+        type = "burn",
+        duration = 2.0,  -- Animation takes 2 seconds (twice as long)
+        timer = 0,
+        redValue = 0,    -- Start with no red tint
+        opacity = 1,     -- Start fully visible
+        onComplete = onComplete
+    }
+    
+    table.insert(animatingCards, anim)
+    return anim
 end
 
 -- Draw function called from love.draw
 function game.draw()
     -- Draw the board of cards
     game.drawBoard()
+    -- Draw animating cards
+    game.drawAnimatingCards()
     -- Display deck information
     game.drawDeckInfo()
+end
+
+-- Draw animating cards
+function game.drawAnimatingCards()
+    for _, anim in ipairs(animatingCards) do
+        if anim.type == "burn" then
+            -- Draw card with burning effect
+            game.drawBurningCard(anim)
+        end
+    end
+end
+
+-- Draw a card with burning effect
+function game.drawBurningCard(anim)
+    -- Draw card background with fading effect
+    love.graphics.setColor(1, 1, 1, anim.opacity)
+    love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
+    
+    -- Draw border with red tint and fading
+    love.graphics.setColor(1, 0, 0, anim.opacity)
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
+    
+    -- Set color for tinting with red burning effect
+    if anim.card.color == "red" then
+        love.graphics.setColor(1, anim.redValue * 0.15, anim.redValue * 0.15, anim.opacity)
+    elseif anim.card.color == "green" then
+        love.graphics.setColor(anim.redValue, 0.65 - anim.redValue * 0.5, 0.25 - anim.redValue * 0.2, anim.opacity)
+    elseif anim.card.color == "blue" then
+        love.graphics.setColor(anim.redValue, 0.35 - anim.redValue * 0.3, 0.75 - anim.redValue * 0.6, anim.opacity)
+    end
+    
+    -- Get the image for this shape and fill
+    local image = cardImages[anim.card.shape][anim.card.fill]
+    if not image then
+        return
+    end
+    
+    -- Calculate image dimensions and scaling (similar to drawCard logic)
+    local imgWidth = image:getWidth()
+    local imgHeight = image:getHeight()
+    local baseScale = 0.8
+    local maxShapesWidth = imgWidth * 3
+    local spacingWidth = imgWidth * 0.6
+    local totalWidthNeeded = maxShapesWidth + spacingWidth
+    local scaleForWidth = (anim.width * 0.85) / totalWidthNeeded
+    local scaleForHeight = (anim.height * 0.55) / imgHeight
+    local scale = math.min(scaleForWidth, scaleForHeight, baseScale)
+    local scaledWidth = imgWidth * scale
+    local scaledHeight = imgHeight * scale
+    
+    -- Calculate positions for the symbols based on card.number and scaled size
+    local positions = {}
+    if anim.card.number == 1 then
+        positions = {
+            {anim.x + anim.width/2, anim.y + anim.height/2}
+        }
+    elseif anim.card.number == 2 then
+        local spacing = scaledWidth * 0.15
+        positions = {
+            {anim.x + anim.width/2 - spacing - scaledWidth/2, anim.y + anim.height/2},
+            {anim.x + anim.width/2 + spacing + scaledWidth/2, anim.y + anim.height/2}
+        }
+    elseif anim.card.number == 3 then
+        local spacing = scaledWidth * 0.15
+        positions = {
+            {anim.x + anim.width/2 - spacing*2 - scaledWidth, anim.y + anim.height/2},
+            {anim.x + anim.width/2, anim.y + anim.height/2},
+            {anim.x + anim.width/2 + spacing*2 + scaledWidth, anim.y + anim.height/2}
+        }
+    end
+    
+    -- Draw the symbols at each position with the calculated scale
+    for _, pos in ipairs(positions) do
+        love.graphics.draw(
+            image, 
+            pos[1] - scaledWidth/2,
+            pos[2] - scaledHeight/2,
+            0,
+            scale, scale
+        )
+    end
 end
 
 -- Draw deck information
@@ -91,14 +245,14 @@ function game.drawDeckInfo()
     -- Set font
     love.graphics.setFont(love.graphics.newFont(16))    -- Get window dimensions
     local windowWidth = love.graphics.getWidth()
-      -- Display score
+      -- Display score - positioned in top right
     local scoreText = "Score: " .. score
-    love.graphics.print(scoreText, windowWidth - 150, 20)
+    love.graphics.print(scoreText, windowWidth - 250, 20)
     
-    -- Display cards remaining
+    -- Display cards remaining - positioned below the score, first letters aligned
     local cardsRemaining = deck.getCount()
     local infoText = "Cards remaining in deck: " .. cardsRemaining
-    love.graphics.print(infoText, windowWidth - 350, 45)
+    love.graphics.print(infoText, windowWidth - 250, 45)
     
     -- Display hint instructions
     love.graphics.print("Press 'h' for a hint", 20, 20)
@@ -328,6 +482,9 @@ function game.keypressed(key)
     -- Toggle hint mode
     elseif key == "h" then
         game.toggleHint()
+    -- Check if there's no set on the board
+    elseif key == "x" then
+        game.checkNoSetOnBoard()
     end
 end
 
@@ -424,23 +581,59 @@ function game.removeSelectedCards()
         local card1 = board[selectedCards[1]]
         local card2 = board[selectedCards[2]]
         local card3 = board[selectedCards[3]]
-          -- Check if they form a valid Set
+        
+        -- Check if they form a valid Set
         if game.isValidSet(card1, card2, card3) then
             print("Found a valid Set! Removing cards.")
-            -- Sort in reverse order so we can remove from higher indices first
-            -- This prevents issues with indices changing as we remove cards
-            table.sort(selectedCards, function(a, b) return a > b end)
-            -- Remove the cards
-            for _, index in ipairs(selectedCards) do
-                table.remove(board, index)
-            end
-            -- Increment score when a valid set is found
-            score = score + 1
-            print("Board now has " .. #board .. " cards")
             
-            -- Reset hint state when board changes
-            hintActive = false
-            hintCards = {}
+            -- Get window dimensions to calculate proportions for animations
+            local windowWidth, windowHeight = love.graphics.getDimensions()
+            local cardWidth = windowWidth * 0.2 
+            local cardHeight = windowHeight * 0.2
+            local marginX = cardWidth * 0.1
+            local marginY = cardHeight * 0.1
+            local startX = windowWidth * 0.05
+            local startY = windowHeight * 0.15
+            
+            -- Prepare for animation
+            local animationsStarted = 0
+            local totalAnimations = #selectedCards
+            
+            -- Sort in reverse order so indices remain valid during removal
+            table.sort(selectedCards, function(a, b) return a > b end)
+            
+            -- Animate and remove each card
+            for _, index in ipairs(selectedCards) do
+                local card = board[index]
+                
+                -- Calculate position in the grid for animation
+                local origIndex = index
+                local col = (origIndex - 1) % 4
+                local row = math.floor((origIndex - 1) / 4)
+                local x = startX + col * (cardWidth + marginX)
+                local y = startY + row * (cardHeight + marginY)
+                
+                -- Create burn animation for the card
+                game.animateCardBurn(card, x, y, cardWidth, cardHeight, function()
+                    animationsStarted = animationsStarted + 1
+                    
+                    -- When all animations complete, finish removing cards
+                    if animationsStarted == totalAnimations then
+                        -- Remove the cards (indices are still valid since we haven't removed anything yet)
+                        for _, idx in ipairs(selectedCards) do
+                            table.remove(board, idx)
+                        end
+                        
+                        -- Increment score when a valid set is found
+                        score = score + 1
+                        print("Board now has " .. #board .. " cards")
+                        
+                        -- Reset hint state when board changes
+                        hintActive = false
+                        hintCards = {}
+                    end
+                end)
+            end
         else
             print("Not a valid Set! Deselecting cards.")
             -- Deselect all cards
@@ -448,6 +641,129 @@ function game.removeSelectedCards()
                 board[index].selected = false
             end
         end
+    end
+end
+
+-- Check if there's no set on the board (when player presses 'x')
+function game.checkNoSetOnBoard()
+    local validSet = game.findValidSet()
+    
+    if validSet then
+        -- There is a set but player claimed there wasn't (incorrect)
+        print("Set found! Player was incorrect.")
+        
+        -- Get window dimensions to calculate proportions for animations
+        local windowWidth, windowHeight = love.graphics.getDimensions()
+        local cardWidth = windowWidth * 0.2 
+        local cardHeight = windowHeight * 0.2
+        local marginX = cardWidth * 0.1
+        local marginY = cardHeight * 0.1
+        local startX = windowWidth * 0.05
+        local startY = windowHeight * 0.15
+        
+        -- Prepare cards for animation
+        local animatingCardsIndices = validSet
+        local animationsStarted = 0
+        local totalAnimations = #animatingCardsIndices
+        
+        -- Start burning animation for each card in the set
+        for _, index in ipairs(animatingCardsIndices) do
+            local card = board[index]
+            
+            -- Calculate position in the grid for animation
+            local col = (index - 1) % 4
+            local row = math.floor((index - 1) / 4)
+            local x = startX + col * (cardWidth + marginX)
+            local y = startY + row * (cardHeight + marginY)
+            
+            -- Create burn animation
+            game.animateCardBurn(card, x, y, cardWidth, cardHeight, function()
+                animationsStarted = animationsStarted + 1
+                
+                -- When all animations are complete, finish the discard process
+                if animationsStarted == totalAnimations then
+                    -- Move cards to the discard pile
+                    for _, setIndex in ipairs(validSet) do
+                        table.insert(discardedCards, board[setIndex])
+                    end
+                    
+                    -- Remove the set cards from the board in reverse order
+                    -- to avoid index shifting problems
+                    table.sort(validSet, function(a, b) return a > b end)
+                    for _, setIndex in ipairs(validSet) do
+                        table.remove(board, setIndex)
+                    end
+                    
+                    -- Reduce score by 1
+                    score = score - 1
+                    print("Player loses a point. New score: " .. score)
+                    
+                    -- Disable hint mode when board changes
+                    hintActive = false
+                    hintCards = {}
+                end
+            end)
+        end
+    else
+        -- There is no set and player was correct
+        print("No set found! Player was correct.")
+        
+        -- Select half of the cards to be removed
+        local cardsToRemove = {}
+        local removedCards = {}
+        local numToRemove = math.floor(#board / 2)
+        
+        -- Create a copy of board indices to shuffle
+        local indices = {}
+        for i = 1, #board do
+            table.insert(indices, i)
+        end
+        
+        -- Shuffle the indices
+        for i = #indices, 2, -1 do
+            local j = math.random(i)
+            indices[i], indices[j] = indices[j], indices[i]
+        end
+        
+        -- Select the first half of the shuffled indices
+        for i = 1, numToRemove do
+            table.insert(cardsToRemove, indices[i])
+        end
+        
+        -- Sort in reverse order to avoid index shifting when removing
+        table.sort(cardsToRemove, function(a, b) return a > b end)
+        
+        -- Remove selected cards from the board and save them
+        for _, index in ipairs(cardsToRemove) do
+            local removedCard = table.remove(board, index)
+            table.insert(removedCards, removedCard)
+        end
+        
+        -- Return these cards to the deck
+        for _, card in ipairs(removedCards) do
+            -- Reset the card's selection state before returning to deck
+            card.selected = false
+            table.insert(deck.getCards(), card)
+        end
+        
+        -- Shuffle the deck to ensure cards don't come back immediately
+        deck.shuffle()
+        
+        -- Refill the board from the deck
+        while #board < 12 and deck.getCount() > 0 do
+            local card = deck.takeCard()
+            if card then
+                table.insert(board, card)
+            end
+        end
+        
+        -- Increase score by 1
+        score = score + 1
+        print("Player gains a point. New score: " .. score)
+        
+        -- Disable hint mode when board changes
+        hintActive = false
+        hintCards = {}
     end
 end
 
