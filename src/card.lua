@@ -60,6 +60,8 @@ function card.updateAnimations(dt)
         elseif anim.type == "fadeIn" then
             -- Simple fade in - opacity increases with progress
             anim.opacity = progress
+        elseif anim.type == "flashRed" then
+            -- Flash red animation is handled in the drawing function
         end
         -- Check if animation is complete
         if progress >= 1 then
@@ -118,6 +120,25 @@ function card.animateFadeIn(cardRef, x, y, width, height, onComplete)
     return anim
 end
 
+-- Function to animate a card flashing red (for invalid sets)
+function card.animateFlashRed(cardRef, x, y, width, height, onComplete)
+    local cardData = card._getInternalData(cardRef)
+    local anim = {
+        card = cardData,
+        x = x,
+        y = y,
+        width = width,
+        height = height,
+        type = "flashRed",
+        duration = 1.0, -- Animation takes 1 second
+        timer = 0,
+        opacity = 1, -- Start fully visible
+        onComplete = onComplete
+    }
+    table.insert(animatingCards, anim)
+    return anim
+end
+
 -- Draw animating cards
 function card.drawAnimatingCards()
     for _, anim in ipairs(animatingCards) do
@@ -125,6 +146,8 @@ function card.drawAnimatingCards()
             card.drawBurningCard(anim)
         elseif anim.type == "fadeIn" then
             card.drawFadingInCard(anim)
+        elseif anim.type == "flashRed" then
+            card.drawFlashingRedCard(anim)
         end
     end
 end
@@ -250,6 +273,46 @@ function card.drawBurningCard(anim)
         return
     end
 
+    -- Draw the symbols with calculated positions
+    card.drawSymbols(image, anim.card.number, anim.x, anim.y, anim.width, anim.height)
+end
+
+-- Draw a card with flash red effect
+function card.drawFlashingRedCard(anim)
+    local progress = anim.timer / anim.duration
+    
+    -- Calculate the flash intensity (peak at middle of animation)
+    local flashIntensity = 0
+    if progress < 0.5 then
+        flashIntensity = progress * 2 -- 0 to 1 in first half
+    else
+        flashIntensity = (1 - progress) * 2 -- 1 to 0 in second half
+    end
+    
+    -- Draw card background with red tint based on flash intensity
+    love.graphics.setColor(1, 1 - flashIntensity * 0.8, 1 - flashIntensity * 0.8)
+    love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
+    
+    -- Draw border with red highlight based on flash intensity
+    love.graphics.setColor(1, 0.2, 0.2)
+    love.graphics.setLineWidth(4)
+    love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
+    
+    -- Set color for the card symbols
+    if anim.card.color == "red" then
+        love.graphics.setColor(0.85, 0.15, 0.15) -- Red tint
+    elseif anim.card.color == "green" then
+        love.graphics.setColor(0.15, 0.65, 0.25) -- Green tint
+    elseif anim.card.color == "blue" then
+        love.graphics.setColor(0.15, 0.35, 0.75) -- Blue tint
+    end
+    
+    -- Get the image for this shape and fill
+    local image = cardImages[anim.card.shape][anim.card.fill]
+    if not image then
+        return
+    end
+    
     -- Draw the symbols with calculated positions
     card.drawSymbols(image, anim.card.number, anim.x, anim.y, anim.width, anim.height)
 end
