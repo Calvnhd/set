@@ -8,6 +8,10 @@ local cardImages = {}
 -- Animation tracking
 local animatingCards = {} -- animation state information each currently animating card
 
+-- Card objects cache - storing internal data for all created cards
+local cardObjects = {} -- indexed by card id
+local nextCardId = 1 -- unique id counter for cards
+
 -- Load all card images
 function card.loadImages()
     cardImages = {
@@ -75,7 +79,8 @@ function card.updateAnimations(dt)
 end
 
 -- Function to animate a card burning
-function card.animateBurn(cardData, x, y, width, height, onComplete)
+function card.animateBurn(cardRef, x, y, width, height, onComplete)
+    local cardData = card._getInternalData(cardRef)
     local anim = {
         card = cardData,
         x = x,
@@ -95,7 +100,8 @@ function card.animateBurn(cardData, x, y, width, height, onComplete)
 end
 
 -- Function to animate a card fading in
-function card.animateFadeIn(cardData, x, y, width, height, onComplete)
+function card.animateFadeIn(cardRef, x, y, width, height, onComplete)
+    local cardData = card._getInternalData(cardRef)
     local anim = {
         card = cardData,
         x = x,
@@ -249,9 +255,11 @@ function card.drawBurningCard(anim)
 end
 
 -- Draw a single card
-function card.draw(cardData, x, y, width, height, bIsSelected, bIsInHint)
+function card.draw(cardRef, x, y, width, height, bIsInHint)
+    local cardData = card._getInternalData(cardRef)
+    
     -- Draw card background
-    if cardData.selected then
+    if cardData.bIsSelected then
         love.graphics.setColor(0.9, 0.9, 0.7) -- Slight yellow tint for selected cards
     else
         love.graphics.setColor(1, 1, 1) -- White background for normal cards
@@ -259,7 +267,7 @@ function card.draw(cardData, x, y, width, height, bIsSelected, bIsInHint)
     love.graphics.rectangle("fill", x, y, width, height, 8, 8) -- Rounded corners
     
     -- Draw border
-    if cardData.selected then
+    if cardData.bIsSelected then
         love.graphics.setColor(1, 1, 0) -- Yellow highlight for selected cards
         love.graphics.setLineWidth(4)
     elseif bIsInHint then
@@ -348,9 +356,107 @@ function card.drawSymbols(image, number, x, y, width, height)
     end
 end
 
+-- Create a new card with the given attributes
+function card.create(color, shape, number, fill)
+    -- Generate a unique ID for this card
+    local id = nextCardId
+    nextCardId = nextCardId + 1
+    
+    -- Store the card's data internally
+    cardObjects[id] = {
+        id = id,
+        color = color,
+        shape = shape,
+        number = number,
+        fill = fill,
+        bIsSelected = false
+    }
+    
+    -- Return a lightweight reference to this card
+    return { _cardId = id }
+end
+
+-- Get a card's color
+function card.getColor(cardRef)
+    local cardData = cardObjects[cardRef._cardId]
+    return cardData.color
+end
+
+-- Get a card's shape
+function card.getShape(cardRef)
+    local cardData = cardObjects[cardRef._cardId]
+    return cardData.shape
+end
+
+-- Get a card's number
+function card.getNumber(cardRef)
+    local cardData = cardObjects[cardRef._cardId]
+    return cardData.number
+end
+
+-- Get a card's fill
+function card.getFill(cardRef)
+    local cardData = cardObjects[cardRef._cardId]
+    return cardData.fill
+end
+
+-- Check if a card is selected
+function card.isSelected(cardRef)
+    local cardData = cardObjects[cardRef._cardId]
+    return cardData.bIsSelected
+end
+
+-- Set a card's selection state
+function card.setSelected(cardRef, bSelected)
+    local cardData = cardObjects[cardRef._cardId]
+    cardData.bIsSelected = bSelected
+end
+
+-- Toggle a card's selection state and return the new state
+function card.toggleSelected(cardRef)
+    local cardData = cardObjects[cardRef._cardId]
+    cardData.bIsSelected = not cardData.bIsSelected
+    return cardData.bIsSelected
+end
+
+-- Get internal card data (for use by the card module functions)
+function card._getInternalData(cardRef)
+    return cardObjects[cardRef._cardId]
+end
+
 -- Get any current animation data (could be used for game logic)
 function card.getAnimatingCards()
     return animatingCards
+end
+
+-- Check if three cards form a valid Set
+function card.isValidSet(card1Ref, card2Ref, card3Ref)
+    local card1 = card._getInternalData(card1Ref)
+    local card2 = card._getInternalData(card2Ref)
+    local card3 = card._getInternalData(card3Ref)
+
+    -- Helper function to check if all values are the same or all different
+    local function checkAttribute(attr1, attr2, attr3)
+        if attr1 == attr2 and attr2 == attr3 then
+            -- All three are the same
+            return true
+        elseif attr1 ~= attr2 and attr2 ~= attr3 and attr1 ~= attr3 then
+            -- All three are different
+            return true
+        else
+            -- Some are the same, some are different
+            return false
+        end
+    end
+    
+    -- Check each attribute (color, shape, number, fill)
+    local colorValid = checkAttribute(card1.color, card2.color, card3.color)
+    local shapeValid = checkAttribute(card1.shape, card2.shape, card3.shape)
+    local numberValid = checkAttribute(card1.number, card2.number, card3.number)
+    local fillValid = checkAttribute(card1.fill, card2.fill, card3.fill)
+    
+    -- It's a valid set only if ALL attributes pass the check
+    return colorValid and shapeValid and numberValid and fillValid
 end
 
 return card

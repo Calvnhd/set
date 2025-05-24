@@ -1,4 +1,5 @@
 -- Deck management for Set card game
+local card = require('card')
 local deck = {}
 
 -- Card attributes
@@ -19,17 +20,10 @@ function deck.create()
         for _, shape in ipairs(SHAPE) do
             for _, number in ipairs(NUMBER) do
                 for _, fill in ipairs(FILL) do
-                    local card = {
-                        -- attributes
-                        color = color,
-                        shape = shape,
-                        number = number,
-                        fill = fill,
-                        -- state
-                        selected = false
-                    }
+                    -- Create a new card using the card module
+                    local cardRef = card.create(color, shape, number, fill)
                     -- Add newly created card to the deck
-                    table.insert(cards, card)
+                    table.insert(cards, cardRef)
                 end
             end
         end
