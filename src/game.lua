@@ -4,16 +4,38 @@ local card = require('card')
 local game = {}
 
 -- Cards
-local board = {} -- cards currently in play
+local board = {} -- Using a 4x3 grid with nil for empty positions
 local discardedCards = {} -- never returned to deck until a new game
 local hintCards = {} -- Indices of cards in a valid set for hint
+
+-- Game constants
+local BOARD_COLUMNS = 4
+local BOARD_ROWS = 3
+local BOARD_SIZE = BOARD_COLUMNS * BOARD_ROWS
 
 -- Game state
 local bHintIsActive = false -- Track if hint mode is active
 local score = 0 -- Track player's score
 
+-- Helper function to convert 1D index to 2D grid position
+function game.indexToGridPos(index)
+    local col = (index - 1) % BOARD_COLUMNS -- 0-based
+    local row = math.floor((index - 1) / BOARD_COLUMNS) -- 0-based
+    return col, row
+end
+
+-- Helper function to convert 2D grid position to 1D index
+function game.gridPosToIndex(col, row)
+    return row * BOARD_COLUMNS + col + 1
+end
+
 function game.reset()
+    -- Initialize board with all nil values
     board = {}
+    for i = 1, BOARD_SIZE do
+        board[i] = nil
+    end
+    
     discardedCards = {}
     hintCards = {}
     bHintIsActive = false
@@ -33,10 +55,10 @@ end
 
 -- Deal the initial cards to the board
 function game.dealInitialCards()
-    for i = 1, 12 do
+    for i = 1, BOARD_SIZE do
         local cardRef = deck.takeCard()
         if cardRef then
-            table.insert(board, cardRef)
+            board[i] = cardRef
         end
     end
 end
@@ -96,15 +118,18 @@ function game.drawBoard()
     -- Get the card layout dimensions
     local layout = game.calculateCardLayout()
     -- Draw each card on the board
-    for i, cardData in ipairs(board) do
-        -- Calculate position in the grid (4 columns, 3 rows)
-        local col = (i - 1) % 4 -- 0, 1, 2, 3
-        local row = math.floor((i - 1) / 4) -- 0, 1, 2
-        -- Calculate pixel position
-        local x = layout.startX + col * (layout.cardWidth + layout.marginX)
-        local y = layout.startY + row * (layout.cardHeight + layout.marginY)
-        -- Draw the card
-        game.drawCard(cardData, x, y, layout.cardWidth, layout.cardHeight, i)
+    for i = 1, BOARD_SIZE do
+        local cardData = board[i]
+        if cardData then -- Only draw non-nil cards
+            -- Calculate position in the grid (4 columns, 3 rows)
+            local col = (i - 1) % BOARD_COLUMNS -- 0, 1, 2, 3
+            local row = math.floor((i - 1) / BOARD_COLUMNS) -- 0, 1, 2
+            -- Calculate pixel position
+            local x = layout.startX + col * (layout.cardWidth + layout.marginX)
+            local y = layout.startY + row * (layout.cardHeight + layout.marginY)
+            -- Draw the card
+            game.drawCard(cardData, x, y, layout.cardWidth, layout.cardHeight, i)
+        end
     end
 end
 
@@ -126,16 +151,28 @@ end
 
 -- Find a valid set on the board (returns indices of 3 cards or nil if none found)
 function game.findValidSet()
+    -- Count cards on the board to check if we have at least 3
+    local cardCount = 0
+    local cardIndices = {}
+    for i = 1, BOARD_SIZE do
+        if board[i] then
+            cardCount = cardCount + 1
+            table.insert(cardIndices, i)
+        end
+    end
+    
     -- Need at least 3 cards to form a set
-    if #board < 3 then
+    if cardCount < 3 then
         return nil
     end
+    
     -- Try all possible combinations of 3 cards
-    for i = 1, #board - 2 do
-        for j = i + 1, #board - 1 do
-            for k = j + 1, #board do
-                if card.isValidSet(board[i], board[j], board[k]) then
-                    return {i, j, k}
+    for i = 1, #cardIndices - 2 do
+        for j = i + 1, #cardIndices - 1 do
+            for k = j + 1, #cardIndices do
+                local idx1, idx2, idx3 = cardIndices[i], cardIndices[j], cardIndices[k]
+                if card.isValidSet(board[idx1], board[idx2], board[idx3]) then
+                    return {idx1, idx2, idx3}
                 end
             end
         end
@@ -170,15 +207,31 @@ function game.keypressed(key)
         end
     end
     -- Clear card selection on any other key input
-    game.clearCardSelection()
-    if key == "d" then
-        -- Draw a card from the deck if there's space on the board    
-        if #board >= 12 then
+    game.clearCardSelection()    if key == "d" then
+        -- Check if there's any empty position on the board
+        local bEmptyPositionExists = false
+        for i = 1, BOARD_SIZE do
+            if not board[i] then
+                bEmptyPositionExists = true
+                break
+            end
+        end
+        
+        -- Don't draw if there are no empty positions
+        if not bEmptyPositionExists then
             return
-        end        local cardData = deck.takeCard()
+        end
+        
+        local cardData = deck.takeCard()
         if cardData then
-            -- Simply add the card to the board without animation
-            table.insert(board, cardData)
+            -- Find the first empty position to place the card
+            for i = 1, BOARD_SIZE do
+                if not board[i] then
+                    -- Simply add the card to the first empty position without animation
+                    board[i] = cardData
+                    break
+                end
+            end
             -- No animation needed, the card will appear in the next draw cycle
         end
         -- Reset hint state when board changes
@@ -195,8 +248,11 @@ end
 
 -- Helper function to clear all card selections
 function game.clearCardSelection()
-    for _, cardRef in ipairs(board) do
-        card.setSelected(cardRef, false)
+    for i = 1, BOARD_SIZE do
+        local cardRef = board[i]
+        if cardRef then
+            card.setSelected(cardRef, false)
+        end
     end
 end
 
@@ -226,16 +282,18 @@ function game.getCardAtPosition(x, y)
     -- Get layout dimensions
     local layout = game.calculateCardLayout()
     -- Check each card's position
-    for i, _ in ipairs(board) do
-        -- Calculate position in the grid (4 columns, 3 rows)
-        local col = (i - 1) % 4 -- 0, 1, 2, 3
-        local row = math.floor((i - 1) / 4) -- 0, 1, 2
-        -- Calculate pixel position of this card
-        local cardX = layout.startX + col * (layout.cardWidth + layout.marginX)
-        local cardY = layout.startY + row * (layout.cardHeight + layout.marginY)
-        -- Check if the point (x,y) is within this card's bounds
-        if x >= cardX and x <= cardX + layout.cardWidth and y >= cardY and y <= cardY + layout.cardHeight then
-            return i -- Return the index of the clicked card
+    for i = 1, BOARD_SIZE do
+        if board[i] then -- Only check positions where there's a card
+            -- Calculate position in the grid
+            local col = (i - 1) % BOARD_COLUMNS -- 0, 1, 2, 3
+            local row = math.floor((i - 1) / BOARD_COLUMNS) -- 0, 1, 2
+            -- Calculate pixel position of this card
+            local cardX = layout.startX + col * (layout.cardWidth + layout.marginX)
+            local cardY = layout.startY + row * (layout.cardHeight + layout.marginY)
+            -- Check if the point (x,y) is within this card's bounds
+            if x >= cardX and x <= cardX + layout.cardWidth and y >= cardY and y <= cardY + layout.cardHeight then
+                return i -- Return the index of the clicked card
+            end
         end
     end
     return nil -- No card was clicked
@@ -244,8 +302,9 @@ end
 -- Get all selected cards
 function game.getSelectedCards()
     local selected = {}
-    for i, cardRef in ipairs(board) do
-        if card.isSelected(cardRef) then
+    for i = 1, BOARD_SIZE do
+        local cardRef = board[i]
+        if cardRef and card.isSelected(cardRef) then
             table.insert(selected, i)
         end
     end
@@ -271,7 +330,7 @@ function game.removeSelectedCards()
             end)
             -- Remove the cards immediately (no animation for regular card removal)
             for _, idx in ipairs(selectedCards) do
-                table.remove(board, idx)
+                board[idx] = nil
             end            -- Increment score when a valid set is found
             score = score + 1
         else
@@ -343,7 +402,7 @@ function game.checkNoSetOnBoard()
         
         -- Remove cards from the board immediately before starting animations
         for _, index in ipairs(validSet) do
-            table.remove(board, index)
+            board[index] = nil
         end
         
         -- Now start the animations with saved references (cards no longer on board)
@@ -370,52 +429,59 @@ function game.checkNoSetOnBoard()
         end
     else
         -- There is no set and player was correct
-        print("No set found! Player was correct.")
-
-        -- Select half of the cards to be removed
+        print("No set found! Player was correct.")        -- Select half of the cards to be removed
         local cardsToRemove = {}
         local removedCards = {}
-        local numToRemove = math.floor(#board / 2)
-
-        -- Create a copy of board indices to shuffle
-        local indices = {}
-        for i = 1, #board do
-            table.insert(indices, i)
+        
+        -- Count how many cards are on the board
+        local nonEmptyPositions = {}
+        for i = 1, BOARD_SIZE do
+            if board[i] then
+                table.insert(nonEmptyPositions, i)
+            end
         end
-
-        -- Shuffle the indices
-        for i = #indices, 2, -1 do
+        
+        local numToRemove = math.floor(#nonEmptyPositions / 2)
+        
+        -- Shuffle the indices of non-empty positions
+        for i = #nonEmptyPositions, 2, -1 do
             local j = math.random(i)
-            indices[i], indices[j] = indices[j], indices[i]
+            nonEmptyPositions[i], nonEmptyPositions[j] = nonEmptyPositions[j], nonEmptyPositions[i]
         end
-
-        -- Select the first half of the shuffled indices
+        
+        -- Select the first half of the shuffled indices to remove
         for i = 1, numToRemove do
-            table.insert(cardsToRemove, indices[i])
+            table.insert(cardsToRemove, nonEmptyPositions[i])
         end
-
-        -- Sort in reverse order to avoid index shifting when removing
-        table.sort(cardsToRemove, function(a, b)
-            return a > b
-        end)
-
+        
         -- Remove selected cards from the board and save them
         for _, index in ipairs(cardsToRemove) do
-            local removedCard = table.remove(board, index)
+            local removedCard = board[index]
+            board[index] = nil -- Clear the position
             table.insert(removedCards, removedCard)
-        end -- Return these cards to the deck
-        for _, cardRef in ipairs(removedCards) do -- Reset the card's selection state before returning to deck
+        end 
+        
+        -- Return these cards to the deck
+        for _, cardRef in ipairs(removedCards) do 
+            -- Reset the card's selection state before returning to deck
             card.setSelected(cardRef, false)
             table.insert(deck.getCards(), cardRef)
         end
+        
         -- Shuffle the deck to ensure cards don't come back immediately
-        deck.shuffle() -- Get layout dimensions for animations
-        local layout = game.calculateCardLayout()        -- Refill the board from the deck without animation
-        while #board < 12 and deck.getCount() > 0 do
-            local cardRef = deck.takeCard()
-            if cardRef then
-                -- Simply add the card to the board without animation
-                table.insert(board, cardRef)
+        deck.shuffle()
+        
+        -- Get layout dimensions for animations
+        local layout = game.calculateCardLayout()
+        
+        -- Refill empty positions on the board from the deck without animation
+        for i = 1, BOARD_SIZE do
+            if not board[i] and deck.getCount() > 0 then
+                local cardRef = deck.takeCard()
+                if cardRef then
+                    -- Simply add the card to the empty position without animation
+                    board[i] = cardRef
+                end
             end
         end
 
