@@ -41,15 +41,12 @@ end
 
 -- Update card animations
 function card.updateAnimations(dt)
-    local animationsCompleted = {}
-
-    -- Process each animating card
+    local animationsCompleted = {}    -- Process each animating card
     for i, anim in ipairs(animatingCards) do
         -- Update the animation timer
         anim.timer = anim.timer + dt
         -- Calculate progress (0 to 1)
-        local progress = math.min(anim.timer / anim.duration, 1)
-        -- Update the card's animation properties based on progress
+        local progress = math.min(anim.timer / anim.duration, 1)        -- Update the card's animation properties based on progress
         if anim.type == "burn" then
             -- Calculate which phase we're in based on progress
             local phaseLength = 1 / 4 -- Each phase is 1/4 of the total animation
@@ -57,16 +54,14 @@ function card.updateAnimations(dt)
             -- Calculate progress within the current phase (0 to 1)
             anim.phaseProgress = (progress - (anim.phase - 1) * phaseLength) / phaseLength
             -- Phase-specific updates will be handled in the drawing function
-        elseif anim.type == "fadeIn" then
-            -- Simple fade in - opacity increases with progress
-            anim.opacity = progress
         elseif anim.type == "flashRed" then
             -- Flash red animation is handled in the drawing function
         end
         -- Check if animation is complete
         if progress >= 1 then
             table.insert(animationsCompleted, i)
-            if anim.onComplete then
+            -- Only call the completion callback if it hasn't been called during phase 4 already
+            if anim.onComplete and not anim.bCompletionCalled then
                 anim.onComplete()
             end
         end
@@ -90,31 +85,13 @@ function card.animateBurn(cardRef, x, y, width, height, onComplete)
         width = width,
         height = height,
         type = "burn",
-        duration = 2.0, -- Animation takes 2 seconds
+        duration = 1.5, -- Animation takes 1.5 seconds (shortened for better feel)
         timer = 0,
         phase = 1, -- Start with phase 1
         phaseProgress = 0, -- Progress within the current phase
         opacity = 1, -- Start fully visible
-        onComplete = onComplete
-    }
-    table.insert(animatingCards, anim)
-    return anim
-end
-
--- Function to animate a card fading in
-function card.animateFadeIn(cardRef, x, y, width, height, onComplete)
-    local cardData = card._getInternalData(cardRef)
-    local anim = {
-        card = cardData,
-        x = x,
-        y = y,
-        width = width,
-        height = height,
-        type = "fadeIn",
-        duration = 1.0, -- Animation takes 1 second
-        timer = 0,
-        opacity = 0, -- Start invisible
-        onComplete = onComplete
+        onComplete = onComplete,
+        bCompletionCalled = false -- Flag to track if animation completion callback was already called
     }
     table.insert(animatingCards, anim)
     return anim
@@ -144,40 +121,13 @@ function card.drawAnimatingCards()
     for _, anim in ipairs(animatingCards) do
         if anim.type == "burn" then
             card.drawBurningCard(anim)
-        elseif anim.type == "fadeIn" then
-            card.drawFadingInCard(anim)
         elseif anim.type == "flashRed" then
             card.drawFlashingRedCard(anim)
         end
     end
 end
 
--- Draw a card with fade-in effect
-function card.drawFadingInCard(anim)
-    -- Draw card with opacity based on animation progress
-    love.graphics.setColor(1, 1, 1, anim.opacity)
-    love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
-    -- Draw border with opacity
-    love.graphics.setColor(0, 0, 0, anim.opacity)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
-    -- Set color for the card symbols
-    if anim.card.color == "red" then
-        love.graphics.setColor(0.85, 0.15, 0.15, anim.opacity) -- Red tint
-    elseif anim.card.color == "green" then
-        love.graphics.setColor(0.15, 0.65, 0.25, anim.opacity) -- Green tint
-    elseif anim.card.color == "blue" then
-        love.graphics.setColor(0.15, 0.35, 0.75, anim.opacity) -- Blue tint
-    end
-    -- Get the image for this shape and fill
-    local image = cardImages[anim.card.shape][anim.card.fill]
-    if not image then
-        return
-    end
-    
-    -- Draw the symbols with calculated positions
-    card.drawSymbols(image, anim.card.number, anim.x, anim.y, anim.width, anim.height)
-end
+
 
 -- Draw a card with burning effect
 function card.drawBurningCard(anim)
@@ -242,31 +192,37 @@ function card.drawBurningCard(anim)
         love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
 
         -- Shapes use the same color as the background (invisible)
-        love.graphics.setColor(darkRed, darkGreen, darkBlue, 1)
-
-    elseif phase == 4 then
-        -- Phase 4: Card fades from opaque to transparent
+        love.graphics.setColor(darkRed, darkGreen, darkBlue, 1)    elseif phase == 4 then
+        -- Phase 4: Card simply fades out completely
         local opacity = 1 - progress
-
-        -- Draw card with dark red and fading opacity
-        local darkRed = 0.1
-        local darkGreen = 0
-        local darkBlue = 0
-
-        -- Draw card background with fading opacity
-        love.graphics.setColor(darkRed, darkGreen, darkBlue, opacity)
+        
+        -- Make sure the card becomes completely invisible as we approach the end
+        if opacity < 0.1 then
+            -- When we get to 90% through phase 4, mark this animation as complete
+            -- This ensures the card never reappears, even for a single frame
+            if anim.onComplete and not anim.bCompletionCalled then
+                anim.bCompletionCalled = true
+                anim.onComplete()
+            end
+            
+            -- Don't render anything at this low opacity
+            return
+        end
+        
+        -- Draw a completely black card with fading opacity
+        love.graphics.setColor(0, 0, 0, opacity)
         love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-        -- Draw border with fading opacity
-        love.graphics.setColor(darkRed + 0.2, darkGreen, darkBlue, opacity)
-        love.graphics.setLineWidth(2)
+        
+        -- Draw a thin black border
+        love.graphics.setColor(0.2, 0, 0, opacity)
+        love.graphics.setLineWidth(1)
         love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-        -- No need to draw shapes at this point
+        
+        -- No symbols in phase 4
         return
     end
 
-    -- Only draw shapes for phases 1-3 (phase 4 returns early)
+    -- Only draw shapes for phases 1-3
     -- Get the image for this shape and fill
     local image = cardImages[anim.card.shape][anim.card.fill]
     if not image then

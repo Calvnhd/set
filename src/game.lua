@@ -175,21 +175,11 @@ function game.keypressed(key)
         -- Draw a card from the deck if there's space on the board    
         if #board >= 12 then
             return
-        end
-        local cardData = deck.takeCard()
+        end        local cardData = deck.takeCard()
         if cardData then
-            -- Get layout dimensions for animations
-            local layout = game.calculateCardLayout()
-            -- Add the card to the board
+            -- Simply add the card to the board without animation
             table.insert(board, cardData)
-            -- Calculate position in the grid for animation
-            local newIndex = #board
-            local col = (newIndex - 1) % 4
-            local row = math.floor((newIndex - 1) / 4)
-            local x = layout.startX + col * (layout.cardWidth + layout.marginX)
-            local y = layout.startY + row * (layout.cardHeight + layout.marginY)
-            -- Create fade-in animation using card module
-            card.animateFadeIn(cardData, x, y, layout.cardWidth, layout.cardHeight)
+            -- No animation needed, the card will appear in the next draw cycle
         end
         -- Reset hint state when board changes
         bHintIsActive = false
@@ -324,33 +314,50 @@ function game.checkNoSetOnBoard()
     if validSet then -- There is a set but player claimed there wasn't (incorrect)
         -- Get layout dimensions for animations
         local layout = game.calculateCardLayout()
-        -- Prepare cards for animation
-        local animatingCardsIndices = validSet
-        local animationsStarted = 0
-        local totalAnimations = #animatingCardsIndices -- Start burning animation for each card in the set
-        for _, index in ipairs(animatingCardsIndices) do
+
+        -- Save card references and positions before modifying the board
+        local cardsToAnimate = {}
+        for _, index in ipairs(validSet) do
             local cardRef = board[index]
-            -- Calculate position in the grid for animation
             local col = (index - 1) % 4
             local row = math.floor((index - 1) / 4)
             local x = layout.startX + col * (layout.cardWidth + layout.marginX)
-            local y = layout.startY + row * (layout.cardHeight + layout.marginY)            -- Create burn animation
-            card.animateBurn(cardRef, x, y, layout.cardWidth, layout.cardHeight, function()
+            local y = layout.startY + row * (layout.cardHeight + layout.marginY)
+            
+            -- Store the card and its position for animation
+            table.insert(cardsToAnimate, {
+                cardRef = cardRef,
+                x = x,
+                y = y,
+                index = index
+            })
+            
+            -- Add card to discard pile
+            table.insert(discardedCards, cardRef)
+        end
+        
+        -- Sort indices in reverse to properly remove cards from board without affecting other indices
+        table.sort(validSet, function(a, b) 
+            return a > b 
+        end)
+        
+        -- Remove cards from the board immediately before starting animations
+        for _, index in ipairs(validSet) do
+            table.remove(board, index)
+        end
+        
+        -- Now start the animations with saved references (cards no longer on board)
+        local animationsStarted = 0
+        local totalAnimations = #cardsToAnimate
+        
+        for _, cardInfo in ipairs(cardsToAnimate) do
+            -- Create burn animation using the saved card reference and position
+            card.animateBurn(cardInfo.cardRef, cardInfo.x, cardInfo.y, layout.cardWidth, layout.cardHeight, function()
                 animationsStarted = animationsStarted + 1
-                -- When all animations are complete, finish the discard process
+                
+                -- When all animations are complete, update game state
                 if animationsStarted == totalAnimations then
-                    -- Move cards to the discard pile
-                    for _, setIndex in ipairs(validSet) do
-                        table.insert(discardedCards, board[setIndex])
-                    end
-                    -- Remove the set cards from the board in reverse order
-                    -- to avoid index shifting problems
-                    table.sort(validSet, function(a, b)
-                        return a > b
-                    end)
-                    for _, setIndex in ipairs(validSet) do
-                        table.remove(board, setIndex)
-                    end -- Reduce score by 1, but ensure it doesn't go below 0
+                    -- Reduce score by 1, but ensure it doesn't go below 0
                     if score > 0 then
                         score = score - 1
                     end
@@ -403,21 +410,12 @@ function game.checkNoSetOnBoard()
         end
         -- Shuffle the deck to ensure cards don't come back immediately
         deck.shuffle() -- Get layout dimensions for animations
-        local layout = game.calculateCardLayout()
-
-        -- Refill the board from the deck with fade-in animation
+        local layout = game.calculateCardLayout()        -- Refill the board from the deck without animation
         while #board < 12 and deck.getCount() > 0 do
             local cardRef = deck.takeCard()
             if cardRef then
-                -- Add the card to the board
+                -- Simply add the card to the board without animation
                 table.insert(board, cardRef)
-
-                -- Calculate position in the grid for animation
-                local newIndex = #board
-                local col = (newIndex - 1) % 4
-                local row = math.floor((newIndex - 1) / 4)                local x = layout.startX + col * (layout.cardWidth + layout.marginX)
-                local y = layout.startY + row * (layout.cardHeight + layout.marginY) -- Create fade-in animation
-                card.animateFadeIn(cardRef, x, y, layout.cardWidth, layout.cardHeight)
             end
         end
 
