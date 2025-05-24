@@ -1,0 +1,2 @@
+- refactor all the card animations into the card module
+- the card module should be responsible for its own appearance 

@@ -1,12 +1,11 @@
 -- Game logic and state management
 local deck = require('deck')
+local card = require('card')
 local game = {}
 
 -- Cards
 local board = {} -- cards currently in play
-local cardImages = {}
 local discardedCards = {} -- never returned to deck until a new game
-local animatingCards = {} -- animation state information each currently animating card
 local hintCards = {} -- Indices of cards in a valid set for hint
 
 -- Game state
@@ -15,7 +14,7 @@ local score = 0 -- Track player's score
 
 -- Initialize the game state
 function game.initialize()
-    loadCardImages()
+    card.loadImages()
     deck.create()
     deck.shuffle()
     game.dealInitialCards()
@@ -24,27 +23,6 @@ function game.initialize()
     hintCards = {}
     score = 0
     discardedCards = {}
-end
-
--- Load all card images
-function loadCardImages()
-    cardImages = {
-        oval = {
-            solid = love.graphics.newImage("images/oval-fill-54x96.png"),
-            stripes = love.graphics.newImage("images/oval-stripes-54x96.png"),
-            empty = love.graphics.newImage("images/oval-empty-54x96.png")
-        },
-        diamond = {
-            solid = love.graphics.newImage("images/diamond-fill-54x96.png"),
-            stripes = love.graphics.newImage("images/diamond-stripes-54x96.png"),
-            empty = love.graphics.newImage("images/diamond-empty-54x96.png")
-        },
-        squiggle = {
-            solid = love.graphics.newImage("images/squiggle-fill-54x96.png"),
-            stripes = love.graphics.newImage("images/squiggle-stripe-54x96.png"),
-            empty = love.graphics.newImage("images/squiggle-empty-54x96.png")
-        }
-    }
 end
 
 -- Deal the initial cards to the board
@@ -63,284 +41,14 @@ end
 -- Update function called from love.update
 function game.update(dt)
     -- Update animations
-    updateCardAnimations(dt)
-end
-
--- Update card animations
-function updateCardAnimations(dt)
-    local animationsCompleted = {}
-
-    -- Process each animating card
-    for i, anim in ipairs(animatingCards) do
-        -- Update the animation timer
-        anim.timer = anim.timer + dt
-        -- Calculate progress (0 to 1)
-        local progress = math.min(anim.timer / anim.duration, 1)
-        -- Update the card's animation properties based on progress
-        if anim.type == "burn" then
-            -- Calculate which phase we're in based on progress
-            local phaseLength = 1 / 4 -- Each phase is 1/4 of the total animation
-            anim.phase = math.min(4, math.floor(progress / phaseLength) + 1)
-            -- Calculate progress within the current phase (0 to 1)
-            anim.phaseProgress = (progress - (anim.phase - 1) * phaseLength) / phaseLength
-            -- Phase-specific updates will be handled in the drawing function
-        elseif anim.type == "fadeIn" then
-            -- Simple fade in - opacity increases with progress
-            anim.opacity = progress
-        end
-        -- Check if animation is complete
-        if progress >= 1 then
-            table.insert(animationsCompleted, i)
-            if anim.onComplete then
-                anim.onComplete()
-            end
-        end
-    end
-    -- Remove completed animations in reverse order to avoid index issues
-    table.sort(animationsCompleted, function(a, b)
-        return a > b
-    end)
-    for _, index in ipairs(animationsCompleted) do
-        table.remove(animatingCards, index)
-    end
-end
-
--- Function to animate a card burning
-function game.animateCardBurn(card, x, y, width, height, onComplete)
-    local anim = {
-        card = card,
-        x = x,
-        y = y,
-        width = width,
-        height = height,
-        type = "burn",
-        duration = 2.0, -- Animation takes 2 seconds
-        timer = 0,
-        phase = 1, -- Start with phase 1
-        phaseProgress = 0, -- Progress within the current phase
-        opacity = 1, -- Start fully visible
-        onComplete = onComplete
-    }
-    table.insert(animatingCards, anim)
-    return anim
-end
-
--- Function to animate a card fading in
-function game.animateCardFadeIn(card, x, y, width, height, onComplete)
-    local anim = {
-        card = card,
-        x = x,
-        y = y,
-        width = width,
-        height = height,
-        type = "fadeIn",
-        duration = 1.0, -- Animation takes 1 second
-        timer = 0,
-        opacity = 0, -- Start invisible
-        onComplete = onComplete
-    }
-    table.insert(animatingCards, anim)
-    return anim
+    card.updateAnimations(dt)
 end
 
 -- Draw function called from love.draw
 function game.draw()
     game.drawBoard()
-    game.drawAnimatingCards()
+    card.drawAnimatingCards()
     game.drawDeckInfo()
-end
-
--- Draw animating cards
-function game.drawAnimatingCards()
-    for _, anim in ipairs(animatingCards) do
-        if anim.type == "burn" then
-            game.drawBurningCard(anim)
-        elseif anim.type == "fadeIn" then
-            game.drawFadingInCard(anim)
-        end
-    end
-end
-
--- Draw a card with fade-in effect
-function game.drawFadingInCard(anim)
-    -- Draw card with opacity based on animation progress
-    love.graphics.setColor(1, 1, 1, anim.opacity)
-    love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
-    -- Draw border with opacity
-    love.graphics.setColor(0, 0, 0, anim.opacity)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
-    -- Set color for the card symbols
-    if anim.card.color == "red" then
-        love.graphics.setColor(0.85, 0.15, 0.15, anim.opacity) -- Red tint
-    elseif anim.card.color == "green" then
-        love.graphics.setColor(0.15, 0.65, 0.25, anim.opacity) -- Green tint
-    elseif anim.card.color == "blue" then
-        love.graphics.setColor(0.15, 0.35, 0.75, anim.opacity) -- Blue tint
-    end
-    -- Get the image for this shape and fill
-    local image = cardImages[anim.card.shape][anim.card.fill]
-    if not image then
-        return
-    end
-    -- Same drawing logic as in drawCard and drawBurningCard for consistency
-    local imgWidth = image:getWidth()
-    local imgHeight = image:getHeight()
-    local baseScale = 0.8
-    local maxShapesWidth = imgWidth * 3
-    local spacingWidth = imgWidth * 0.6
-    local totalWidthNeeded = maxShapesWidth + spacingWidth
-    local scaleForWidth = (anim.width * 0.85) / totalWidthNeeded
-    local scaleForHeight = (anim.height * 0.55) / imgHeight
-    local scale = math.min(scaleForWidth, scaleForHeight, baseScale)
-    local scaledWidth = imgWidth * scale
-    local scaledHeight = imgHeight * scale
-    -- Calculate positions for the symbols
-    local positions = {}
-    if anim.card.number == 1 then
-        positions = {{anim.x + anim.width / 2, anim.y + anim.height / 2}}
-    elseif anim.card.number == 2 then
-        local spacing = scaledWidth * 0.15
-        positions = {{anim.x + anim.width / 2 - spacing - scaledWidth / 2, anim.y + anim.height / 2},
-                     {anim.x + anim.width / 2 + spacing + scaledWidth / 2, anim.y + anim.height / 2}}
-    elseif anim.card.number == 3 then
-        local spacing = scaledWidth * 0.15
-        positions = {{anim.x + anim.width / 2 - spacing * 2 - scaledWidth, anim.y + anim.height / 2},
-                     {anim.x + anim.width / 2, anim.y + anim.height / 2},
-                     {anim.x + anim.width / 2 + spacing * 2 + scaledWidth, anim.y + anim.height / 2}}
-    end
-    -- Draw the symbols at each position with the calculated scale
-    for _, pos in ipairs(positions) do
-        love.graphics.draw(image, pos[1] - scaledWidth / 2, pos[2] - scaledHeight / 2, 0, scale, scale)
-    end
-end
-
--- Draw a card with burning effect
-function game.drawBurningCard(anim)
-    -- Different drawing logic depending on which phase we're in
-    local phase = anim.phase
-    local progress = anim.phaseProgress
-
-    if phase == 1 then
-        -- Phase 1: Background fades to medium red, shapes fade to black
-
-        -- Draw card background with increasing red tint
-        local redAmount = 0.6 * progress -- Medium red
-        love.graphics.setColor(1, 1 - redAmount, 1 - redAmount, 1)
-        love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-        -- Draw border with slight red tint
-        love.graphics.setColor(1, 0.3, 0.3, 1)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-        -- Set color for the shapes - fade toward black
-        local blackAmount = progress
-        if anim.card.color == "red" then
-            love.graphics.setColor(0.85 * (1 - blackAmount), 0.15 * (1 - blackAmount), 0.15 * (1 - blackAmount), 1)
-        elseif anim.card.color == "green" then
-            love.graphics.setColor(0.15 * (1 - blackAmount), 0.65 * (1 - blackAmount), 0.25 * (1 - blackAmount), 1)
-        elseif anim.card.color == "blue" then
-            love.graphics.setColor(0.15 * (1 - blackAmount), 0.35 * (1 - blackAmount), 0.75 * (1 - blackAmount), 1)
-        end
-
-    elseif phase == 2 then
-        -- Phase 2: Card fades to bright orange/red (shapes no longer visible)
-        local brightRed = 1
-        local brightGreen = 0.3 + (0.4 * (1 - progress)) -- Fades from orange-red to red
-        local brightBlue = 0.1 * (1 - progress) -- Almost no blue at the end
-
-        -- Draw card background with bright orange/red
-        love.graphics.setColor(brightRed, brightGreen, brightBlue, 1)
-        love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-        -- Draw border slightly brighter
-        love.graphics.setColor(1, 0.5 * (1 - progress), 0.2 * (1 - progress), 1)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-        -- Draw shapes with the same color (they become invisible against background)
-        love.graphics.setColor(brightRed, brightGreen, brightBlue, 1)
-
-    elseif phase == 3 then
-        -- Phase 3: Card fades to deep dark blackish red
-        local darkRed = 0.6 - (0.5 * progress) -- From medium red to very dark red
-        local darkGreen = 0.05 * (1 - progress)
-        local darkBlue = 0.05 * (1 - progress)
-
-        -- Draw card background with darkening red
-        love.graphics.setColor(darkRed, darkGreen, darkBlue, 1)
-        love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-        -- Draw border with matching dark red
-        love.graphics.setColor(darkRed + 0.2, darkGreen, darkBlue, 1)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-        -- Shapes use the same color as the background (invisible)
-        love.graphics.setColor(darkRed, darkGreen, darkBlue, 1)
-
-    elseif phase == 4 then
-        -- Phase 4: Card fades from opaque to transparent
-        local opacity = 1 - progress
-
-        -- Draw card with dark red and fading opacity
-        local darkRed = 0.1
-        local darkGreen = 0
-        local darkBlue = 0
-
-        -- Draw card background with fading opacity
-        love.graphics.setColor(darkRed, darkGreen, darkBlue, opacity)
-        love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-        -- Draw border with fading opacity
-        love.graphics.setColor(darkRed + 0.2, darkGreen, darkBlue, opacity)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-        -- No need to draw shapes at this point
-        return
-    end
-
-    -- Only draw shapes for phases 1-3 (phase 4 returns early)
-    -- Get the image for this shape and fill
-    local image = cardImages[anim.card.shape][anim.card.fill]
-    if not image then
-        return
-    end
-
-    -- Calculate image dimensions and scaling (similar to drawCard logic)
-    local imgWidth = image:getWidth()
-    local imgHeight = image:getHeight()
-    local baseScale = 0.8
-    local maxShapesWidth = imgWidth * 3
-    local spacingWidth = imgWidth * 0.6
-    local totalWidthNeeded = maxShapesWidth + spacingWidth
-    local scaleForWidth = (anim.width * 0.85) / totalWidthNeeded
-    local scaleForHeight = (anim.height * 0.55) / imgHeight
-    local scale = math.min(scaleForWidth, scaleForHeight, baseScale)
-    local scaledWidth = imgWidth * scale
-    local scaledHeight = imgHeight * scale
-
-    -- Calculate positions for the symbols based on card.number and scaled size
-    local positions = {}
-    if anim.card.number == 1 then
-        positions = {{anim.x + anim.width / 2, anim.y + anim.height / 2}}
-    elseif anim.card.number == 2 then
-        local spacing = scaledWidth * 0.15
-        positions = {{anim.x + anim.width / 2 - spacing - scaledWidth / 2, anim.y + anim.height / 2},
-                     {anim.x + anim.width / 2 + spacing + scaledWidth / 2, anim.y + anim.height / 2}}
-    elseif anim.card.number == 3 then
-        local spacing = scaledWidth * 0.15
-        positions = {{anim.x + anim.width / 2 - spacing * 2 - scaledWidth, anim.y + anim.height / 2},
-                     {anim.x + anim.width / 2, anim.y + anim.height / 2},
-                     {anim.x + anim.width / 2 + spacing * 2 + scaledWidth, anim.y + anim.height / 2}}
-    end
-
-    -- Draw the symbols at each position with the calculated scale
-    for _, pos in ipairs(positions) do
-        love.graphics.draw(image, pos[1] - scaledWidth / 2, pos[2] - scaledHeight / 2, 0, scale, scale)
-    end
 end
 
 -- Draw deck information
@@ -376,7 +84,7 @@ function game.drawBoard()
     local startX = windowWidth * 0.05 -- Adjusted starting position
     local startY = windowHeight * 0.15 -- Adjusted starting position
     -- Draw each card on the board
-    for i, card in ipairs(board) do
+    for i, cardData in ipairs(board) do
         -- Calculate position in the grid (4 columns, 3 rows)
         local col = (i - 1) % 4 -- 0, 1, 2, 3
         local row = math.floor((i - 1) / 4) -- 0, 1, 2
@@ -384,97 +92,14 @@ function game.drawBoard()
         local x = startX + col * (cardWidth + marginX)
         local y = startY + row * (cardHeight + marginY)
         -- Draw the card
-        game.drawCard(card, x, y, cardWidth, cardHeight, i)
+        game.drawCard(cardData, x, y, cardWidth, cardHeight, i)
     end
 end
 
--- Draw a single card
-function game.drawCard(card, x, y, width, height, index)
-    -- Draw card background
-    if card.selected then
-        love.graphics.setColor(0.9, 0.9, 0.7) -- Slight yellow tint for selected cards
-    else
-        love.graphics.setColor(1, 1, 1) -- White background for normal cards
-    end
-    love.graphics.rectangle("fill", x, y, width, height, 8, 8) -- Rounded corners
-    -- Draw border
-    if card.selected then
-        love.graphics.setColor(1, 1, 0) -- Yellow highlight for selected cards
-        love.graphics.setLineWidth(4)
-    elseif hintActive and isInHint(index) then
-        love.graphics.setColor(0, 0.8, 0.8) -- Cyan highlight for hint cards
-        love.graphics.setLineWidth(4)
-    else
-        love.graphics.setColor(0, 0, 0) -- Black border for normal cards
-        love.graphics.setLineWidth(2)
-    end
-    love.graphics.rectangle("line", x, y, width, height, 8, 8)
-    -- Set color based on card color for tinting the white images
-    if card.color == "red" then
-        love.graphics.setColor(0.85, 0.15, 0.15) -- Slightly deeper red
-    elseif card.color == "green" then
-        love.graphics.setColor(0.15, 0.65, 0.25) -- Softer, more natural green
-    elseif card.color == "blue" then
-        love.graphics.setColor(0.15, 0.35, 0.75) -- Brighter, royal blue
-    end
-
-    -- Get the image for this shape and fill
-    local image = cardImages[card.shape][card.fill]
-    if not image then
-        print("Warning: Missing image for " .. card.shape .. "-" .. card.fill)
-        return
-    end
-    -- Calculate image dimensions
-    local imgWidth = image:getWidth()
-    local imgHeight = image:getHeight()
-
-    -- Calculate a consistent scale for all shapes regardless of card number
-    -- First, determine the worst-case scenario (3 shapes on a card)
-    local baseScale = 0.8 -- Default scale factor
-
-    -- Calculate the maximum width needed for 3 shapes plus spacing
-    local maxShapesWidth = imgWidth * 3 -- Width of three shapes
-    local spacingWidth = imgWidth * 0.6 -- Total spacing between 3 shapes
-    local totalWidthNeeded = maxShapesWidth + spacingWidth
-
-    -- Calculate the scale that would make 3 shapes fit on any card
-    local scaleForWidth = (width * 0.85) / totalWidthNeeded -- 85% of card width
-
-    -- Ensure the height also fits (55% of card height)
-    local scaleForHeight = (height * 0.55) / imgHeight
-
-    -- Take the smaller scale to ensure both width and height fit
-    local scale = math.min(scaleForWidth, scaleForHeight, baseScale)
-
-    -- Calculate scaled dimensions
-    local scaledWidth = imgWidth * scale
-    local scaledHeight = imgHeight * scale
-    -- Calculate positions for the symbols based on card.number and scaled size
-    local positions = {}
-    if card.number == 1 then
-        -- Single symbol centered
-        positions = {{x + width / 2, y + height / 2}}
-    elseif card.number == 2 then
-        -- Two symbols side by side
-        local spacing = scaledWidth * 0.15 -- Spacing between symbols
-        positions = {{x + width / 2 - spacing - scaledWidth / 2, y + height / 2},
-                     {x + width / 2 + spacing + scaledWidth / 2, y + height / 2}}
-    elseif card.number == 3 then
-        -- Reduced spacing for three symbols to ensure they fit
-        local spacing = scaledWidth * 0.15 -- Reduced spacing between symbols
-        positions = {{x + width / 2 - spacing * 2 - scaledWidth, y + height / 2}, {x + width / 2, y + height / 2},
-                     {x + width / 2 + spacing * 2 + scaledWidth, y + height / 2}}
-    end
-
-    -- Draw the symbols at each position with the calculated scale
-    for _, pos in ipairs(positions) do
-        -- Center the image at the position
-        love.graphics.draw(image, pos[1] - scaledWidth / 2, -- Center horizontally
-        pos[2] - scaledHeight / 2, -- Center vertically
-        0, -- Rotation (none)
-        scale, scale -- Apply the calculated scale
-        )
-    end
+-- Draw a single card (wrapper for card module function)
+function game.drawCard(cardData, x, y, width, height, index)
+    local bIsInHint = hintActive and isInHint(index)
+    card.draw(cardData, x, y, width, height, cardData.selected, bIsInHint)
 end
 
 -- Helper function to check if a card index is part of the hint
@@ -559,11 +184,10 @@ function game.keypressed(key)
     if key == "c" then
         local numToClear = math.random(1, #board)
         game.clearRandomCards(numToClear)
-        -- Draw a card from the deck if there's space on the board
-    elseif key == "d" then
+        -- Draw a card from the deck if there's space on the board    elseif key == "d" then
         if #board < 12 then
-            local card = deck.takeCard()
-            if card then
+            local cardData = deck.takeCard()
+            if cardData then
                 -- Get window dimensions to calculate proportions for animations
                 local windowWidth, windowHeight = love.graphics.getDimensions()
                 local cardWidth = windowWidth * 0.2
@@ -574,7 +198,7 @@ function game.keypressed(key)
                 local startY = windowHeight * 0.15
 
                 -- Add the card to the board
-                table.insert(board, card)
+                table.insert(board, cardData)
 
                 -- Calculate position in the grid for animation
                 local newIndex = #board
@@ -583,8 +207,8 @@ function game.keypressed(key)
                 local x = startX + col * (cardWidth + marginX)
                 local y = startY + row * (cardHeight + marginY)
 
-                -- Create fade-in animation
-                game.animateCardFadeIn(card, x, y, cardWidth, cardHeight)
+                -- Create fade-in animation using card module
+                card.animateFadeIn(cardData, x, y, cardWidth, cardHeight)
 
                 print("Added new card to board, now have " .. #board .. " cards")
             else
@@ -744,10 +368,8 @@ function game.removeSelectedCards()
                         local col = (newIndex - 1) % 4
                         local row = math.floor((newIndex - 1) / 4)
                         local x = startX + col * (cardWidth + marginX)
-                        local y = startY + row * (cardHeight + marginY)
-
-                        -- Create fade-in animation
-                        game.animateCardFadeIn(newCard, x, y, cardWidth, cardHeight)
+                        local y = startY + row * (cardHeight + marginY)                        -- Create fade-in animation
+                        card.animateFadeIn(newCard, x, y, cardWidth, cardHeight)
                     end
                 end
             end
@@ -781,11 +403,9 @@ function game.checkNoSetOnBoard()
         -- Prepare cards for animation
         local animatingCardsIndices = validSet
         local animationsStarted = 0
-        local totalAnimations = #animatingCardsIndices
-
-        -- Start burning animation for each card in the set
+        local totalAnimations = #animatingCardsIndices            -- Start burning animation for each card in the set
         for _, index in ipairs(animatingCardsIndices) do
-            local card = board[index]
+            local cardData = board[index]
 
             -- Calculate position in the grid for animation
             local col = (index - 1) % 4
@@ -794,7 +414,7 @@ function game.checkNoSetOnBoard()
             local y = startY + row * (cardHeight + marginY)
 
             -- Create burn animation
-            game.animateCardBurn(card, x, y, cardWidth, cardHeight, function()
+            card.animateBurn(cardData, x, y, cardWidth, cardHeight, function()
                 animationsStarted = animationsStarted + 1
 
                 -- When all animations are complete, finish the discard process
@@ -893,10 +513,8 @@ function game.checkNoSetOnBoard()
                 local col = (newIndex - 1) % 4
                 local row = math.floor((newIndex - 1) / 4)
                 local x = startX + col * (cardWidth + marginX)
-                local y = startY + row * (cardHeight + marginY)
-
-                -- Create fade-in animation
-                game.animateCardFadeIn(card, x, y, cardWidth, cardHeight)
+                local y = startY + row * (cardHeight + marginY)                -- Create fade-in animation
+                card.animateFadeIn(card, x, y, cardWidth, cardHeight)
             end
         end
 
