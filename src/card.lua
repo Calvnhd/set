@@ -12,6 +12,42 @@ local animatingCards = {} -- animation state information each currently animatin
 local cardObjects = {} -- indexed by card id
 local nextCardId = 1 -- unique id counter for cards
 
+-- Centralized color definitions
+local COLORS = {
+    -- Symbol colors (standard)
+    symbol = {
+        red = {0.85, 0.15, 0.15},     -- Slightly deeper red
+        green = {0.15, 0.65, 0.25},   -- Softer, more natural green
+        blue = {0.15, 0.35, 0.75}     -- Brighter, royal blue
+    },
+    
+    -- Background complementary colors (pale versions)
+    background = {
+        red = {0.97, 1.0, 0.99},      -- Very pale cyan (complement of red)
+        green = {1.0, 0.97, 0.99},    -- Very pale magenta (complement of green)
+        blue = {1.0, 0.99, 0.93}      -- Very pale yellow (complement of blue)
+    },
+    
+    -- Selection and UI colors
+    ui = {
+        selected = {0.9, 0.9, 0.7},       -- Slight yellow tint for selected cards
+        selectedBorder = {1, 1, 0},       -- Yellow highlight for selected cards
+        hintBorder = {0, 0.8, 0.8},       -- Cyan highlight for hint cards
+        normalBorder = {0, 0, 0}          -- Black border for normal cards
+    }
+}
+
+-- Helper function to get a pale complementary color for card background
+local function getPaleComplementaryColor(color)
+    if COLORS.background[color] then
+        -- Use the centralized color definitions
+        return COLORS.background[color][1], COLORS.background[color][2], COLORS.background[color][3]
+    else
+        -- Default white
+        return 1.0, 1.0, 1.0
+    end
+end
+
 -- Load all card images
 function card.loadImages()
     cardImages = {
@@ -136,11 +172,18 @@ function card.drawBurningCard(anim)
     local progress = anim.phaseProgress
 
     if phase == 1 then
-        -- Phase 1: Background fades to medium red, shapes fade to black
-
-        -- Draw card background with increasing red tint
+        -- Phase 1: Background fades from complementary color to medium red, shapes fade to black
+        
+        -- Get the complementary color as a starting point
+        local baseR, baseG, baseB = getPaleComplementaryColor(anim.card.color)
+        
+        -- Transition from complementary color to red
         local redAmount = 0.6 * progress -- Medium red
-        love.graphics.setColor(1, 1 - redAmount, 1 - redAmount, 1)
+        local r = baseR * (1 - progress) + progress -- Transition to reddish
+        local g = baseG * (1 - progress) + (1 - redAmount) * progress -- Fade green component
+        local b = baseB * (1 - progress) + (1 - redAmount) * progress -- Fade blue component
+        
+        love.graphics.setColor(r, g, b, 1)
         love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
 
         -- Draw border with slight red tint
@@ -148,14 +191,16 @@ function card.drawBurningCard(anim)
         love.graphics.setLineWidth(2)
         love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
 
-        -- Set color for the shapes - fade toward black
+    -- Set color for the shapes - fade toward black
         local blackAmount = progress
-        if anim.card.color == "red" then
-            love.graphics.setColor(0.85 * (1 - blackAmount), 0.15 * (1 - blackAmount), 0.15 * (1 - blackAmount), 1)
-        elseif anim.card.color == "green" then
-            love.graphics.setColor(0.15 * (1 - blackAmount), 0.65 * (1 - blackAmount), 0.25 * (1 - blackAmount), 1)
-        elseif anim.card.color == "blue" then
-            love.graphics.setColor(0.15 * (1 - blackAmount), 0.35 * (1 - blackAmount), 0.75 * (1 - blackAmount), 1)
+        if COLORS.symbol[anim.card.color] then
+            local symbolColor = COLORS.symbol[anim.card.color]
+            love.graphics.setColor(
+                symbolColor[1] * (1 - blackAmount),
+                symbolColor[2] * (1 - blackAmount),
+                symbolColor[3] * (1 - blackAmount),
+                1
+            )
         end
 
     elseif phase == 2 then
@@ -245,8 +290,16 @@ function card.drawFlashingRedCard(anim)
         flashIntensity = (1 - progress) * 2 -- 1 to 0 in second half
     end
     
-    -- Draw card background with red tint based on flash intensity
-    love.graphics.setColor(1, 1 - flashIntensity * 0.8, 1 - flashIntensity * 0.8)
+    -- Get the complementary color as a base
+    local baseR, baseG, baseB = getPaleComplementaryColor(anim.card.color)
+    
+    -- Mix the complementary color with the red flash
+    local r = baseR + (1 - baseR) * flashIntensity
+    local g = baseG * (1 - flashIntensity * 0.8)
+    local b = baseB * (1 - flashIntensity * 0.8)
+    
+    -- Draw card background with mixed color
+    love.graphics.setColor(r, g, b)
     love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
     
     -- Draw border with red highlight based on flash intensity
@@ -254,13 +307,9 @@ function card.drawFlashingRedCard(anim)
     love.graphics.setLineWidth(4)
     love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
     
-    -- Set color for the card symbols
-    if anim.card.color == "red" then
-        love.graphics.setColor(0.85, 0.15, 0.15) -- Red tint
-    elseif anim.card.color == "green" then
-        love.graphics.setColor(0.15, 0.65, 0.25) -- Green tint
-    elseif anim.card.color == "blue" then
-        love.graphics.setColor(0.15, 0.35, 0.75) -- Blue tint
+    -- Set color for the card symbols using centralized color definitions
+    if COLORS.symbol[anim.card.color] then
+        love.graphics.setColor(unpack(COLORS.symbol[anim.card.color]))
     end
     
     -- Get the image for this shape and fill
@@ -268,8 +317,7 @@ function card.drawFlashingRedCard(anim)
     if not image then
         return
     end
-    
-    -- Draw the symbols with calculated positions
+      -- Draw the symbols with calculated positions
     card.drawSymbols(image, anim.card.number, anim.x, anim.y, anim.width, anim.height)
 end
 
@@ -277,34 +325,32 @@ end
 function card.draw(cardRef, x, y, width, height, bIsInHint)
     local cardData = card._getInternalData(cardRef)
     
-    -- Draw card background
+    -- Draw card background with pale complementary color
     if cardData.bIsSelected then
-        love.graphics.setColor(0.9, 0.9, 0.7) -- Slight yellow tint for selected cards
+        love.graphics.setColor(unpack(COLORS.ui.selected)) -- Selected card background
     else
-        love.graphics.setColor(1, 1, 1) -- White background for normal cards
+        -- Use a pale complementary color based on the card's symbol color
+        local r, g, b = getPaleComplementaryColor(cardData.color)
+        love.graphics.setColor(r, g, b) -- Pale complementary color
     end
     love.graphics.rectangle("fill", x, y, width, height, 8, 8) -- Rounded corners
     
     -- Draw border
     if cardData.bIsSelected then
-        love.graphics.setColor(1, 1, 0) -- Yellow highlight for selected cards
+        love.graphics.setColor(unpack(COLORS.ui.selectedBorder)) -- Selected card border
         love.graphics.setLineWidth(4)
     elseif bIsInHint then
-        love.graphics.setColor(0, 0.8, 0.8) -- Cyan highlight for hint cards
+        love.graphics.setColor(unpack(COLORS.ui.hintBorder)) -- Hint card border
         love.graphics.setLineWidth(4)
     else
-        love.graphics.setColor(0, 0, 0) -- Black border for normal cards
+        love.graphics.setColor(unpack(COLORS.ui.normalBorder)) -- Normal card border
         love.graphics.setLineWidth(2)
     end
     love.graphics.rectangle("line", x, y, width, height, 8, 8)
     
     -- Set color based on card color for tinting the white images
-    if cardData.color == "red" then
-        love.graphics.setColor(0.85, 0.15, 0.15) -- Slightly deeper red
-    elseif cardData.color == "green" then
-        love.graphics.setColor(0.15, 0.65, 0.25) -- Softer, more natural green
-    elseif cardData.color == "blue" then
-        love.graphics.setColor(0.15, 0.35, 0.75) -- Brighter, royal blue
+    if COLORS.symbol[cardData.color] then
+        love.graphics.setColor(unpack(COLORS.symbol[cardData.color])) -- Symbol color from centralized definition
     end
 
     -- Get the image for this shape and fill
