@@ -47,7 +47,7 @@ end
 -- Initialize the game state
 function game.initialize()
     game.reset()
-    love.graphics.setBackgroundColor(0.2, 0.3, 0.4) -- Dark blue
+    love.graphics.setBackgroundColor(0.34, 0.45, 0.47) 
     card.loadImages()
     deck.create()
     deck.shuffle()
@@ -160,6 +160,26 @@ end
 function game.drawBoard()
     -- Get the card layout dimensions
     local layout = game.calculateCardLayout()
+    
+    -- Draw a white rectangle board background behind the cards
+    love.graphics.setColor(1, 1, 1) -- Pure white
+    
+    -- Calculate the board rectangle dimensions
+    -- Add some padding around the entire board
+    local boardPadding = layout.cardWidth * 0.15 -- % of card width for padding
+    
+    local boardX = layout.startX - boardPadding
+    local boardY = layout.startY - boardPadding
+    local boardWidth = BOARD_COLUMNS * layout.cardWidth + 
+                      (BOARD_COLUMNS - 1) * layout.marginX + 
+                      2 * boardPadding
+    local boardHeight = BOARD_ROWS * layout.cardHeight + 
+                       (BOARD_ROWS - 1) * layout.marginY + 
+                       2 * boardPadding
+    
+    -- Draw the white rectangle background
+    love.graphics.rectangle("fill", boardX, boardY, boardWidth, boardHeight, 8, 8) -- Rounded corners
+    
     -- Draw each card on the board
     for i = 1, BOARD_SIZE do
         local cardData = board[i]

@@ -16,16 +16,16 @@ local nextCardId = 1 -- unique id counter for cards
 local COLORS = {
     -- Symbol colors (standard)
     symbol = {
-        red = {0.85, 0.15, 0.15},     -- Slightly deeper red
-        green = {0.15, 0.65, 0.25},   -- Softer, more natural green
-        blue = {0.15, 0.35, 0.75}     -- Brighter, royal blue
+        red = {0.64, 0.19, 0.19},     
+        green = {0.45, 0.65, 0.26},  
+        blue = {0.30, 0.56, 0.72}     
     },
     
-    -- Background complementary colors (pale versions)
+    -- Background complementary colors with opacity (R, G, B, Alpha)
     background = {
-        red = {0.97, 1.0, 0.99},      -- Very pale cyan (complement of red)
-        green = {1.0, 0.97, 0.99},    -- Very pale magenta (complement of green)
-        blue = {1.0, 0.99, 0.93}      -- Very pale yellow (complement of blue)
+        red = {0.77, 0.51, 0.64, 0.2},      -- Alpha of 0.6 (60% opacity)
+        green = {0.81, 0.34, 0.24, 0.2},     -- Alpha of 0.6 (60% opacity)
+        blue = {0.9, 0.83, 0.70, 0.2}       -- Alpha of 0.6 (60% opacity)
     },
     
     -- Selection and UI colors
@@ -40,11 +40,15 @@ local COLORS = {
 -- Helper function to get a pale complementary color for card background
 local function getPaleComplementaryColor(color)
     if COLORS.background[color] then
-        -- Use the centralized color definitions
-        return COLORS.background[color][1], COLORS.background[color][2], COLORS.background[color][3]
+        -- Use the centralized color definitions, including alpha if available
+        local r = COLORS.background[color][1]
+        local g = COLORS.background[color][2]
+        local b = COLORS.background[color][3]
+        local a = COLORS.background[color][4] or 1.0  -- Use 1.0 (fully opaque) if alpha is not specified
+        return r, g, b, a
     else
-        -- Default white
-        return 1.0, 1.0, 1.0
+        -- Default white (fully opaque)
+        return 1.0, 1.0, 1.0, 1.0
     end
 end
 
@@ -173,17 +177,18 @@ function card.drawBurningCard(anim)
 
     if phase == 1 then
         -- Phase 1: Background fades from complementary color to medium red, shapes fade to black
-        
-        -- Get the complementary color as a starting point
-        local baseR, baseG, baseB = getPaleComplementaryColor(anim.card.color)
+          -- Get the complementary color as a starting point
+        local baseR, baseG, baseB, baseA = getPaleComplementaryColor(anim.card.color)
         
         -- Transition from complementary color to red
         local redAmount = 0.6 * progress -- Medium red
         local r = baseR * (1 - progress) + progress -- Transition to reddish
         local g = baseG * (1 - progress) + (1 - redAmount) * progress -- Fade green component
         local b = baseB * (1 - progress) + (1 - redAmount) * progress -- Fade blue component
+        -- Transition from the base alpha to full opacity
+        local a = baseA * (1 - progress) + progress
         
-        love.graphics.setColor(r, g, b, 1)
+        love.graphics.setColor(r, g, b, a)
         love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
 
         -- Draw border with slight red tint
@@ -289,17 +294,18 @@ function card.drawFlashingRedCard(anim)
     else
         flashIntensity = (1 - progress) * 2 -- 1 to 0 in second half
     end
-    
-    -- Get the complementary color as a base
-    local baseR, baseG, baseB = getPaleComplementaryColor(anim.card.color)
+      -- Get the complementary color as a base
+    local baseR, baseG, baseB, baseA = getPaleComplementaryColor(anim.card.color)
     
     -- Mix the complementary color with the red flash
     local r = baseR + (1 - baseR) * flashIntensity
     local g = baseG * (1 - flashIntensity * 0.8)
     local b = baseB * (1 - flashIntensity * 0.8)
+    -- Keep the same alpha value
+    local a = baseA
     
     -- Draw card background with mixed color
-    love.graphics.setColor(r, g, b)
+    love.graphics.setColor(r, g, b, a)
     love.graphics.rectangle("fill", anim.x, anim.y, anim.width, anim.height, 8, 8)
     
     -- Draw border with red highlight based on flash intensity
@@ -330,8 +336,8 @@ function card.draw(cardRef, x, y, width, height, bIsInHint)
         love.graphics.setColor(unpack(COLORS.ui.selected)) -- Selected card background
     else
         -- Use a pale complementary color based on the card's symbol color
-        local r, g, b = getPaleComplementaryColor(cardData.color)
-        love.graphics.setColor(r, g, b) -- Pale complementary color
+        local r, g, b, a = getPaleComplementaryColor(cardData.color)
+        love.graphics.setColor(r, g, b, a) -- Pale complementary color with opacity
     end
     love.graphics.rectangle("fill", x, y, width, height, 8, 8) -- Rounded corners
     
