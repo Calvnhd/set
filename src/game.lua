@@ -12,19 +12,17 @@ local hintCards = {} -- Indices of cards in a valid set for hint
 local bHintIsActive = false -- Track if hint mode is active
 local score = 0 -- Track player's score
 
--- Score display variables
-local bScoreThrob = false
-local scoreThrobTimer = 0
-local scoreThrobDuration = 1.0 -- 1 second for complete throb animation
-local scoreThrobScale = 1.0 -- Current scale of the score text
+function game.reset()
+    board = {}
+    discardedCards = {}
+    hintCards = {}
+    bHintIsActive = false
+    score = 0
+end
 
 -- Initialize the game state
 function game.initialize()
-    board = {}
-    bHintIsActive = false
-    hintCards = {}
-    score = 0
-    discardedCards = {}
+    game.reset()
     love.graphics.setBackgroundColor(0.2, 0.3, 0.4) -- Dark blue
     card.loadImages()
     deck.create()
@@ -46,7 +44,6 @@ end
 -- Update function, called from love.update
 function game.update(dt)
     card.updateAnimations(dt)
-    game.updateScoreThrob(dt) -- Update score throb animation
 end
 
 -- Draw function called from love.draw
@@ -56,61 +53,22 @@ function game.draw()
     game.drawDeckInfo()
 end
 
--- Draw deck information
+-- Draw text info on cards remaining and current score
 function game.drawDeckInfo()
     love.graphics.setColor(1, 1, 1)
     local windowWidth = love.graphics.getWidth()
-    
-    -- Display score with throb effect - positioned in top right
+    -- Display score in top right
     local scoreText = "Score: " .. score
     local font = love.graphics.newFont(16)
-    local baseFont = love.graphics.getFont()
-    
-    -- Apply the throb scale to the score text
-    if bScoreThrob then
-        -- Save current transform
-        love.graphics.push()
-        
-        -- Set the font for measuring text width
-        love.graphics.setFont(font)
-        local textWidth = font:getWidth(scoreText)
-        local textHeight = font:getHeight()
-        
-        -- Calculate position and transform origin (center of text)
-        local textX = windowWidth - 250 + textWidth/2
-        local textY = 20 + textHeight/2
-        
-        -- Translate to the center of the text, scale, then translate back
-        love.graphics.translate(textX, textY)
-        love.graphics.scale(scoreThrobScale, scoreThrobScale)
-        love.graphics.translate(-textX, -textY)
-        
-        -- Draw the score text
-        love.graphics.print(scoreText, windowWidth - 250, 20)
-        
-        -- Restore previous transform
-        love.graphics.pop()
-    else
-        love.graphics.setFont(font)
-        love.graphics.print(scoreText, windowWidth - 250, 20)
-    end
-    
-    -- Set the font back for the remaining text
-    love.graphics.setFont(font)
-    
+    love.graphics.print(scoreText, windowWidth - 250, 20)
     -- Display cards remaining - positioned below the score, first letters aligned
     local cardsRemaining = deck.getCount()
     local infoText = "Cards remaining in deck: " .. cardsRemaining
     love.graphics.print(infoText, windowWidth - 250, 45)
-    
-    -- Restore original font
-    if baseFont then
-        love.graphics.setFont(baseFont)
-    end
 end
 
--- Draw the board of cards in a 4x3 pattern
-function game.drawBoard()
+-- Calculate card layout dimensions and positions
+function game.calculateCardLayout()
     -- Get window dimensions to calculate proportions
     local windowWidth, windowHeight = love.graphics.getDimensions()
     -- Calculate card dimensions based on screen size
@@ -121,16 +79,32 @@ function game.drawBoard()
     local marginY = cardHeight * 0.1
     local startX = windowWidth * 0.05
     local startY = windowHeight * 0.15
+    return {
+        cardWidth = cardWidth,
+        cardHeight = cardHeight,
+        marginX = marginX,
+        marginY = marginY,
+        startX = startX,
+        startY = startY,
+        windowWidth = windowWidth,
+        windowHeight = windowHeight
+    }
+end
+
+-- Draw the board of cards in a 4x3 pattern
+function game.drawBoard()
+    -- Get the card layout dimensions
+    local layout = game.calculateCardLayout()
     -- Draw each card on the board
     for i, cardData in ipairs(board) do
         -- Calculate position in the grid (4 columns, 3 rows)
         local col = (i - 1) % 4 -- 0, 1, 2, 3
         local row = math.floor((i - 1) / 4) -- 0, 1, 2
         -- Calculate pixel position
-        local x = startX + col * (cardWidth + marginX)
-        local y = startY + row * (cardHeight + marginY)
+        local x = layout.startX + col * (layout.cardWidth + layout.marginX)
+        local y = layout.startY + row * (layout.cardHeight + layout.marginY)
         -- Draw the card
-        game.drawCard(cardData, x, y, cardWidth, cardHeight, i)
+        game.drawCard(cardData, x, y, layout.cardWidth, layout.cardHeight, i)
     end
 end
 
@@ -189,17 +163,14 @@ end
 -- Handle keyboard input
 function game.keypressed(key)
     if key == "s" then
-        -- Special case for 's' key - check for a set with the selected cards
         local selectedCards = game.getSelectedCards()
         if #selectedCards == 3 then
             game.removeSelectedCards()
-            return -- Exit early to avoid clearing selection (it's handled in removeSelectedCards)
+            return
         end
     end
-    
     -- Clear card selection on any other key input
     game.clearCardSelection()
-    
     if key == "d" then
         -- Draw a card from the deck if there's space on the board    
         if #board >= 12 then
@@ -207,24 +178,18 @@ function game.keypressed(key)
         end
         local cardData = deck.takeCard()
         if cardData then
-            -- Get window dimensions to calculate proportions for animations
-            local windowWidth, windowHeight = love.graphics.getDimensions()
-            local cardWidth = windowWidth * 0.2
-            local cardHeight = windowHeight * 0.2
-            local marginX = cardWidth * 0.1
-            local marginY = cardHeight * 0.1
-            local startX = windowWidth * 0.05
-            local startY = windowHeight * 0.15
+            -- Get layout dimensions for animations
+            local layout = game.calculateCardLayout()
             -- Add the card to the board
             table.insert(board, cardData)
             -- Calculate position in the grid for animation
             local newIndex = #board
             local col = (newIndex - 1) % 4
             local row = math.floor((newIndex - 1) / 4)
-            local x = startX + col * (cardWidth + marginX)
-            local y = startY + row * (cardHeight + marginY)
+            local x = layout.startX + col * (layout.cardWidth + layout.marginX)
+            local y = layout.startY + row * (layout.cardHeight + layout.marginY)
             -- Create fade-in animation using card module
-            card.animateFadeIn(cardData, x, y, cardWidth, cardHeight)
+            card.animateFadeIn(cardData, x, y, layout.cardWidth, layout.cardHeight)
         end
         -- Reset hint state when board changes
         bHintIsActive = false
@@ -253,15 +218,12 @@ function game.mousepressed(x, y, button)
         if clickedCardIndex then
             local selectedCards = game.getSelectedCards()
             local clickedCardIsSelected = card.isSelected(board[clickedCardIndex])
-            
             -- If we already have 3 cards selected and trying to select a new one, do nothing
             if #selectedCards == 3 and not clickedCardIsSelected then
                 return
             end
-            
             -- Toggle the card's selection state
             card.toggleSelected(board[clickedCardIndex])
-            
             -- Disable hint mode when a card is selected
             bHintIsActive = false
             hintCards = {}
@@ -271,26 +233,18 @@ end
 
 -- Get the card at a given position (returns the index or nil)
 function game.getCardAtPosition(x, y)
-    -- Get window dimensions to calculate proportions
-    local windowWidth, windowHeight = love.graphics.getDimensions()
-    -- Calculate card dimensions based on screen size
-    local cardWidth = windowWidth * 0.23 -- Match the card width from drawBoard
-    local cardHeight = windowHeight * 0.29 -- Match the card height from drawBoard
-    -- Calculate margins and starting position
-    local marginX = windowWidth * 0.012 -- Match the margin from drawBoard
-    local marginY = windowHeight * 0.015 -- Match the margin from drawBoard
-    local startX = windowWidth * 0.03 -- Match the start position from drawBoard
-    local startY = windowHeight * 0.06 -- Match the start position from drawBoard
+    -- Get layout dimensions
+    local layout = game.calculateCardLayout()
     -- Check each card's position
     for i, _ in ipairs(board) do
         -- Calculate position in the grid (4 columns, 3 rows)
         local col = (i - 1) % 4 -- 0, 1, 2, 3
         local row = math.floor((i - 1) / 4) -- 0, 1, 2
         -- Calculate pixel position of this card
-        local cardX = startX + col * (cardWidth + marginX)
-        local cardY = startY + row * (cardHeight + marginY)
+        local cardX = layout.startX + col * (layout.cardWidth + layout.marginX)
+        local cardY = layout.startY + row * (layout.cardHeight + layout.marginY)
         -- Check if the point (x,y) is within this card's bounds
-        if x >= cardX and x <= cardX + cardWidth and y >= cardY and y <= cardY + cardHeight then
+        if x >= cardX and x <= cardX + layout.cardWidth and y >= cardY and y <= cardY + layout.cardHeight then
             return i -- Return the index of the clicked card
         end
     end
@@ -319,7 +273,7 @@ function game.removeSelectedCards()
     if #selectedCards == 3 then -- Get the actual card objects
         local cardRef1 = board[selectedCards[1]]
         local cardRef2 = board[selectedCards[2]]
-        local cardRef3 = board[selectedCards[3]]        -- Check if they form a valid Set
+        local cardRef3 = board[selectedCards[3]] -- Check if they form a valid Set
         if card.isValidSet(cardRef1, cardRef2, cardRef3) then
             -- Sort in reverse order so indices remain valid during removal
             table.sort(selectedCards, function(a, b)
@@ -328,33 +282,25 @@ function game.removeSelectedCards()
             -- Remove the cards immediately (no animation for regular card removal)
             for _, idx in ipairs(selectedCards) do
                 table.remove(board, idx)
-            end
-            -- Increment score when a valid set is found
+            end            -- Increment score when a valid set is found
             score = score + 1
-            game.startScoreThrob() -- Start the score throb animation
         else
-            -- Get window dimensions to calculate proportions for animations
-            local windowWidth, windowHeight = love.graphics.getDimensions()
-            local cardWidth = windowWidth * 0.2
-            local cardHeight = windowHeight * 0.2
-            local marginX = cardWidth * 0.1
-            local marginY = cardHeight * 0.1
-            local startX = windowWidth * 0.05
-            local startY = windowHeight * 0.15
+            -- Get layout dimensions for animations
+            local layout = game.calculateCardLayout()
 
             -- Animate incorrect set cards flashing red
             local animationsCompleted = 0
             for _, index in ipairs(selectedCards) do
                 local cardRef = board[index]
-                
+
                 -- Calculate position in the grid for animation
                 local col = (index - 1) % 4
                 local row = math.floor((index - 1) / 4)
-                local x = startX + col * (cardWidth + marginX)
-                local y = startY + row * (cardHeight + marginY)
-                
+                local x = layout.startX + col * (layout.cardWidth + layout.marginX)
+                local y = layout.startY + row * (layout.cardHeight + layout.marginY)
+
                 -- Create flash red animation
-                card.animateFlashRed(cardRef, x, y, cardWidth, cardHeight, function()
+                card.animateFlashRed(cardRef, x, y, layout.cardWidth, layout.cardHeight, function()
                     animationsCompleted = animationsCompleted + 1
                     if animationsCompleted == #selectedCards then
                         -- Deselect all cards after animation completes
@@ -364,10 +310,9 @@ function game.removeSelectedCards()
                     end
                 end)
             end
-              -- Decrement score for incorrect attempt
+            -- Decrement score for incorrect attempt
             if score > 0 then
                 score = score - 1
-                game.startScoreThrob() -- Start the score throb animation
             end
         end
     end
@@ -376,35 +321,22 @@ end
 -- Check if there's no set on the board
 function game.checkNoSetOnBoard()
     local validSet = game.findValidSet()
-
-    if validSet then
-        -- There is a set but player claimed there wasn't (incorrect)
-        print("Set found! Player was incorrect.")
-
-        -- Get window dimensions to calculate proportions for animations
-        local windowWidth, windowHeight = love.graphics.getDimensions()
-        local cardWidth = windowWidth * 0.2
-        local cardHeight = windowHeight * 0.2
-        local marginX = cardWidth * 0.1
-        local marginY = cardHeight * 0.1
-        local startX = windowWidth * 0.05
-        local startY = windowHeight * 0.15 -- Prepare cards for animation
+    if validSet then -- There is a set but player claimed there wasn't (incorrect)
+        -- Get layout dimensions for animations
+        local layout = game.calculateCardLayout()
+        -- Prepare cards for animation
         local animatingCardsIndices = validSet
         local animationsStarted = 0
         local totalAnimations = #animatingCardsIndices -- Start burning animation for each card in the set
         for _, index in ipairs(animatingCardsIndices) do
             local cardRef = board[index]
-
             -- Calculate position in the grid for animation
             local col = (index - 1) % 4
             local row = math.floor((index - 1) / 4)
-            local x = startX + col * (cardWidth + marginX)
-            local y = startY + row * (cardHeight + marginY)
-
-            -- Create burn animation
-            card.animateBurn(cardRef, x, y, cardWidth, cardHeight, function()
+            local x = layout.startX + col * (layout.cardWidth + layout.marginX)
+            local y = layout.startY + row * (layout.cardHeight + layout.marginY)            -- Create burn animation
+            card.animateBurn(cardRef, x, y, layout.cardWidth, layout.cardHeight, function()
                 animationsStarted = animationsStarted + 1
-
                 -- When all animations are complete, finish the discard process
                 if animationsStarted == totalAnimations then
                     -- Move cards to the discard pile
@@ -418,13 +350,9 @@ function game.checkNoSetOnBoard()
                     end)
                     for _, setIndex in ipairs(validSet) do
                         table.remove(board, setIndex)
-                    end                    -- Reduce score by 1, but ensure it doesn't go below 0
+                    end -- Reduce score by 1, but ensure it doesn't go below 0
                     if score > 0 then
                         score = score - 1
-                        game.startScoreThrob() -- Start the score throb animation
-                        print("Player loses a point. New score: " .. score)
-                    else
-                        print("Score already at 0, no points deducted.")
                     end
 
                     -- Disable hint mode when board changes
@@ -474,16 +402,10 @@ function game.checkNoSetOnBoard()
             table.insert(deck.getCards(), cardRef)
         end
         -- Shuffle the deck to ensure cards don't come back immediately
-        deck.shuffle()
+        deck.shuffle() -- Get layout dimensions for animations
+        local layout = game.calculateCardLayout()
 
-        -- Get window dimensions to calculate proportions for animations
-        local windowWidth, windowHeight = love.graphics.getDimensions()
-        local cardWidth = windowWidth * 0.2
-        local cardHeight = windowHeight * 0.2
-        local marginX = cardWidth * 0.1
-        local marginY = cardHeight * 0.1
-        local startX = windowWidth * 0.05
-        local startY = windowHeight * 0.15 -- Refill the board from the deck with fade-in animation
+        -- Refill the board from the deck with fade-in animation
         while #board < 12 and deck.getCount() > 0 do
             local cardRef = deck.takeCard()
             if cardRef then
@@ -493,63 +415,17 @@ function game.checkNoSetOnBoard()
                 -- Calculate position in the grid for animation
                 local newIndex = #board
                 local col = (newIndex - 1) % 4
-                local row = math.floor((newIndex - 1) / 4)
-                local x = startX + col * (cardWidth + marginX)
-                local y = startY + row * (cardHeight + marginY) -- Create fade-in animation
-                card.animateFadeIn(cardRef, x, y, cardWidth, cardHeight)
+                local row = math.floor((newIndex - 1) / 4)                local x = layout.startX + col * (layout.cardWidth + layout.marginX)
+                local y = layout.startY + row * (layout.cardHeight + layout.marginY) -- Create fade-in animation
+                card.animateFadeIn(cardRef, x, y, layout.cardWidth, layout.cardHeight)
             end
         end
 
         -- Increase score by 1
         score = score + 1
-        print("Player gains a point. New score: " .. score)
-        game.startScoreThrob() -- Start the score throb animation
-
         -- Disable hint mode when board changes
         bHintIsActive = false
         hintCards = {}
-    end
-end
-
--- Score display variables
-local bScoreThrob = false
-local scoreThrobTimer = 0
-local scoreThrobDuration = 1.0 -- 1 second for complete throb animation
-local scoreThrobScale = 1.0 -- Current scale of the score text
-
--- Function to start score throb animation
-function game.startScoreThrob()
-    bScoreThrob = true
-    scoreThrobTimer = 0
-    scoreThrobScale = 1.0
-end
-
--- Update score throb animation
-function game.updateScoreThrob(dt)
-    if bScoreThrob then
-        scoreThrobTimer = scoreThrobTimer + dt
-        local progress = scoreThrobTimer / scoreThrobDuration
-        
-        -- Calculate the throb scale: slightly larger, back to normal, slightly smaller, back to normal
-        if progress < 0.25 then
-            -- Phase 1: Get larger (1.0 to 1.2)
-            scoreThrobScale = 1.0 + (0.2 * (progress / 0.25))
-        elseif progress < 0.5 then
-            -- Phase 2: Return to normal (1.2 to 1.0)
-            scoreThrobScale = 1.2 - (0.2 * ((progress - 0.25) / 0.25))
-        elseif progress < 0.75 then
-            -- Phase 3: Get smaller (1.0 to 0.8)
-            scoreThrobScale = 1.0 - (0.2 * ((progress - 0.5) / 0.25))
-        else
-            -- Phase 4: Return to normal (0.8 to 1.0)
-            scoreThrobScale = 0.8 + (0.2 * ((progress - 0.75) / 0.25))
-        end
-        
-        -- End the animation when complete
-        if progress >= 1.0 then
-            bScoreThrob = false
-            scoreThrobScale = 1.0
-        end
     end
 end
 
