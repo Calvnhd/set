@@ -1,3 +1,5 @@
+- you never need to the run the actual game code "love.exe".  Assume I will test it.
+
 # Code conventions
 - boolean variables must be prefixed with 'b'. This applies to variables only, not functions.
 - boolean variables should be named such that they pose a question for which "true" or "false" are valid answers.  This applies to variables only, not functions.

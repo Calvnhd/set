@@ -16,6 +16,7 @@ local BOARD_SIZE = BOARD_COLUMNS * BOARD_ROWS
 -- Game state
 local bHintIsActive = false -- Track if hint mode is active
 local score = 0 -- Track player's score
+local bGameEnded = false -- Track if the game has ended
 
 -- Helper function to convert 1D index to 2D grid position
 function game.indexToGridPos(index)
@@ -40,6 +41,7 @@ function game.reset()
     hintCards = {}
     bHintIsActive = false
     score = 0
+    bGameEnded = false
 end
 
 -- Initialize the game state
@@ -66,6 +68,9 @@ end
 -- Update function, called from love.update
 function game.update(dt)
     card.updateAnimations(dt)
+    
+    -- Check if the game has ended
+    game.checkGameEnd()
 end
 
 -- Draw function called from love.draw
@@ -73,6 +78,44 @@ function game.draw()
     game.drawBoard()
     card.drawAnimatingCards()
     game.drawDeckInfo()
+    
+    -- Draw game end screen if the game has ended
+    -- This is drawn last so it appears on top of everything else
+    if bGameEnded then
+        game.drawGameEndScreen()
+    end
+end
+
+-- Draw the game end screen with final score
+function game.drawGameEndScreen()
+    local windowWidth, windowHeight = love.graphics.getDimensions()
+    local circleRadius = math.min(windowWidth, windowHeight) * 0.4 -- 80% diameter = 40% radius
+    local centerX, centerY = windowWidth / 2, windowHeight / 2
+    
+    -- Draw a big yellow circle
+    love.graphics.setColor(1, 1, 0) -- Yellow
+    love.graphics.circle("fill", centerX, centerY, circleRadius)
+    
+    -- Create a larger font for the score text
+    local fontSize = circleRadius / 5 -- Size proportional to circle
+    local font = love.graphics.newFont(fontSize)
+    love.graphics.setFont(font)
+    
+    -- Draw the final score text in black
+    love.graphics.setColor(0, 0, 0) -- Black
+    local scoreText = "Final Score: " .. score
+    
+    -- Calculate text dimensions for centering
+    local textWidth = font:getWidth(scoreText)
+    local textHeight = font:getHeight()
+    
+    -- Draw the text once, centered
+    love.graphics.print(scoreText, 
+        centerX - textWidth / 2, 
+        centerY - textHeight / 2)
+    
+    -- Reset font to default
+    love.graphics.setFont(love.graphics.newFont(16))
 end
 
 -- Draw text info on cards remaining and current score
@@ -199,6 +242,16 @@ end
 
 -- Handle keyboard input
 function game.keypressed(key)
+    -- If game has ended, only respond to spacebar to start a new game
+    if bGameEnded then
+        if key == "space" then
+            game.initialize() -- Start a brand new game
+            return
+        else
+            return -- Ignore all other keypresses in game end state
+        end
+    end
+    
     if key == "s" then
         local selectedCards = game.getSelectedCards()
         if #selectedCards == 3 then
@@ -258,6 +311,11 @@ end
 
 -- Handle mouse press events
 function game.mousepressed(x, y, button)
+    -- Ignore mouse events if the game has ended
+    if bGameEnded then
+        return
+    end
+    
     if button == 1 then -- Left mouse button
         -- Check if any card was clicked
         local clickedCardIndex = game.getCardAtPosition(x, y)
@@ -333,6 +391,9 @@ function game.removeSelectedCards()
                 board[idx] = nil
             end            -- Increment score when a valid set is found
             score = score + 1
+            
+            -- Check if the game has ended after removing cards
+            game.checkGameEnd()
         else
             -- Get layout dimensions for animations
             local layout = game.calculateCardLayout()
@@ -419,11 +480,12 @@ function game.checkNoSetOnBoard()
                     -- Reduce score by 1, but ensure it doesn't go below 0
                     if score > 0 then
                         score = score - 1
-                    end
-
-                    -- Disable hint mode when board changes
+                    end                    -- Disable hint mode when board changes
                     bHintIsActive = false
                     hintCards = {}
+                    
+                    -- Check if the game has ended after animation completes
+                    game.checkGameEnd()
                 end
             end)
         end
@@ -483,14 +545,28 @@ function game.checkNoSetOnBoard()
                     board[i] = cardRef
                 end
             end
-        end
-
-        -- Increase score by 1
+        end        -- Increase score by 1
         score = score + 1
         -- Disable hint mode when board changes
         bHintIsActive = false
         hintCards = {}
+        
+        -- Check if the game has ended after board changes
+        game.checkGameEnd()
     end
+end
+
+-- Check if the game has ended (deck is empty and no more valid sets)
+function game.checkGameEnd()
+    -- Only check if the game hasn't ended already
+    if not bGameEnded then
+        -- Game ends when deck is empty and there are no valid sets on the board
+        if deck.getCount() == 0 and not game.findValidSet() then
+            bGameEnded = true
+        end
+    end
+    
+    return bGameEnded
 end
 
 -- Export the game module
