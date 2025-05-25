@@ -1,4 +1,4 @@
-- you never need to the run the actual game code "love.exe".  Assume I will test it.
+- you never need to run the actual game code "love.exe".  Assume I will test it.
 
 # Code conventions
 - boolean variables must be prefixed with 'b'. This applies to variables only, not functions.
