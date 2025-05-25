@@ -67,7 +67,7 @@ function card.loadImages()
         },
         squiggle = {
             solid = love.graphics.newImage("images/squiggle-fill-54x96.png"),
-            stripes = love.graphics.newImage("images/squiggle-stripe-54x96.png"),
+            stripes = love.graphics.newImage("images/squiggle-stripes-54x96.png"),
             empty = love.graphics.newImage("images/squiggle-empty-54x96.png")
         }
     }
