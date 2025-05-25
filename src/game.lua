@@ -1,7 +1,24 @@
+-- filepath: c:\source\set\src\game.lua
 -- Game logic and state management
 local deck = require('deck')
 local card = require('card')
 local game = {}
+
+-- Game states
+local GAME_STATE = {
+    MENU = "menu",
+    PLAYING = "playing"
+}
+local currentState = GAME_STATE.MENU
+
+-- UI elements for main menu
+local playButton = {
+    x = 0,
+    y = 0,
+    width = 200,
+    height = 60,
+    text = "Play Game"
+}
 
 -- Cards
 local board = {} -- Using a 4x3 grid with nil for empty positions
@@ -36,7 +53,7 @@ function game.reset()
     for i = 1, BOARD_SIZE do
         board[i] = nil
     end
-    
+
     discardedCards = {}
     hintCards = {}
     bHintIsActive = false
@@ -47,12 +64,23 @@ end
 -- Initialize the game state
 function game.initialize()
     game.reset()
-    love.graphics.setBackgroundColor(0.34, 0.45, 0.47) 
+    love.graphics.setBackgroundColor(0.34, 0.45, 0.47)
     card.loadImages()
+
+    -- Center the play button
+    local windowWidth, windowHeight = love.graphics.getDimensions()
+    playButton.x = windowWidth / 2 - playButton.width / 2
+    playButton.y = windowHeight / 2 - playButton.height / 2
+
+    -- Start in menu state
+    currentState = GAME_STATE.MENU
+end
+
+-- Setup game play
+function game.setupGamePlay()
     deck.create()
     deck.shuffle()
     game.dealInitialCards()
-
 end
 
 -- Deal the initial cards to the board
@@ -67,18 +95,49 @@ end
 
 -- Update function, called from love.update
 function game.update(dt)
-    card.updateAnimations(dt)
-    
-    -- Check if the game has ended
-    game.checkGameEnd()
+    if currentState == GAME_STATE.PLAYING then
+        card.updateAnimations(dt)
+
+        -- Check if the game has ended
+        game.checkGameEnd()
+    end
 end
 
 -- Draw function called from love.draw
 function game.draw()
+    if currentState == GAME_STATE.MENU then
+        game.drawMenu()
+    elseif currentState == GAME_STATE.PLAYING then
+        game.drawPlaying()
+    end
+end
+
+function game.drawMenu()
+    -- Draw the menu background
+    love.graphics.clear(0.34, 0.45, 0.47)
+
+    -- Set the font for the menu title
+    love.graphics.setFont(love.graphics.newFont(32))
+
+    -- Draw the title
+    love.graphics.setColor(1, 1, 1) -- White
+    love.graphics.printf("Welcome to the Set Game!", 0, 100, love.graphics.getWidth(), "center")
+
+    -- Draw the play button
+    love.graphics.setColor(0.2, 0.6, 0.2) -- Green
+    love.graphics.rectangle("fill", playButton.x, playButton.y, playButton.width, playButton.height, 8, 8)
+
+    -- Set the font for the button text
+    love.graphics.setFont(love.graphics.newFont(24))
+    love.graphics.setColor(1, 1, 1) -- White
+    love.graphics.printf(playButton.text, playButton.x, playButton.y + 15, playButton.width, "center")
+end
+
+function game.drawPlaying()
     game.drawBoard()
     card.drawAnimatingCards()
     game.drawDeckInfo()
-    
+
     -- Draw game end screen if the game has ended
     -- This is drawn last so it appears on top of everything else
     if bGameEnded then
@@ -91,29 +150,27 @@ function game.drawGameEndScreen()
     local windowWidth, windowHeight = love.graphics.getDimensions()
     local circleRadius = math.min(windowWidth, windowHeight) * 0.4 -- 80% diameter = 40% radius
     local centerX, centerY = windowWidth / 2, windowHeight / 2
-    
+
     -- Draw a big yellow circle
     love.graphics.setColor(1, 1, 0) -- Yellow
     love.graphics.circle("fill", centerX, centerY, circleRadius)
-    
+
     -- Create a larger font for the score text
     local fontSize = circleRadius / 5 -- Size proportional to circle
     local font = love.graphics.newFont(fontSize)
     love.graphics.setFont(font)
-    
+
     -- Draw the final score text in black
     love.graphics.setColor(0, 0, 0) -- Black
     local scoreText = "Final Score: " .. score
-    
+
     -- Calculate text dimensions for centering
     local textWidth = font:getWidth(scoreText)
     local textHeight = font:getHeight()
-    
+
     -- Draw the text once, centered
-    love.graphics.print(scoreText, 
-        centerX - textWidth / 2, 
-        centerY - textHeight / 2)
-    
+    love.graphics.print(scoreText, centerX - textWidth / 2, centerY - textHeight / 2)
+
     -- Reset font to default
     love.graphics.setFont(love.graphics.newFont(16))
 end
@@ -122,9 +179,11 @@ end
 function game.drawDeckInfo()
     love.graphics.setColor(1, 1, 1)
     local windowWidth = love.graphics.getWidth()
+    -- Create and set a 16pt font for the deck info
+    local font = love.graphics.newFont(16)
+    love.graphics.setFont(font)
     -- Display score in top right
     local scoreText = "Score: " .. score
-    local font = love.graphics.newFont(16)
     love.graphics.print(scoreText, windowWidth - 250, 20)
     -- Display cards remaining - positioned below the score, first letters aligned
     local cardsRemaining = deck.getCount()
@@ -160,26 +219,22 @@ end
 function game.drawBoard()
     -- Get the card layout dimensions
     local layout = game.calculateCardLayout()
-    
+
     -- Draw a white rectangle board background behind the cards
     love.graphics.setColor(1, 1, 1) -- Pure white
-    
+
     -- Calculate the board rectangle dimensions
     -- Add some padding around the entire board
     local boardPadding = layout.cardWidth * 0.15 -- % of card width for padding
-    
+
     local boardX = layout.startX - boardPadding
     local boardY = layout.startY - boardPadding
-    local boardWidth = BOARD_COLUMNS * layout.cardWidth + 
-                      (BOARD_COLUMNS - 1) * layout.marginX + 
-                      2 * boardPadding
-    local boardHeight = BOARD_ROWS * layout.cardHeight + 
-                       (BOARD_ROWS - 1) * layout.marginY + 
-                       2 * boardPadding
-    
+    local boardWidth = BOARD_COLUMNS * layout.cardWidth + (BOARD_COLUMNS - 1) * layout.marginX + 2 * boardPadding
+    local boardHeight = BOARD_ROWS * layout.cardHeight + (BOARD_ROWS - 1) * layout.marginY + 2 * boardPadding
+
     -- Draw the white rectangle background
     love.graphics.rectangle("fill", boardX, boardY, boardWidth, boardHeight, 8, 8) -- Rounded corners
-    
+
     -- Draw each card on the board
     for i = 1, BOARD_SIZE do
         local cardData = board[i]
@@ -223,12 +278,12 @@ function game.findValidSet()
             table.insert(cardIndices, i)
         end
     end
-    
+
     -- Need at least 3 cards to form a set
     if cardCount < 3 then
         return nil
     end
-    
+
     -- Try all possible combinations of 3 cards
     for i = 1, #cardIndices - 2 do
         for j = i + 1, #cardIndices - 1 do
@@ -260,65 +315,6 @@ function game.toggleHint()
     end
 end
 
--- Handle keyboard input
-function game.keypressed(key)
-    -- If game has ended, only respond to spacebar to start a new game
-    if bGameEnded then
-        if key == "space" then
-            game.initialize() -- Start a brand new game
-            return
-        else
-            return -- Ignore all other keypresses in game end state
-        end
-    end
-    
-    if key == "s" then
-        local selectedCards = game.getSelectedCards()
-        if #selectedCards == 3 then
-            game.removeSelectedCards()
-            return
-        end
-    end
-    -- Clear card selection on any other key input
-    game.clearCardSelection()    if key == "d" then
-        -- Check if there's any empty position on the board
-        local bEmptyPositionExists = false
-        for i = 1, BOARD_SIZE do
-            if not board[i] then
-                bEmptyPositionExists = true
-                break
-            end
-        end
-        
-        -- Don't draw if there are no empty positions
-        if not bEmptyPositionExists then
-            return
-        end
-        
-        local cardData = deck.takeCard()
-        if cardData then
-            -- Find the first empty position to place the card
-            for i = 1, BOARD_SIZE do
-                if not board[i] then
-                    -- Simply add the card to the first empty position without animation
-                    board[i] = cardData
-                    break
-                end
-            end
-            -- No animation needed, the card will appear in the next draw cycle
-        end
-        -- Reset hint state when board changes
-        bHintIsActive = false
-        hintCards = {}
-    elseif key == "h" then
-        -- Toggle hint mode
-        game.toggleHint()
-    elseif key == "x" then
-        -- Check if there's no set on the board
-        game.checkNoSetOnBoard()
-    end
-end
-
 -- Helper function to clear all card selections
 function game.clearCardSelection()
     for i = 1, BOARD_SIZE do
@@ -329,8 +325,98 @@ function game.clearCardSelection()
     end
 end
 
+-- Handle keyboard input
+function game.keypressed(key)
+    -- Allow ESC key to quit the game from menu
+    if currentState == GAME_STATE.MENU then
+        if key == "escape" then
+            love.event.quit()
+            return
+        end
+    end
+
+    -- If game has ended, only respond to spacebar to start a new game
+    if currentState == GAME_STATE.PLAYING and bGameEnded then
+        if key == "space" then
+            game.initialize() -- Start a brand new game
+            return
+        else
+            return -- Ignore all other keypresses in game end state
+        end
+    end
+
+    -- Game playing controls
+    if currentState == GAME_STATE.PLAYING then
+        if key == "s" then
+            local selectedCards = game.getSelectedCards()
+            if #selectedCards == 3 then
+                game.removeSelectedCards()
+                return
+            end
+        end
+        -- Clear card selection on any other key input
+        game.clearCardSelection()
+        
+        if key == "d" then
+            -- Check if there's any empty position on the board
+            local bEmptyPositionExists = false
+            for i = 1, BOARD_SIZE do
+                if not board[i] then
+                    bEmptyPositionExists = true
+                    break
+                end
+            end
+
+            -- Don't draw if there are no empty positions
+            if not bEmptyPositionExists then
+                return
+            end
+
+            local cardData = deck.takeCard()
+            if cardData then
+                -- Find the first empty position to place the card
+                for i = 1, BOARD_SIZE do
+                    if not board[i] then
+                        -- Simply add the card to the first empty position without animation
+                        board[i] = cardData
+                        break
+                    end
+                end
+                -- No animation needed, the card will appear in the next draw cycle
+            end
+            -- Reset hint state when board changes
+            bHintIsActive = false
+            hintCards = {}
+        elseif key == "h" then
+            -- Toggle hint mode
+            game.toggleHint()
+        elseif key == "x" then
+            -- Check if there's no set on the board
+            game.checkNoSetOnBoard()
+        elseif key == "escape" then
+            -- Return to main menu
+            currentState = GAME_STATE.MENU
+        end
+    end
+end
+
 -- Handle mouse press events
 function game.mousepressed(x, y, button)
+    -- If in menu state, check for button clicks
+    if currentState == GAME_STATE.MENU then
+        if button == 1 then -- Left mouse button
+            -- Check if play button was clicked
+            if x >= playButton.x and x <= playButton.x + playButton.width and
+               y >= playButton.y and y <= playButton.y + playButton.height then
+                -- Switch to play state
+                currentState = GAME_STATE.PLAYING
+                game.setupGamePlay()
+                return
+            end
+        end
+        return
+    end
+
     -- Ignore mouse events if the game has ended
     if bGameEnded then
         return
@@ -409,7 +495,8 @@ function game.removeSelectedCards()
             -- Remove the cards immediately (no animation for regular card removal)
             for _, idx in ipairs(selectedCards) do
                 board[idx] = nil
-            end            -- Increment score when a valid set is found
+            end            
+            -- Increment score when a valid set is found
             score = score + 1
             
             -- Check if the game has ended after removing cards
@@ -500,7 +587,8 @@ function game.checkNoSetOnBoard()
                     -- Reduce score by 1, but ensure it doesn't go below 0
                     if score > 0 then
                         score = score - 1
-                    end                    -- Disable hint mode when board changes
+                    end                    
+                    -- Disable hint mode when board changes
                     bHintIsActive = false
                     hintCards = {}
                     
@@ -511,7 +599,8 @@ function game.checkNoSetOnBoard()
         end
     else
         -- There is no set and player was correct
-        print("No set found! Player was correct.")        -- Select half of the cards to be removed
+        print("No set found! Player was correct.")        
+        -- Select half of the cards to be removed
         local cardsToRemove = {}
         local removedCards = {}
         
@@ -565,7 +654,8 @@ function game.checkNoSetOnBoard()
                     board[i] = cardRef
                 end
             end
-        end        -- Increase score by 1
+        end        
+        -- Increase score by 1
         score = score + 1
         -- Disable hint mode when board changes
         bHintIsActive = false

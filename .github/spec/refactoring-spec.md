@@ -79,6 +79,92 @@ I recommend refactoring the codebase using a combination of architectural patter
 
 ## Additional comments
 
+### State Management Strategy
+
+A robust approach to state management is crucial for this refactoring. I recommend implementing:
+
+1. **Game State Container**: A centralized state container in the `models/gameModel.lua` that will store:
+   - Current board state
+   - Selected cards
+   - Score
+   - Deck state
+   - Animation states
+
+2. **State Access Patterns**:
+   - Controllers should modify state through well-defined methods
+   - Views should only read state, never modify it
+   - State changes should trigger events for UI updates
+
+3. **Persistent vs. Transient State**:
+   - Clearly separate persistent game state (score, cards) from transient UI state (animations, hover effects)
+   - Use local state in view components for UI-specific state
+
+This approach will enable better testing, debugging, and extension of game features while maintaining clear data flow.
+
+### Data Flow Architecture
+
+Understanding how data flows through the application is critical for maintaining the separation of concerns:
+
+#### Core Data Flow Pattern:
+
+```
+User Input → Controllers → Models (State Update) → Events → Views (Re-render)
+```
+
+#### Key Interaction Points:
+
+1. **User Input to Game State**:
+   - Input controller receives user actions (clicks, key presses)
+   - Controller validates input via rules service
+   - Controller updates model state if input is valid
+   - State changes trigger events
+
+2. **Game Logic to UI Updates**:
+   - Model changes emit events
+   - View components subscribe to relevant events
+   - Views re-render when state changes
+   - No direct model-to-view communication
+
+3. **Scene Transitions**:
+   - Controllers determine when scene changes should occur
+   - Scene manager handles the actual transition
+   - Each scene initializes with required state data
+
+4. **Animation Flow**:
+   - Game events trigger animation requests
+   - Animation service manages animation state
+   - View layer renders based on combined game state and animation state
+
+This unidirectional data flow pattern makes the system more predictable and easier to debug.
+
+### Testing Strategy
+
+Testing is essential for maintaining the stability of the codebase during and after refactoring:
+
+1. **Unit Testing**:
+   - Each service and model component should have unit tests
+   - The `rulesService` is particularly important to test thoroughly
+   - Mock dependencies to isolate components during testing
+
+2. **Integration Testing**:
+   - Test interactions between components
+   - Ensure events properly propagate through the system
+   - Verify state changes correctly affect the UI
+
+3. **Test Framework Recommendation**:
+   - Use Busted (Lua testing framework) for unit tests
+   - Consider implementing a simple test harness for integration tests
+
+4. **Test Coverage Goals**:
+   - 80%+ coverage for model and service layers
+   - Focus testing on game logic rather than rendering code
+
+5. **Regression Testing**:
+   - Create a test suite that verifies core game functionality remains intact
+   - Include tests for edge cases identified in the current implementation
+
+Tests should be implemented alongside the refactoring process, not afterward, to catch issues early.
+
 ### Proposed Directory Structure
 
 ```
@@ -114,23 +200,93 @@ src/
 
 I recommend implementing the refactoring in stages:
 
-1. **Stage 1: Extract the Scene Management**
+1. **Stage 1: Extract the Scene Management (Week 1)**
    - Create a scene manager and separate scenes for menu, gameplay, and end-game
-   - This provides an immediate architectural improvement with minimal risk
+   - Move the existing UI rendering code into appropriate scene modules
+   - Update main.lua to use the scene manager
+   - **Migration Focus**: Minimal changes to game logic, primarily restructuring UI flow
 
-2. **Stage 2: Separate Model and View**
+2. **Stage 2: Separate Model and View (Week 2)**
    - Extract data structures from rendering code
    - Create dedicated view modules for each UI component
+   - Implement basic state container for game data
+   - **Migration Focus**: Carefully extract state variables, ensure rendering still works properly
 
-3. **Stage 3: Implement Controllers and Services**
+3. **Stage 3: Implement Controllers and Services (Week 3)**
    - Create controllers to handle game logic
    - Extract rules and animations into services
+   - Connect controllers to views via basic event system
+   - **Migration Focus**: Move complex logic into appropriate services, create clean APIs
 
-4. **Stage 4: Add Event System**
-   - Implement a simple publisher-subscriber pattern
+4. **Stage 4: Enhance Event System and Refine (Week 4)**
+   - Implement a full publisher-subscriber pattern
    - Gradually convert direct function calls to event dispatches
+   - Polish architecture and fix any integration issues
+   - **Migration Focus**: Complete separation of concerns, ensure all components communicate properly
 
-This phased approach allows for incremental improvement while maintaining a functioning game at each stage.
+5. **Stage 5: Testing and Optimization (Week 5)**
+   - Implement testing framework
+   - Create tests for critical components
+   - Optimize performance of new architecture
+   - **Migration Focus**: Ensure stability and performance meet or exceed original implementation
+
+Each stage should end with a fully functioning game. This allows for incremental verification and reduces risk during the refactoring process.
+
+### Performance Considerations
+
+While refactoring for maintainability, we must ensure performance remains optimal:
+
+1. **Rendering Optimization**:
+   - Implement dirty checking to only re-render views when state changes
+   - Use Love2D's SpriteBatch for more efficient card rendering
+   - Consider object pooling for animations to reduce garbage collection
+
+2. **Event System Efficiency**:
+   - Use targeted events rather than broad broadcasts
+   - Implement event debouncing for high-frequency events
+   - Allow subscribers to specify priority for critical event handlers
+
+3. **State Update Batching**:
+   - Batch related state updates to minimize event triggers
+   - Use a predictable update cycle to prevent rendering/logic conflicts
+   - Consider implementing a transaction-like pattern for complex state changes
+
+4. **Memory Management**:
+   - Implement proper cleanup for scenes when they're exited
+   - Use weak references for event listeners to prevent memory leaks
+   - Profile memory usage during development to catch issues early
+
+5. **Performance Testing**:
+   - Create benchmarks for critical operations (card rendering, set validation)
+   - Compare performance metrics before and after refactoring
+   - Test on lower-end hardware to ensure broad compatibility
+
+By following these guidelines, the refactored code can achieve better architecture while maintaining or improving runtime performance.
+
+### Animation System Architecture
+
+The current animation system in `card.lua` is complex and tightly coupled with rendering. I recommend:
+
+1. **Animation Service**: Create a dedicated animation service that:
+   - Manages animation state separate from card data
+   - Provides a standardized interface for creating and updating animations
+   - Supports different animation types (burn, flash, move, etc.)
+
+2. **Animation Components**:
+   - Create specific components for each animation type that define:
+     - Animation timeline
+     - Visual properties at each stage
+     - Completion callbacks
+
+3. **Rendering Integration**:
+   - Animation state should be applied during the view rendering phase
+   - The view layer shouldn't know about animation logic, only how to render a card with given visual properties
+
+4. **Event-Based Triggers**:
+   - Animations should be triggered via the event system
+   - Completion of animations should emit events that other systems can subscribe to
+
+This approach will make the animation system more maintainable and allow for easier addition of new animation types in the future.
 
 ## Code snippets
 
