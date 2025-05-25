@@ -2,9 +2,12 @@
 
 local EventManager = require('core.eventManager')
 local GameModel = require('models.gameModel')
+local GameModeModel = require('models.gameModeModel')
 local DeckModel = require('models.deckModel')
 local CardModel = require('models.cardModel')
 local RulesService = require('services.rulesService')
+local RoundManager = require('services.roundManager')
+local ProgressManager = require('services.progressManager')
 local AnimationService = require('services.animationService')
 local BoardView = require('views.boardView')
 
@@ -16,14 +19,86 @@ function GameController.initialize()
     EventManager.subscribe('input:keypressed', GameController.handleKeypress)
     EventManager.subscribe('input:mousepressed', GameController.handleMousePress)
     EventManager.subscribe('animation:completed', GameController.handleAnimationCompleted)
+    EventManager.subscribe('roundManager:roundStarted', GameController.handleRoundStarted)
+    EventManager.subscribe('roundManager:allRoundsComplete', GameController.handleAllRoundsComplete)
+    
+    -- Initialize supporting services
+    GameModeModel.initialize()
+    RoundManager.initialize()
+    ProgressManager.initialize()
 end
 
--- Setup a new game
-function GameController.setupNewGame()
+-- Setup a new game with specified mode
+function GameController.setupNewGame(gameMode)
+    gameMode = gameMode or GameModeModel.getCurrentMode()
+    
+    -- Set the game mode
+    local GAME_MODES = GameModeModel.getGameModes()
+    if gameMode == GAME_MODES.CLASSIC or gameMode == 'classic' then
+        GameModeModel.setMode(GAME_MODES.CLASSIC)
+        GameController.setupClassicGame()
+    elseif gameMode == GAME_MODES.ROGUE or gameMode == 'rogue' then
+        GameModeModel.setMode(GAME_MODES.ROGUE)
+        GameController.setupRogueGame()
+    else
+        error("Unknown game mode: " .. tostring(gameMode))
+    end
+end
+
+-- Setup classic mode game
+function GameController.setupClassicGame()
     GameModel.reset()
     DeckModel.create()
     DeckModel.shuffle()
     GameController.dealInitialCards()
+end
+
+-- Setup rogue mode game
+function GameController.setupRogueGame()
+    GameModel.reset()
+    
+    -- Start the first round
+    local config = RoundManager.startRound(1)
+    GameController.applyRoundConfiguration(config)
+    
+    -- Create deck based on round configuration
+    DeckModel.createFromConfig(config)
+    DeckModel.shuffle()
+    GameController.dealInitialCards()
+end
+
+-- Apply round configuration to game state
+function GameController.applyRoundConfiguration(config)
+    if not config then return end
+    
+    -- Set board size
+    if config.boardSize then
+        GameModel.configureBoardSize(config.boardSize.columns, config.boardSize.rows)
+    end
+    
+    -- Set required set size
+    if config.setSize then
+        GameModel.setCurrentSetSize(config.setSize)
+    end
+end
+
+-- Handle round started event
+function GameController.handleRoundStarted(config, roundIndex)
+    GameController.applyRoundConfiguration(config)
+    
+    -- Create new deck for the round
+    DeckModel.createFromConfig(config)
+    DeckModel.shuffle()
+    
+    -- Clear board and deal new cards
+    GameModel.reset()
+    GameController.applyRoundConfiguration(config)  -- Reapply after reset
+    GameController.dealInitialCards()
+end
+
+-- Handle all rounds complete
+function GameController.handleAllRoundsComplete()
+    GameModel.setGameEnded(true)
 end
 
 -- Deal initial cards to the board
@@ -85,9 +160,11 @@ function GameController.handleMousePress(x, y, button)
             local cardRef = board[clickedCardIndex]
             local selectedCards = GameModel.getSelectedCards()
             local bClickedCardIsSelected = CardModel.isSelected(cardRef)
+              -- Get current set size for this game mode
+            local currentSetSize = GameModel.getCurrentSetSize()
             
-            -- If we already have 3 cards selected and trying to select a new one, do nothing
-            if #selectedCards == 3 and not bClickedCardIsSelected then
+            -- If we already have the required number of cards selected and trying to select a new one, do nothing
+            if #selectedCards == currentSetSize and not bClickedCardIsSelected then
                 return
             end
             
@@ -105,19 +182,28 @@ end
 function GameController.processSelectedCards()
     local selectedCards = GameModel.getSelectedCards()
     local board = GameModel.getBoard()
+    local currentSetSize = GameModel.getCurrentSetSize()
     
-    if #selectedCards == 3 then
-        local cardRef1 = board[selectedCards[1]]
-        local cardRef2 = board[selectedCards[2]]
-        local cardRef3 = board[selectedCards[3]]
+    if #selectedCards == currentSetSize then
+        local cardRefs = {}
+        for i, idx in ipairs(selectedCards) do
+            cardRefs[i] = board[idx]
+        end
         
-        local bIsValid, message = RulesService.validateSelectedCards(selectedCards, board)
+        local bIsValid, message = RulesService.validateSelectedCardsOfSize(selectedCards, board, currentSetSize)
         
         if bIsValid then
             -- Valid set - remove cards and increment score
             GameController.removeValidSet(selectedCards)
             GameModel.incrementScore()
-            GameController.checkGameEnd()
+            GameModel.incrementSetsFound()
+            
+            -- Check for round completion in rogue mode
+            if GameModeModel.bIsRogueMode() then
+                GameController.checkRoundCompletion()
+            else
+                GameController.checkGameEnd()
+            end
         else
             -- Invalid set - animate flash red and decrement score
             GameController.animateInvalidSet(selectedCards)
@@ -188,7 +274,8 @@ function GameController.toggleHint()
     end
     
     local board = GameModel.getBoard()
-    local validSet = RulesService.findValidSet(board)
+    local currentSetSize = GameModel.getCurrentSetSize()
+    local validSet = RulesService.findValidSetOfSize(board, currentSetSize)
     if validSet then
         GameModel.setHint(validSet)
     end
@@ -197,7 +284,8 @@ end
 -- Check if there's no set on the board
 function GameController.checkNoSetOnBoard()
     local board = GameModel.getBoard()
-    local validSet = RulesService.findValidSet(board)
+    local currentSetSize = GameModel.getCurrentSetSize()
+    local validSet = RulesService.findValidSetOfSize(board, currentSetSize)
     
     if validSet then
         -- There is a set but player claimed there wasn't (incorrect)
@@ -316,11 +404,38 @@ function GameController.clearCardSelection()
     EventManager.emit('cards:allDeselected')
 end
 
+-- Check if the current round is complete (rogue mode)
+function GameController.checkRoundCompletion()
+    local currentScore = GameModel.getScore()
+    local setsFound = GameModel.getSetsFound()
+    
+    if RoundManager.bIsRoundComplete(currentScore, setsFound) then
+        -- Mark round as completed and save progress
+        local currentRound = GameModeModel.getCurrentRoundIndex()
+        ProgressManager.markRoundCompleted(currentRound)
+        ProgressManager.saveProgress()
+        
+        if RoundManager.bHasMoreRounds() then
+            -- Advance to next round
+            local nextConfig = RoundManager.advanceToNextRound()
+            -- The handleRoundStarted event will be triggered automatically
+        else
+            -- All rounds completed
+            GameModel.setGameEnded(true)
+            ProgressManager.saveProgress()
+        end
+    else
+        -- Round not complete, check for normal game end conditions
+        GameController.checkGameEnd()
+    end
+end
+
 -- Check if the game has ended
 function GameController.checkGameEnd()
     local board = GameModel.getBoard()
     local bDeckEmpty = DeckModel.isEmpty()
-    local bNoValidSet = not RulesService.hasValidSet(board)
+    local currentSetSize = GameModel.getCurrentSetSize()
+    local bNoValidSet = not RulesService.hasValidSetOfSize(board, currentSetSize)
     
     if bDeckEmpty and bNoValidSet then
         GameModel.setGameEnded(true)

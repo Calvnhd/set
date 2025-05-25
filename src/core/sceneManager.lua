@@ -11,7 +11,7 @@ function SceneManager.registerScene(name, scene)
 end
 
 -- Change to a new scene
-function SceneManager.changeScene(sceneName)
+function SceneManager.changeScene(sceneName, ...)
     local newScene = scenes[sceneName]
     if not newScene then
         error("Scene '" .. sceneName .. "' not found")
@@ -25,9 +25,9 @@ function SceneManager.changeScene(sceneName)
     -- Set new scene
     currentScene = newScene
     
-    -- Enter new scene
+    -- Enter new scene with parameters
     if currentScene.enter then
-        currentScene.enter()
+        currentScene.enter(...)
     end
 end
 

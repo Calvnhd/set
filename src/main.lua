@@ -14,10 +14,9 @@ function love.load()
     -- Register scenes
     SceneManager.registerScene('menu', MenuScene)
     SceneManager.registerScene('game', GameScene)
-    
-    -- Subscribe to scene change events
-    EventManager.subscribe('scene:changeToGame', function()
-        SceneManager.changeScene('game')
+      -- Subscribe to scene change events
+    EventManager.subscribe('scene:changeToGame', function(gameMode)
+        SceneManager.changeScene('game', gameMode)
     end)
     
     EventManager.subscribe('scene:changeToMenu', function()

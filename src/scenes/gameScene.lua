@@ -10,15 +10,15 @@ local EventManager = require('core.eventManager')
 local GameScene = {}
 
 -- Enter the game scene
-function GameScene.enter()
+function GameScene.enter(gameMode)
     -- Load card images
     CardView.loadImages()
     
     -- Initialize game controller
     GameController.initialize()
     
-    -- Setup new game
-    GameController.setupNewGame()
+    -- Setup new game with specified mode
+    GameController.setupNewGame(gameMode)
     
     -- Subscribe to scene transition events
     EventManager.subscribe('game:requestMenuTransition', GameScene.handleMenuTransition)

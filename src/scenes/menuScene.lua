@@ -40,8 +40,10 @@ end
 -- Handle mouse press events
 function MenuScene.mousepressed(x, y, button)
     if button == 1 then -- Left mouse button
-        if MenuView.isPlayButtonClicked(x, y) then
-            EventManager.emit('scene:changeToGame')
+        if MenuView.isClassicButtonClicked(x, y) then
+            EventManager.emit('scene:changeToGame', 'classic')
+        elseif MenuView.isRogueButtonClicked(x, y) then
+            EventManager.emit('scene:changeToGame', 'rogue')
         end
     end
 end

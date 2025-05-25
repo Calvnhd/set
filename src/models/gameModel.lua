@@ -4,7 +4,7 @@ local EventManager = require('core.eventManager')
 
 local GameModel = {}
 
--- Game constants
+-- Game constants (can be overridden for rogue mode)
 local BOARD_COLUMNS = 4
 local BOARD_ROWS = 3
 local BOARD_SIZE = BOARD_COLUMNS * BOARD_ROWS
@@ -16,12 +16,15 @@ local gameState = {
     hintCards = {},  -- Indices of cards in a valid set for hint
     score = 0,
     bHintIsActive = false,
-    bGameEnded = false
+    bGameEnded = false,
+    -- Round-based state
+    setsFound = 0,  -- Number of valid sets found in current round
+    currentSetSize = 3  -- Current required set size
 }
 
 -- Initialize/reset game state
 function GameModel.reset()
-    -- Initialize board with all nil values
+    -- Initialize board with all nil values (size may change in rogue mode)
     gameState.board = {}
     for i = 1, BOARD_SIZE do
         gameState.board[i] = nil
@@ -32,8 +35,37 @@ function GameModel.reset()
     gameState.score = 0
     gameState.bHintIsActive = false
     gameState.bGameEnded = false
+    gameState.setsFound = 0
+    gameState.currentSetSize = 3
     
     EventManager.emit('game:reset')
+end
+
+-- Configure board dimensions (for rogue mode)
+function GameModel.configureBoardSize(columns, rows)
+    BOARD_COLUMNS = columns
+    BOARD_ROWS = rows
+    BOARD_SIZE = BOARD_COLUMNS * BOARD_ROWS
+    
+    -- Resize board array if needed
+    local newBoard = {}
+    for i = 1, BOARD_SIZE do
+        newBoard[i] = gameState.board[i] or nil
+    end
+    gameState.board = newBoard
+    
+    EventManager.emit('board:sizeChanged', BOARD_COLUMNS, BOARD_ROWS, BOARD_SIZE)
+end
+
+-- Set the current required set size
+function GameModel.setCurrentSetSize(setSize)
+    gameState.currentSetSize = setSize
+    EventManager.emit('game:setSizeChanged', setSize)
+end
+
+-- Get the current required set size
+function GameModel.getCurrentSetSize()
+    return gameState.currentSetSize
 end
 
 -- Board management
@@ -100,6 +132,26 @@ end
 
 function GameModel.decrementScore()
     GameModel.setScore(gameState.score - 1)
+end
+
+-- Sets found management (for round progression)
+function GameModel.getSetsFound()
+    return gameState.setsFound
+end
+
+function GameModel.incrementSetsFound()
+    gameState.setsFound = gameState.setsFound + 1
+    EventManager.emit('game:setsFoundChanged', gameState.setsFound)
+end
+
+function GameModel.setSetsFound(count)
+    gameState.setsFound = count or 0
+    EventManager.emit('game:setsFoundChanged', gameState.setsFound)
+end
+
+function GameModel.resetSetsFound()
+    gameState.setsFound = 0
+    EventManager.emit('game:setsFoundReset')
 end
 
 -- Hint management
