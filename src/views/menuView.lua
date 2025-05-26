@@ -1,4 +1,5 @@
 -- Menu View - Main menu interface
+local Logger = require('core.logger')
 
 local MenuView = {}
 
@@ -33,6 +34,7 @@ function MenuView.initialize()
     
     rogueButton.x = windowWidth / 2 - rogueButton.width / 2
     rogueButton.y = startY + 60 + buttonSpacing
+    Logger.trace("MenuView initialized")
 end
 
 -- Draw the menu
@@ -80,11 +82,6 @@ end
 function MenuView.isRogueButtonClicked(x, y)
     return x >= rogueButton.x and x <= rogueButton.x + rogueButton.width and
            y >= rogueButton.y and y <= rogueButton.y + rogueButton.height
-end
-
--- Legacy function for backward compatibility
-function MenuView.isPlayButtonClicked(x, y)
-    return MenuView.isClassicButtonClicked(x, y)
 end
 
 return MenuView

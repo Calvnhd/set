@@ -6,6 +6,7 @@ local CardView = require('views.cardView')
 local GameController = require('controllers.gameController')
 local AnimationService = require('services.animationService')
 local EventManager = require('core.eventManager')
+local Events = require('core.events')
 
 local GameScene = {}
 
@@ -19,15 +20,14 @@ function GameScene.enter(gameMode)
     
     -- Setup new game with specified mode
     GameController.setupNewGame(gameMode)
-    
-    -- Subscribe to scene transition events
-    EventManager.subscribe('game:requestMenuTransition', GameScene.handleMenuTransition)
+      -- Subscribe to scene transition events
+    EventManager.subscribe(Events.GAME.REQUEST_MENU_TRANSITION, GameScene.handleMenuTransition)
 end
 
 -- Exit the game scene
 function GameScene.exit()
     -- Unsubscribe from events
-    EventManager.unsubscribe('game:requestMenuTransition', GameScene.handleMenuTransition)
+    EventManager.unsubscribe(Events.GAME.REQUEST_MENU_TRANSITION, GameScene.handleMenuTransition)
     
     -- Clear any remaining animations
     AnimationService.clearAll()
@@ -68,7 +68,7 @@ end
 
 -- Handle request to transition back to menu
 function GameScene.handleMenuTransition()
-    EventManager.emit('scene:changeToMenu')
+    EventManager.emit(Events.SCENE.CHANGE_TO_MENU)
 end
 
 return GameScene

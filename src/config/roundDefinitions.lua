@@ -11,11 +11,11 @@ RoundDefinitions.tutorial = {
         attributes = {
             number = {1, 2},
             color = {"green", "blue"},
-            shape = {"diamond"},
+            shape = {"diamond", "oval"},
             fill = {"empty", "solid"}
         },
         setSize = 3,
-        boardSize = {columns = 3, rows = 3},
+        boardSize = {columns = 2, rows = 2},
         scoring = {
             validSet = 1,
             invalidSet = -1,
