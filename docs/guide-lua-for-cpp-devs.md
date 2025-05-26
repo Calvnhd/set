@@ -224,12 +224,12 @@ void (*callback)(string) = &GameController::handleKeypress;
 ### Lua Pattern
 ```lua
 -- EventManager pattern
-EventManager.subscribe('input:keypressed', GameController.handleKeypress)
-EventManager.emit('input:keypressed', key)
+EventManager.subscribe(Events.INPUT.KEY_PRESSED, GameController.handleKeypress)
+EventManager.emit(Events.INPUT.KEY_PRESSED, key)
 
 -- Anonymous functions as event handlers
-EventManager.subscribe('scene:changeToGame', function(gameMode)
-    SceneManager.changeScene('game', gameMode)
+EventManager.subscribe(Events.SCENE.CHANGE_TO_GAME, function(gameMode)
+    SceneManager.changeScene(Events.SCENE.CHANGE_TO_GAME, gameMode)
 end)
 ```
 

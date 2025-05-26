@@ -1,6 +1,7 @@
 -- Game Model - Centralized game state container
 
 local EventManager = require('core.eventManager')
+local Events = require('core.events')
 
 local GameModel = {}
 
@@ -31,14 +32,13 @@ function GameModel.reset()
     end
     
     gameState.discardedCards = {}
-    gameState.hintCards = {}
-    gameState.score = 0
+    gameState.hintCards = {}    gameState.score = 0
     gameState.bHintIsActive = false
     gameState.bGameEnded = false
     gameState.setsFound = 0
     gameState.currentSetSize = 3
     
-    EventManager.emit('game:reset')
+    EventManager.emit(Events.GAME.RESET)
 end
 
 -- Configure board dimensions (for rogue mode)
@@ -53,14 +53,13 @@ function GameModel.configureBoardSize(columns, rows)
         newBoard[i] = gameState.board[i] or nil
     end
     gameState.board = newBoard
-    
-    EventManager.emit('board:sizeChanged', BOARD_COLUMNS, BOARD_ROWS, BOARD_SIZE)
+      EventManager.emit(Events.BOARD.SIZE_CHANGED, BOARD_COLUMNS, BOARD_ROWS, BOARD_SIZE)
 end
 
 -- Set the current required set size
 function GameModel.setCurrentSetSize(setSize)
     gameState.currentSetSize = setSize
-    EventManager.emit('game:setSizeChanged', setSize)
+    EventManager.emit(Events.GAME.SET_SIZE_CHANGED, setSize)
 end
 
 -- Get the current required set size
@@ -72,7 +71,7 @@ end
 function GameModel.setCardAtPosition(index, cardRef)
     if index >= 1 and index <= BOARD_SIZE then
         gameState.board[index] = cardRef
-        EventManager.emit('board:cardPlaced', index, cardRef)
+        EventManager.emit(Events.BOARD.CARD_PLACED, index, cardRef)
     end
 end
 
@@ -83,11 +82,10 @@ function GameModel.getCardAtPosition(index)
     return nil
 end
 
-function GameModel.removeCardAtPosition(index)
-    if index >= 1 and index <= BOARD_SIZE and gameState.board[index] then
+function GameModel.removeCardAtPosition(index)    if index >= 1 and index <= BOARD_SIZE and gameState.board[index] then
         local cardRef = gameState.board[index]
         gameState.board[index] = nil
-        EventManager.emit('board:cardRemoved', index, cardRef)
+        EventManager.emit(Events.BOARD.CARD_REMOVED, index, cardRef)
         return cardRef
     end
     return nil
@@ -108,7 +106,7 @@ end
 -- Discard pile management
 function GameModel.addToDiscardPile(cardRef)
     table.insert(gameState.discardedCards, cardRef)
-    EventManager.emit('game:cardDiscarded', cardRef)
+    EventManager.emit(Events.GAME.CARD_DISCARDED, cardRef)
 end
 
 function GameModel.getDiscardedCards()
@@ -123,7 +121,7 @@ end
 function GameModel.setScore(newScore)
     local oldScore = gameState.score
     gameState.score = math.max(0, newScore)  -- Ensure score doesn't go below 0
-    EventManager.emit('score:changed', gameState.score, oldScore)
+    EventManager.emit(Events.SCORE.CHANGED, gameState.score, oldScore)
 end
 
 function GameModel.incrementScore()
@@ -139,26 +137,24 @@ function GameModel.getSetsFound()
     return gameState.setsFound
 end
 
-function GameModel.incrementSetsFound()
-    gameState.setsFound = gameState.setsFound + 1
-    EventManager.emit('game:setsFoundChanged', gameState.setsFound)
+function GameModel.incrementSetsFound()    gameState.setsFound = gameState.setsFound + 1
+    EventManager.emit(Events.GAME.SETS_FOUND_CHANGED, gameState.setsFound)
 end
 
 function GameModel.setSetsFound(count)
     gameState.setsFound = count or 0
-    EventManager.emit('game:setsFoundChanged', gameState.setsFound)
+    EventManager.emit(Events.GAME.SETS_FOUND_CHANGED, gameState.setsFound)
 end
 
 function GameModel.resetSetsFound()
     gameState.setsFound = 0
-    EventManager.emit('game:setsFoundReset')
+    EventManager.emit(Events.GAME.SETS_FOUND_RESET)
 end
 
 -- Hint management
-function GameModel.setHint(cardIndices)
-    gameState.hintCards = cardIndices or {}
+function GameModel.setHint(cardIndices)    gameState.hintCards = cardIndices or {}
     gameState.bHintIsActive = #gameState.hintCards > 0
-    EventManager.emit('hint:changed', gameState.hintCards, gameState.bHintIsActive)
+    EventManager.emit(Events.HINT.CHANGED, gameState.hintCards, gameState.bHintIsActive)
 end
 
 function GameModel.getHintCards()
@@ -177,7 +173,7 @@ end
 function GameModel.setGameEnded(bEnded)
     gameState.bGameEnded = bEnded
     if bEnded then
-        EventManager.emit('game:ended', gameState.score)
+        EventManager.emit(Events.GAME.ENDED, gameState.score)
     end
 end
 

@@ -1,6 +1,7 @@
 -- Round Manager Service - Handle round progression and rule management
 
 local EventManager = require('core.eventManager')
+local Events = require('core.events')
 local GameModeModel = require('models.gameModeModel')
 local ConfigValidator = require('services.configValidator')
 
@@ -14,7 +15,7 @@ local currentRoundSequence = {}
 function RoundManager.initialize()
     -- Load round definitions
     RoundManager.loadRoundDefinitions()
-    EventManager.emit('roundManager:initialized')
+    EventManager.emit(Events.ROUND_MANAGER.INITIALIZED)
 end
 
 -- Load round definitions from configuration
@@ -138,7 +139,7 @@ function RoundManager.loadRoundDefinitions()
     end
     
     roundDefinitions = currentRoundSequence
-    EventManager.emit('roundManager:definitionsLoaded', #roundDefinitions)
+    EventManager.emit(Events.ROUND_MANAGER.DEFINITIONS_LOADED, #roundDefinitions)
 end
 
 -- Get the current round configuration
@@ -160,7 +161,7 @@ function RoundManager.startRound(roundIndex)
     GameModeModel.setCurrentRoundIndex(roundIndex)
     GameModeModel.setCurrentConfig(config)
     
-    EventManager.emit('roundManager:roundStarted', config, roundIndex)
+    EventManager.emit(Events.ROUND_MANAGER.ROUND_STARTED, config, roundIndex)
     return config
 end
 
@@ -191,7 +192,7 @@ function RoundManager.advanceToNextRound()
         return RoundManager.startRound(nextIndex)
     else
         -- All rounds completed
-        EventManager.emit('roundManager:allRoundsComplete')
+        EventManager.emit(Events.ROUND_MANAGER.ALL_ROUNDS_COMPLETE)
         return nil
     end
 end
@@ -225,7 +226,7 @@ end
 function RoundManager.reset()
     GameModeModel.setCurrentRoundIndex(1)
     GameModeModel.setCurrentConfig(nil)
-    EventManager.emit('roundManager:reset')
+    EventManager.emit(Events.ROUND_MANAGER.RESET)
 end
 
 return RoundManager

@@ -2,6 +2,7 @@
 
 local CardModel = require('models.cardModel')
 local EventManager = require('core.eventManager')
+local Events = require('core.events')
 
 local DeckModel = {}
 
@@ -37,11 +38,11 @@ function DeckModel.createWithAttributes(colors, shapes, numbers, fills)
                     local cardRef = CardModel.create(color, shape, number, fill)
                     table.insert(cards, cardRef)
                 end
-            end
+        end
         end
     end
     
-    EventManager.emit('deck:created', #cards)
+    EventManager.emit(Events.DECK.CREATED, #cards)
     return cards
 end
 
@@ -68,18 +69,17 @@ function DeckModel.shuffle()
         cards[i], cards[j] = cards[j], cards[i]
     end
     
-    EventManager.emit('deck:shuffled')
+    EventManager.emit(Events.DECK.SHUFFLED)
     return cards
 end
 
 -- Take a card from the top of the deck
-function DeckModel.takeCard()
-    if #cards > 0 then
+function DeckModel.takeCard()    if #cards > 0 then
         local card = table.remove(cards, 1)
-        EventManager.emit('deck:cardTaken', card, #cards)
+        EventManager.emit(Events.DECK.CARD_TAKEN, card, #cards)
         return card
     else
-        EventManager.emit('deck:empty')
+        EventManager.emit(Events.DECK.EMPTY)
         return nil
     end
 end
@@ -87,7 +87,7 @@ end
 -- Return a card to the deck
 function DeckModel.returnCard(cardRef)
     table.insert(cards, cardRef)
-    EventManager.emit('deck:cardReturned', cardRef, #cards)
+    EventManager.emit(Events.DECK.CARD_RETURNED, cardRef, #cards)
 end
 
 -- Get the number of cards remaining in the deck

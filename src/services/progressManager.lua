@@ -1,6 +1,7 @@
 -- Progress Manager Service - Handle saving and loading game progress
 
 local EventManager = require('core.eventManager')
+local Events = require('core.events')
 local GameModeModel = require('models.gameModeModel')
 local GameModel = require('models.gameModel')
 
@@ -21,7 +22,7 @@ local currentProgress = {
 -- Initialize the progress manager
 function ProgressManager.initialize()
     ProgressManager.loadProgress()
-    EventManager.emit('progressManager:initialized')
+    EventManager.emit(Events.PROGRESS_MANAGER.INITIALIZED)
 end
 
 -- Save current game progress
@@ -38,12 +39,11 @@ function ProgressManager.saveProgress()
         unlocked = true,
         lastSaved = os.time()
     }
-    
-    local success = ProgressManager.writeProgressToFile(currentProgress)
+      local success = ProgressManager.writeProgressToFile(currentProgress)
     if success then
-        EventManager.emit('progressManager:progressSaved', currentProgress)
+        EventManager.emit(Events.PROGRESS_MANAGER.PROGRESS_SAVED, currentProgress)
     else
-        EventManager.emit('progressManager:saveFailed')
+        EventManager.emit(Events.PROGRESS_MANAGER.SAVE_FAILED)
     end
     
     return success
@@ -51,10 +51,9 @@ end
 
 -- Load saved game progress
 function ProgressManager.loadProgress()
-    local success, progress = ProgressManager.readProgressFromFile()
-    if success and progress then
+    local success, progress = ProgressManager.readProgressFromFile()    if success and progress then
         currentProgress = progress
-        EventManager.emit('progressManager:progressLoaded', currentProgress)
+        EventManager.emit(Events.PROGRESS_MANAGER.PROGRESS_LOADED, currentProgress)
         return true
     else
         -- Initialize default progress
@@ -75,11 +74,11 @@ function ProgressManager.applyProgressToGame()
         return false
     end
     
-    GameModeModel.setCurrentRoundIndex(currentProgress.currentRound)
+    GameModeModel.setCurrentRoundIndex(currentProgress.currentRound)    
     GameModel.setScore(currentProgress.score or 0)
     GameModel.setSetsFound(currentProgress.setsFound or 0)
     
-    EventManager.emit('progressManager:progressApplied', currentProgress)
+    EventManager.emit(Events.PROGRESS_MANAGER.PROGRESS_APPLIED, currentProgress)
     return true
 end
 
@@ -102,12 +101,11 @@ function ProgressManager.markRoundCompleted(roundIndex)
             break
         end
     end
-    
-    if not bAlreadyCompleted then
+      if not bAlreadyCompleted then
         table.insert(currentProgress.completedRounds, roundIndex)
     end
     
-    EventManager.emit('progressManager:roundCompleted', roundIndex)
+    EventManager.emit(Events.PROGRESS_MANAGER.ROUND_COMPLETED, roundIndex)
 end
 
 -- Check if a round is completed
@@ -131,11 +129,10 @@ function ProgressManager.resetProgress()
         score = 0,
         setsFound = 0,
         completedRounds = {},
-        unlocked = true
-    }
+        unlocked = true    }
     
     ProgressManager.deleteProgressFile()
-    EventManager.emit('progressManager:progressReset')
+    EventManager.emit(Events.PROGRESS_MANAGER.PROGRESS_RESET)
 end
 
 -- Get current progress summary
@@ -210,11 +207,10 @@ function ProgressManager.readProgressFromFile()
 end
 
 -- Delete progress file
-function ProgressManager.deleteProgressFile()
-    if love.filesystem.getInfo(SAVE_FILE) then
+function ProgressManager.deleteProgressFile()    if love.filesystem.getInfo(SAVE_FILE) then
         local success = pcall(love.filesystem.remove, SAVE_FILE)
         if success then
-            EventManager.emit('progressManager:progressDeleted')
+            EventManager.emit(Events.PROGRESS_MANAGER.PROGRESS_DELETED)
         end
         return success
     end

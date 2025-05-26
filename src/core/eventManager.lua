@@ -1,4 +1,5 @@
 -- Event Manager - Publisher-subscriber pattern for decoupled communication
+local Logger = require('core.logger')
 
 local EventManager = {}
 
@@ -27,6 +28,7 @@ end
 
 -- Emit an event to all subscribers
 function EventManager.emit(eventName, ...)
+    Logger.trace("Event emitted: "..eventName)
     if listeners[eventName] then
         for _, callback in ipairs(listeners[eventName]) do
             callback(...)

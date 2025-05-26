@@ -1,6 +1,7 @@
 -- Game Controller - Game logic coordination between models/services/views
 
 local EventManager = require('core.eventManager')
+local Events = require('core.events')
 local GameModel = require('models.gameModel')
 local GameModeModel = require('models.gameModeModel')
 local DeckModel = require('models.deckModel')
@@ -10,17 +11,18 @@ local RoundManager = require('services.roundManager')
 local ProgressManager = require('services.progressManager')
 local AnimationService = require('services.animationService')
 local BoardView = require('views.boardView')
+local Events = require('core.events')
 
 local GameController = {}
 
 -- Initialize the game controller
 function GameController.initialize()
     -- Subscribe to events
-    EventManager.subscribe('input:keypressed', GameController.handleKeypress)
-    EventManager.subscribe('input:mousepressed', GameController.handleMousePress)
-    EventManager.subscribe('animation:completed', GameController.handleAnimationCompleted)
-    EventManager.subscribe('roundManager:roundStarted', GameController.handleRoundStarted)
-    EventManager.subscribe('roundManager:allRoundsComplete', GameController.handleAllRoundsComplete)
+    EventManager.subscribe(Events.INPUT.KEY_PRESSED, GameController.handleKeypress)
+    EventManager.subscribe(Events.INPUT.MOUSE_PRESSED, GameController.handleMousePress)
+    EventManager.subscribe(Events.ANIMATION.COMPLETED, GameController.handleAnimationCompleted)
+    EventManager.subscribe(Events.ROUND_MANAGER.ROUND_STARTED, GameController.handleRoundStarted)
+    EventManager.subscribe(Events.ROUND_MANAGER.ALL_ROUNDS_COMPLETE, GameController.handleAllRoundsComplete)
     
     -- Initialize supporting services
     GameModeModel.initialize()
@@ -142,7 +144,7 @@ function GameController.handleKeypress(key)
     elseif key == "x" then
         GameController.checkNoSetOnBoard()
     elseif key == "escape" then
-        EventManager.emit('game:requestMenuTransition')
+        EventManager.emit(Events.GAME.REQUEST_MENU_TRANSITION)
     end
 end
 
@@ -167,10 +169,9 @@ function GameController.handleMousePress(x, y, button)
             if #selectedCards == currentSetSize and not bClickedCardIsSelected then
                 return
             end
-            
-            -- Toggle the card's selection state
+              -- Toggle the card's selection state
             CardModel.toggleSelected(cardRef)
-            EventManager.emit('card:selectionChanged', clickedCardIndex, CardModel.isSelected(cardRef))
+            EventManager.emit(Events.CARD.SELECTION_CHANGED, clickedCardIndex, CardModel.isSelected(cardRef))
             
             -- Disable hint mode when a card is selected
             GameModel.clearHint()
@@ -241,10 +242,9 @@ function GameController.animateInvalidSet(selectedIndices)
             animationsCompleted = animationsCompleted + 1
             if animationsCompleted == #selectedIndices then
                 -- Deselect all cards after animation completes
-                for _, idx in ipairs(selectedIndices) do
-                    CardModel.setSelected(board[idx], false)
+                for _, idx in ipairs(selectedIndices) do                CardModel.setSelected(board[idx], false)
                 end
-                EventManager.emit('cards:deselected', selectedIndices)
+                EventManager.emit(Events.CARDS.DESELECTED, selectedIndices)
             end
         end)
     end
@@ -398,10 +398,10 @@ function GameController.clearCardSelection()
         local cardRef = board[i]
         if cardRef then
             CardModel.setSelected(cardRef, false)
-        end
+    end
     end
     
-    EventManager.emit('cards:allDeselected')
+    EventManager.emit(Events.CARDS.ALL_DESELECTED)
 end
 
 -- Check if the current round is complete (rogue mode)

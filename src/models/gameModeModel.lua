@@ -1,6 +1,7 @@
 -- Game Mode Model - Track current game mode and configuration
 
 local EventManager = require('core.eventManager')
+local Events = require('core.events')
 
 local GameModeModel = {}
 
@@ -21,7 +22,7 @@ function GameModeModel.initialize()
     currentConfig = nil
     currentRoundIndex = 1
     
-    EventManager.emit('gameMode:initialized', currentMode)
+    EventManager.emit(Events.GAME_MODE.INITIALIZED, currentMode)
 end
 
 -- Set the current game mode
@@ -29,12 +30,11 @@ function GameModeModel.setMode(mode)
     if mode == GAME_MODES.CLASSIC or mode == GAME_MODES.ROGUE then
         local previousMode = currentMode
         currentMode = mode
-        
-        -- Reset configuration when changing modes
+          -- Reset configuration when changing modes
         currentConfig = nil
         currentRoundIndex = 1
         
-        EventManager.emit('gameMode:changed', currentMode, previousMode)
+        EventManager.emit(Events.GAME_MODE.CHANGED, currentMode, previousMode)
     else
         error("Invalid game mode: " .. tostring(mode))
     end
@@ -58,7 +58,7 @@ end
 -- Set the current round configuration (for rogue mode)
 function GameModeModel.setCurrentConfig(config)
     currentConfig = config
-    EventManager.emit('gameMode:configChanged', config)
+    EventManager.emit(Events.GAME_MODE.CONFIG_CHANGED, config)
 end
 
 -- Get the current round configuration
@@ -70,7 +70,7 @@ end
 function GameModeModel.setCurrentRoundIndex(roundIndex)
     local previousIndex = currentRoundIndex
     currentRoundIndex = roundIndex
-    EventManager.emit('gameMode:roundIndexChanged', currentRoundIndex, previousIndex)
+    EventManager.emit(Events.GAME_MODE.ROUND_INDEX_CHANGED, currentRoundIndex, previousIndex)
 end
 
 -- Get the current round index
