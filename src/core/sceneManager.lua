@@ -10,7 +10,7 @@ local scenes = {}
 -- Register a scene
 function SceneManager.registerScene(name, scene)
     scenes[name] = scene
-    Logger.detailed("Scene registered: %s", name)
+    Logger.info("Scene registered: %s", name)
 end
 
 -- Change to a new scene
@@ -38,7 +38,7 @@ function SceneManager.changeScene(sceneName, ...)
         currentScene.enter(...)
     end
     
-    Logger.detailed("Scene change complete: %s", sceneName)
+    Logger.info("Scene change complete: %s", sceneName)
 end
 
 -- Get current scene name

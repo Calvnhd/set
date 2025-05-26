@@ -4,7 +4,7 @@ local Logger = {}
 -- Log levels (higher numbers = more severe)
 local LOG_LEVELS = {
     TRACE = 1,
-    DETAILED = 2,
+    INFO = 2,
     WARNING = 3,
     ERROR = 4
 }
@@ -12,7 +12,7 @@ local LOG_LEVELS = {
 -- Log level names for output
 local LEVEL_NAMES = {
     [LOG_LEVELS.TRACE] = "TRACE",
-    [LOG_LEVELS.DETAILED] = "DETAILED",
+    [LOG_LEVELS.INFO] = "INFO",
     [LOG_LEVELS.WARNING] = "WARNING",
     [LOG_LEVELS.ERROR] = "ERROR"
 }
@@ -59,14 +59,14 @@ function Logger.initialize()
     end
 
     bInitialized = true
-    Logger.detailed("Logger initialized - " .. config.logFile)
+    Logger.info("Logger initialized - " .. config.logFile)
     return true
 end
 
 -- Shutdown the logging system
 function Logger.shutdown()
     if logFileHandle then
-        Logger.detailed("Logger shutting down")
+        Logger.info("Logger shutting down")
         logFileHandle:close()
         logFileHandle = nil
     end
@@ -142,8 +142,8 @@ function Logger.trace(message, ...)
     writeLog(LOG_LEVELS.TRACE, message, ...)
 end
 
-function Logger.detailed(message, ...)
-    writeLog(LOG_LEVELS.DETAILED, message, ...)
+function Logger.info(message, ...)
+    writeLog(LOG_LEVELS.INFO, message, ...)
 end
 
 function Logger.warning(message, ...)
@@ -154,17 +154,11 @@ function Logger.error(message, ...)
     writeLog(LOG_LEVELS.ERROR, message, ...)
 end
 
--- Convenience alias functions
-Logger.debug = Logger.detailed
-Logger.info = Logger.detailed
-Logger.warn = Logger.warning
-Logger.err = Logger.error
-
 -- Configuration functions
 function Logger.setEnabled(bEnabled)
     config.bEnabled = bEnabled
     if bEnabled then
-        Logger.detailed("Logging enabled")
+        Logger.info("Logging enabled")
     end
 end
 
@@ -174,7 +168,7 @@ end
 
 function Logger.setMinLevel(level)
     config.minLevel = level
-    Logger.detailed("Minimum log level set to: " .. LEVEL_NAMES[level])
+    Logger.info("Minimum log level set to: " .. LEVEL_NAMES[level])
 end
 
 function Logger.setLogFile(filename)

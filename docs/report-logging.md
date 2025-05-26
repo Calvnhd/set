@@ -127,7 +127,7 @@ local Logger = require('core.logger')
 
 -- Basic logging
 Logger.trace("Detailed debugging information")
-Logger.detailed("General application information")
+Logger.info("General application information")
 Logger.warning("Something unexpected happened")
 Logger.error("Critical error occurred")
 

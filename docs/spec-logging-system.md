@@ -99,7 +99,7 @@ The system integrates with the existing EventManager pattern and follows the pro
 **Development Workflow**: Developers can easily add logging to existing functions without modifying core game logic, following the pattern:
 ```lua
 local Logger = require('core.logger')
-Logger.detailed("Function called with parameters: %s, %s", param1, param2)
+Logger.info("Function called with parameters: %s, %s", param1, param2)
 ```
 
 **Memory Management**: Log file handles are properly managed through Love2D's file system API, with automatic cleanup on application shutdown.

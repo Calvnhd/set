@@ -8,7 +8,7 @@ local MenuScene = {}
 
 -- Enter the menu scene
 function MenuScene.enter()
-    Logger.detailed("Entering menu scene")
+    Logger.info("Entering menu scene")
     MenuView.initialize()
     -- Subscribe to input events
     EventManager.subscribe('input:keypressed', MenuScene.keypressed)
@@ -18,7 +18,7 @@ end
 
 -- Exit the menu scene
 function MenuScene.exit()
-    Logger.detailed("Exiting menu scene")
+    Logger.info("Exiting menu scene")
     -- Unsubscribe from events
     EventManager.unsubscribe('input:keypressed', MenuScene.keypressed)
     EventManager.unsubscribe('input:mousepressed', MenuScene.mousepressed)
