@@ -1,6 +1,7 @@
 -- Animation Service - Animation management separated from card rendering
 
 local EventManager = require('core.eventManager')
+local Events = require('core.events')
 
 local AnimationService = {}
 
@@ -39,7 +40,7 @@ function AnimationService.update(dt)
             -- Call completion callback if it hasn't been called already
             if anim.onComplete and not anim.bCompletionCalled then
                 anim.onComplete()
-                EventManager.emit('animation:completed', anim.id, anim.type)
+                EventManager.emit(Events.ANIMATION.COMPLETED, anim.id, anim.type)
             end
         end
     end
@@ -101,9 +102,8 @@ function AnimationService.createBurnAnimation(cardRef, x, y, width, height, onCo
         onComplete = onComplete,
         bCompletionCalled = false
     }
-    
-    table.insert(animatingCards, anim)
-    EventManager.emit('animation:started', animId, ANIMATION_TYPES.BURN, cardRef)
+      table.insert(animatingCards, anim)
+    EventManager.emit(Events.ANIMATION.STARTED, animId, ANIMATION_TYPES.BURN, cardRef)
     
     return anim
 end
@@ -130,9 +130,8 @@ function AnimationService.createFlashRedAnimation(cardRef, x, y, width, height, 
         onComplete = onComplete,
         bCompletionCalled = false
     }
-    
-    table.insert(animatingCards, anim)
-    EventManager.emit('animation:started', animId, ANIMATION_TYPES.FLASH_RED, cardRef)
+      table.insert(animatingCards, anim)
+    EventManager.emit(Events.ANIMATION.STARTED, animId, ANIMATION_TYPES.FLASH_RED, cardRef)
     
     return anim
 end
@@ -160,7 +159,7 @@ end
 -- Clear all animations
 function AnimationService.clearAll()
     animatingCards = {}
-    EventManager.emit('animations:cleared')
+    EventManager.emit(Events.ANIMATIONS.CLEARED)
 end
 
 -- Check if any animations are running
