@@ -159,7 +159,7 @@ end
 -- Clear all animations
 function AnimationService.clearAll()
     animatingCards = {}
-    EventManager.emit(Events.ANIMATIONS.CLEARED)
+    EventManager.emit(Events.ANIMATION.CLEARED)
 end
 
 -- Check if any animations are running

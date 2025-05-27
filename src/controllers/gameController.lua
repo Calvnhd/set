@@ -171,7 +171,7 @@ function GameController.handleMousePress(x, y, button)
             end
               -- Toggle the card's selection state
             CardModel.toggleSelected(cardRef)
-            EventManager.emit(Events.CARD.SELECTION_CHANGED, clickedCardIndex, CardModel.isSelected(cardRef))
+            EventManager.emit(Events.BOARD.CARD_SELECTION_CHANGED, clickedCardIndex, CardModel.isSelected(cardRef))
             
             -- Disable hint mode when a card is selected
             GameModel.clearHint()
@@ -244,7 +244,7 @@ function GameController.animateInvalidSet(selectedIndices)
                 -- Deselect all cards after animation completes
                 for _, idx in ipairs(selectedIndices) do                CardModel.setSelected(board[idx], false)
                 end
-                EventManager.emit(Events.CARDS.DESELECTED, selectedIndices)
+                EventManager.emit(Events.BOARD.CARD_DESELECTED, selectedIndices)
             end
         end)
     end
@@ -401,7 +401,7 @@ function GameController.clearCardSelection()
     end
     end
     
-    EventManager.emit(Events.CARDS.ALL_DESELECTED)
+    EventManager.emit(Events.BOARD.CARD_ALL_DESELECTED)
 end
 
 -- Check if the current round is complete (rogue mode)

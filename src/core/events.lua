@@ -13,37 +13,17 @@ local Events = {
     -- Scene management events
     SCENE = {
         CHANGE_TO_GAME = 'scene:changeToGame',
-        CHANGE_TO_MENU = 'scene:changeToMenu',
-        PAUSE = 'scene:pause',
-        RESUME = 'scene:resume'
+        CHANGE_TO_MENU = 'scene:changeToMenu'
     },    
     -- Game-related events
     GAME = {
-        PLAYER_SCORED = 'game:playerScored',
-        GAME_OVER = 'game:gameOver',
-        LEVEL_COMPLETE = 'game:levelComplete',
-        PAUSE_REQUESTED = 'game:pauseRequested',
-        ROUND_COMPLETE = 'game:roundComplete',
-        CARD_SELECTED = 'game:cardSelected',
-        SET_FOUND = 'game:setFound',
-        REQUEST_MENU_TRANSITION = 'game:requestMenuTransition',
         RESET = 'game:reset',
         SET_SIZE_CHANGED = 'game:setSizeChanged',
         CARD_DISCARDED = 'game:cardDiscarded',
         SETS_FOUND_CHANGED = 'game:setsFoundChanged',
         SETS_FOUND_RESET = 'game:setsFoundReset',
+        REQUEST_MENU_TRANSITION = 'game:requestMenuTransition',
         ENDED = 'game:ended'
-    },
-    
-    -- Card-related events
-    CARD = {
-        SELECTION_CHANGED = 'card:selectionChanged'
-    },
-    
-    -- Cards (plural) events
-    CARDS = {
-        DESELECTED = 'cards:deselected',
-        ALL_DESELECTED = 'cards:allDeselected'
     },
     
     -- Deck-related events
@@ -59,7 +39,10 @@ local Events = {
     BOARD = {
         SIZE_CHANGED = 'board:sizeChanged',
         CARD_PLACED = 'board:cardPlaced',
-        CARD_REMOVED = 'board:cardRemoved'
+        CARD_REMOVED = 'board:cardRemoved',
+        CARD_SELECTION_CHANGED = 'board:selectionChanged',
+        CARD_DESELECTED = 'board:deselected',
+        CARD_ALL_DESELECTED = 'board:allDeselected'
     },
     
     -- Score-related events
@@ -83,11 +66,7 @@ local Events = {
     -- Animation events
     ANIMATION = {
         COMPLETED = 'animation:completed',
-        STARTED = 'animation:started'
-    },
-    
-    -- Animations (plural) events
-    ANIMATIONS = {
+        STARTED = 'animation:started',
         CLEARED = 'animations:cleared'
     },
     
