@@ -1,5 +1,3 @@
--- Event Registry - Centralized event name constants
--- This module provides a single source of truth for all event names used throughout the application
 local Events = {
     -- Input-related events from InputController
     INPUT = {
@@ -8,12 +6,7 @@ local Events = {
         MOUSE_RELEASED = 'input:mousereleased',
         MOUSE_MOVED = 'input:mousemoved'
     },
-
-    -- Scene management events
-    SCENE = {
-        CHANGE_TO_GAME = 'scene:changeToGame',
-        CHANGE_TO_MENU = 'scene:changeToMenu'
-    },    -- Game-related events
+    -- Game-related events
     GAME = {
         RESET = 'game:reset',
         SET_SIZE_CHANGED = 'game:setSizeChanged',

@@ -1,20 +1,9 @@
--- Scene Manager - Manages scene transitions and Love2D callback delegation
-local Logger = require('core.logger')
 
-local SceneManager = {}
 
-local currentScene = nil
-local scenes = {}
-
--- Register a scene
-function SceneManager.registerScene(name, scene)
-    scenes[name] = scene
-    Logger.info("Scene registered: %s", name)
-end
 
 -- Change to a new scene
 function SceneManager.changeScene(sceneName, ...)
-    local newScene = scenes[sceneName]
+    local newScene = registeredScenes[sceneName]
     if not newScene then
         Logger.error("Scene '%s' not found", sceneName)
         error("Scene '" .. sceneName .. "' not found")
@@ -41,7 +30,7 @@ end
 
 -- Get current scene name
 function SceneManager.getCurrentScene()
-    for name, scene in pairs(scenes) do
+    for name, scene in pairs(registeredScenes) do
         if scene == currentScene then
             return name
         end
@@ -80,4 +69,3 @@ function SceneManager.mousereleased(x, y, button)
     end
 end
 
-return SceneManager
