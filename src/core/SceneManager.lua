@@ -6,7 +6,6 @@ local Logger = require('core.Logger')
 local EventRegistry = require('core.EventRegistry')
 local EventManager = require('core.EventManager')
 local SceneRegistry = require('scenes.SceneRegistry')
-local Colors = require('views.Colors')
 
 -- local variables
 local currentScene = nil
@@ -18,7 +17,6 @@ local registeredScenes = {}
 
 function SceneManager.initialize()
     Logger.trace("Initializing SceneManager")
-    love.graphics.setBackgroundColor(Colors.MAP.BACKGROUND)
     -- Register scenes
     SceneManager.registerScene(SceneRegistry.MENU.NAME, SceneRegistry.MENU.SCENE)
     SceneManager.registerScene(SceneRegistry.GAME.NAME, SceneRegistry.GAME.SCENE)

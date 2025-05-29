@@ -14,14 +14,17 @@ local MenuView = require('views.MenuView')
 
 function MenuScene.enter()
     Logger.trace("Entering main menu scene")
+    MenuView.initialize()
 end
 
 function MenuScene.exit()
     Logger.trace("Exiting menu scene")
 end
 
--- Love2D callbacks called via main -> SceneManager -> current scene
+-- Love2D callbacks 
+-- Called via main -> SceneManager -> current scene
 function MenuScene.draw()
+    MenuView.draw()
 end
 function MenuScene.keypressed(key)
     Logger.trace("Menu scene handling key: %s", key)

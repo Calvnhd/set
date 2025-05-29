@@ -47,3 +47,39 @@ function MenuView.initialize()
     rogueButton.y = startY + 60 + buttonSpacing
     Logger.trace("MenuView initialized")
 end
+
+-- Draw the menu
+function MenuView.draw()
+    -- Draw the menu background
+    love.graphics.clear(Colors.MAP.BACKGROUND)
+    -- Set the font for the menu title
+    love.graphics.setFont(love.graphics.newFont(32))
+    -- Draw the title
+    love.graphics.setColor(Colors.MAP.TEXT)
+    love.graphics.printf("Welcome to Set!", 0, 100, love.graphics.getWidth(), "center")
+
+    -- Draw the classic mode button
+    love.graphics.setColor(classicButton.color)
+    love.graphics.rectangle("fill", classicButton.x, classicButton.y, classicButton.width, classicButton.height, 8, 8)
+
+    -- Draw the rogue mode button
+    love.graphics.setColor(rogueButton.color)
+    love.graphics.rectangle("fill", rogueButton.x, rogueButton.y, rogueButton.width, rogueButton.height, 8, 8)
+
+    -- Set the font for the button text
+    love.graphics.setFont(love.graphics.newFont(20))
+    love.graphics.setColor(Colors.MAP.TEXT)
+
+    -- Draw button texts
+    love.graphics.printf(classicButton.text, classicButton.x, classicButton.y + 18, classicButton.width, "center")
+    love.graphics.printf(rogueButton.text, rogueButton.x, rogueButton.y + 18, rogueButton.width, "center")
+
+    -- Draw mode descriptions
+    love.graphics.setFont(love.graphics.newFont(14))
+    love.graphics.setColor(Colors.MAP.TEXT)
+    love.graphics.printf("Traditional", classicButton.x, classicButton.y + 65, classicButton.width,
+        "center")
+    love.graphics.printf("Progressive", rogueButton.x, rogueButton.y + 65, rogueButton.width, "center")
+end
+
+return MenuView

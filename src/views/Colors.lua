@@ -36,7 +36,8 @@ local COLORS = {
 
 local MAP = {
     BACKGROUND = COLORS.BLUE_1,
-    MENU_BUTTONS = COLORS.PURPLE_2
+    MENU_BUTTONS = COLORS.PURPLE_2,
+    TEXT = COLORS.WHITE
 }
 
 -- Return both tables
