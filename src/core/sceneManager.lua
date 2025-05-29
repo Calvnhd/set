@@ -20,7 +20,6 @@ function SceneManager.changeScene(sceneName, ...)
         Logger.error("Scene '%s' not found", sceneName)
         error("Scene '" .. sceneName .. "' not found")
     end
-    
     Logger.info("Changing scene to: %s", sceneName)
     
     -- Exit current scene

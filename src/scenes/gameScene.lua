@@ -14,10 +14,8 @@ local GameScene = {}
 function GameScene.enter(gameMode)
     -- Load card images
     CardView.loadImages()
-    
     -- Initialize game controller
     GameController.initialize()
-    
     -- Setup new game with specified mode
     GameController.setupNewGame(gameMode)
       -- Subscribe to scene transition events
@@ -28,7 +26,6 @@ end
 function GameScene.exit()
     -- Unsubscribe from events
     EventManager.unsubscribe(Events.GAME.REQUEST_MENU_TRANSITION, GameScene.handleMenuTransition)
-    
     -- Clear any remaining animations
     AnimationService.clearAll()
 end
@@ -42,13 +39,10 @@ end
 function GameScene.draw()
     -- Set background color
     love.graphics.setBackgroundColor(0.34, 0.45, 0.47)
-    
     -- Draw board
     BoardView.draw()
-    
     -- Draw animations
     GameScene.drawAnimations()
-    
     -- Draw UI elements
     GameUIView.draw()
 end

@@ -142,7 +142,7 @@ function DevTools.showGameInfo()
         print("Round Name: " .. config.name)
         print("End Condition: " .. config.endCondition.type .. " = " .. config.endCondition.target)
         
-        if RoundManager.bIsRoundComplete(GameModel.getScore(), GameModel.getSetsFound()) then
+        if RoundManager.isRoundComplete(GameModel.getScore(), GameModel.getSetsFound()) then
             print("Round Status: COMPLETE")
         else
             print("Round Status: IN PROGRESS")

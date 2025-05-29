@@ -13,24 +13,20 @@ function love.load()
     -- Initialize logging system first
     Logger.initialize()
     Logger.info("Game starting up")
-
     -- Set background color
     love.graphics.setBackgroundColor(0.34, 0.45, 0.47)
-    Logger.info("Background color set")
-    
     -- Register scenes
     SceneManager.registerScene('menu', MenuScene)
-    SceneManager.registerScene('game', GameScene)    -- Subscribe to scene change events
+    SceneManager.registerScene('game', GameScene)    
+    -- Subscribe to scene change events
     EventManager.subscribe(Events.SCENE.CHANGE_TO_GAME, function(gameMode)
         Logger.info("Scene change requested: %s mode", gameMode)
         SceneManager.changeScene('game', gameMode)
     end)
-    
     EventManager.subscribe(Events.SCENE.CHANGE_TO_MENU, function()
         Logger.info("Scene change requested: menu")
         SceneManager.changeScene('menu')
     end)
-    
     -- Start with menu scene
     SceneManager.changeScene('menu')
     Logger.info("Game initialization complete")

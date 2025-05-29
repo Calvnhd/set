@@ -1,5 +1,4 @@
 -- Game Controller - Game logic coordination between models/services/views
-
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
 local GameModel = require('models.gameModel')
@@ -23,7 +22,7 @@ function GameController.initialize()
     EventManager.subscribe(Events.ANIMATION.COMPLETED, GameController.handleAnimationCompleted)
     EventManager.subscribe(Events.ROUND_MANAGER.ROUND_STARTED, GameController.handleRoundStarted)
     EventManager.subscribe(Events.ROUND_MANAGER.ALL_ROUNDS_COMPLETE, GameController.handleAllRoundsComplete)
-    
+
     -- Initialize supporting services
     GameModeModel.initialize()
     RoundManager.initialize()
@@ -33,7 +32,7 @@ end
 -- Setup a new game with specified mode
 function GameController.setupNewGame(gameMode)
     gameMode = gameMode or GameModeModel.getCurrentMode()
-    
+
     -- Set the game mode
     local GAME_MODES = GameModeModel.getGameModes()
     if gameMode == GAME_MODES.CLASSIC or gameMode == 'classic' then
@@ -58,11 +57,11 @@ end
 -- Setup rogue mode game
 function GameController.setupRogueGame()
     GameModel.reset()
-    
+
     -- Start the first round
     local config = RoundManager.startRound(1)
     GameController.applyRoundConfiguration(config)
-    
+
     -- Create deck based on round configuration
     DeckModel.createFromConfig(config)
     DeckModel.shuffle()
@@ -71,13 +70,15 @@ end
 
 -- Apply round configuration to game state
 function GameController.applyRoundConfiguration(config)
-    if not config then return end
-    
+    if not config then
+        return
+    end
+
     -- Set board size
     if config.boardSize then
         GameModel.configureBoardSize(config.boardSize.columns, config.boardSize.rows)
     end
-    
+
     -- Set required set size
     if config.setSize then
         GameModel.setCurrentSetSize(config.setSize)
@@ -87,14 +88,14 @@ end
 -- Handle round started event
 function GameController.handleRoundStarted(config, roundIndex)
     GameController.applyRoundConfiguration(config)
-    
+
     -- Create new deck for the round
     DeckModel.createFromConfig(config)
     DeckModel.shuffle()
-    
+
     -- Clear board and deal new cards
     GameModel.reset()
-    GameController.applyRoundConfiguration(config)  -- Reapply after reset
+    GameController.applyRoundConfiguration(config) -- Reapply after reset
     GameController.dealInitialCards()
 end
 
@@ -133,10 +134,10 @@ function GameController.handleKeypress(key)
             return
         end
     end
-    
+
     -- Clear card selection on any other key input
     GameController.clearCardSelection()
-    
+
     if key == "d" then
         GameController.drawCard()
     elseif key == "h" then
@@ -154,7 +155,7 @@ function GameController.handleMousePress(x, y, button)
     if GameModel.hasGameEnded() then
         return
     end
-    
+
     if button == 1 then -- Left mouse button
         local clickedCardIndex = BoardView.getCardAtPosition(x, y)
         if clickedCardIndex then
@@ -162,17 +163,17 @@ function GameController.handleMousePress(x, y, button)
             local cardRef = board[clickedCardIndex]
             local selectedCards = GameModel.getSelectedCards()
             local bClickedCardIsSelected = CardModel.isSelected(cardRef)
-              -- Get current set size for this game mode
+            -- Get current set size for this game mode
             local currentSetSize = GameModel.getCurrentSetSize()
-            
+
             -- If we already have the required number of cards selected and trying to select a new one, do nothing
             if #selectedCards == currentSetSize and not bClickedCardIsSelected then
                 return
             end
-              -- Toggle the card's selection state
+            -- Toggle the card's selection state
             CardModel.toggleSelected(cardRef)
             EventManager.emit(Events.BOARD.CARD_SELECTION_CHANGED, clickedCardIndex, CardModel.isSelected(cardRef))
-            
+
             -- Disable hint mode when a card is selected
             GameModel.clearHint()
         end
@@ -184,21 +185,21 @@ function GameController.processSelectedCards()
     local selectedCards = GameModel.getSelectedCards()
     local board = GameModel.getBoard()
     local currentSetSize = GameModel.getCurrentSetSize()
-    
+
     if #selectedCards == currentSetSize then
         local cardRefs = {}
         for i, idx in ipairs(selectedCards) do
             cardRefs[i] = board[idx]
         end
-        
+
         local bIsValid, message = RulesService.validateSelectedCardsOfSize(selectedCards, board, currentSetSize)
-        
+
         if bIsValid then
             -- Valid set - remove cards and increment score
             GameController.removeValidSet(selectedCards)
             GameModel.incrementScore()
             GameModel.incrementSetsFound()
-            
+
             -- Check for round completion in rogue mode
             if GameModeModel.bIsRogueMode() then
                 GameController.checkRoundCompletion()
@@ -216,10 +217,12 @@ end
 -- Remove a valid set of cards
 function GameController.removeValidSet(selectedIndices)
     local board = GameModel.getBoard()
-    
+
     -- Sort in reverse order so indices remain valid during removal
-    table.sort(selectedIndices, function(a, b) return a > b end)
-    
+    table.sort(selectedIndices, function(a, b)
+        return a > b
+    end)
+
     -- Remove the cards from board and add to discard pile
     for _, idx in ipairs(selectedIndices) do
         local cardRef = GameModel.removeCardAtPosition(idx)
@@ -233,16 +236,17 @@ end
 function GameController.animateInvalidSet(selectedIndices)
     local board = GameModel.getBoard()
     local animationsCompleted = 0
-    
+
     for _, index in ipairs(selectedIndices) do
         local cardRef = board[index]
         local x, y, width, height = BoardView.getCardPosition(index)
-        
+
         AnimationService.createFlashRedAnimation(cardRef, x, y, width, height, function()
             animationsCompleted = animationsCompleted + 1
             if animationsCompleted == #selectedIndices then
                 -- Deselect all cards after animation completes
-                for _, idx in ipairs(selectedIndices) do                CardModel.setSelected(board[idx], false)
+                for _, idx in ipairs(selectedIndices) do
+                    CardModel.setSelected(board[idx], false)
                 end
                 EventManager.emit(Events.BOARD.CARD_DESELECTED, selectedIndices)
             end
@@ -253,11 +257,11 @@ end
 -- Draw a new card from deck
 function GameController.drawCard()
     local emptyPosition = GameModel.findEmptyPosition()
-    
+
     if not emptyPosition then
         return -- No empty positions
     end
-    
+
     local cardRef = DeckModel.takeCard()
     if cardRef then
         GameModel.setCardAtPosition(emptyPosition, cardRef)
@@ -272,7 +276,7 @@ function GameController.toggleHint()
         GameModel.clearHint()
         return
     end
-    
+
     local board = GameModel.getBoard()
     local currentSetSize = GameModel.getCurrentSetSize()
     local validSet = RulesService.findValidSetOfSize(board, currentSetSize)
@@ -286,7 +290,7 @@ function GameController.checkNoSetOnBoard()
     local board = GameModel.getBoard()
     local currentSetSize = GameModel.getCurrentSetSize()
     local validSet = RulesService.findValidSetOfSize(board, currentSetSize)
-    
+
     if validSet then
         -- There is a set but player claimed there wasn't (incorrect)
         GameController.burnIncorrectCards(validSet)
@@ -302,12 +306,12 @@ end
 function GameController.burnIncorrectCards(validSet)
     local board = GameModel.getBoard()
     local cardsToAnimate = {}
-    
+
     -- Save card references and positions before modifying the board
     for _, index in ipairs(validSet) do
         local cardRef = board[index]
         local x, y, width, height = BoardView.getCardPosition(index)
-        
+
         table.insert(cardsToAnimate, {
             cardRef = cardRef,
             x = x,
@@ -316,31 +320,25 @@ function GameController.burnIncorrectCards(validSet)
             height = height,
             index = index
         })
-        
+
         -- Add card to discard pile and remove from board
         GameModel.addToDiscardPile(cardRef)
         GameModel.removeCardAtPosition(index)
     end
-    
+
     -- Start burn animations
     local animationsStarted = 0
     local totalAnimations = #cardsToAnimate
-    
+
     for _, cardInfo in ipairs(cardsToAnimate) do
-        AnimationService.createBurnAnimation(
-            cardInfo.cardRef, 
-            cardInfo.x, 
-            cardInfo.y, 
-            cardInfo.width, 
-            cardInfo.height, 
+        AnimationService.createBurnAnimation(cardInfo.cardRef, cardInfo.x, cardInfo.y, cardInfo.width, cardInfo.height,
             function()
                 animationsStarted = animationsStarted + 1
                 if animationsStarted == totalAnimations then
                     GameModel.clearHint()
                     GameController.checkGameEnd()
                 end
-            end
-        )
+            end)
     end
 end
 
@@ -348,22 +346,22 @@ end
 function GameController.handleCorrectNoSet()
     local board = GameModel.getBoard()
     local nonEmptyPositions = {}
-    
+
     -- Find all non-empty positions
     for i = 1, GameModel.getBoardSize() do
         if board[i] then
             table.insert(nonEmptyPositions, i)
         end
     end
-    
+
     local numToRemove = math.floor(#nonEmptyPositions / 2)
-    
+
     -- Shuffle the indices
     for i = #nonEmptyPositions, 2, -1 do
         local j = math.random(i)
         nonEmptyPositions[i], nonEmptyPositions[j] = nonEmptyPositions[j], nonEmptyPositions[i]
     end
-    
+
     -- Remove selected cards and return to deck
     for i = 1, numToRemove do
         local index = nonEmptyPositions[i]
@@ -373,7 +371,7 @@ function GameController.handleCorrectNoSet()
             DeckModel.returnCard(cardRef)
         end
     end
-    
+
     -- Shuffle deck and refill board
     DeckModel.shuffle()
     for i = 1, GameModel.getBoardSize() do
@@ -384,7 +382,7 @@ function GameController.handleCorrectNoSet()
             end
         end
     end
-    
+
     GameModel.clearHint()
     GameController.checkGameEnd()
 end
@@ -393,14 +391,14 @@ end
 function GameController.clearCardSelection()
     local board = GameModel.getBoard()
     local boardSize = GameModel.getBoardSize()
-    
+
     for i = 1, boardSize do
         local cardRef = board[i]
         if cardRef then
             CardModel.setSelected(cardRef, false)
+        end
     end
-    end
-    
+
     EventManager.emit(Events.BOARD.CARD_ALL_DESELECTED)
 end
 
@@ -408,14 +406,14 @@ end
 function GameController.checkRoundCompletion()
     local currentScore = GameModel.getScore()
     local setsFound = GameModel.getSetsFound()
-    
-    if RoundManager.bIsRoundComplete(currentScore, setsFound) then
+
+    if RoundManager.isRoundComplete(currentScore, setsFound) then
         -- Mark round as completed and save progress
         local currentRound = GameModeModel.getCurrentRoundIndex()
         ProgressManager.markRoundCompleted(currentRound)
         ProgressManager.saveProgress()
-        
-        if RoundManager.bHasMoreRounds() then
+
+        if RoundManager.gameHasMoreRounds() then
             -- Advance to next round
             local nextConfig = RoundManager.advanceToNextRound()
             -- The handleRoundStarted event will be triggered automatically
@@ -432,14 +430,7 @@ end
 
 -- Check if the game has ended
 function GameController.checkGameEnd()
-    local board = GameModel.getBoard()
-    local bDeckEmpty = DeckModel.isEmpty()
-    local currentSetSize = GameModel.getCurrentSetSize()
-    local bNoValidSet = not RulesService.hasValidSetOfSize(board, currentSetSize)
-    
-    if bDeckEmpty and bNoValidSet then
-        GameModel.setGameEnded(true)
-    end
+    return false
 end
 
 -- Handle animation completion

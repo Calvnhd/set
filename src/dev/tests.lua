@@ -163,11 +163,11 @@ function Tests.testRoundManager()
         assert_equal(config.id, "tutorial_1", "Should start with tutorial_1")
         
         -- Test round completion checking
-        assert_false(RoundManager.bIsRoundComplete(0, 0), "Should not be complete with zero score/sets")
-        assert_true(RoundManager.bIsRoundComplete(config.endCondition.target, 0), "Should be complete when target reached")
+        assert_false(RoundManager.isRoundComplete(0, 0), "Should not be complete with zero score/sets")
+        assert_true(RoundManager.isRoundComplete(config.endCondition.target, 0), "Should be complete when target reached")
         
         -- Test advancement
-        assert_true(RoundManager.bHasMoreRounds(), "Should have more rounds available")
+        assert_true(RoundManager.gameHasMoreRounds(), "Should have more rounds available")
     end)
 end
 

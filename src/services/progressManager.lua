@@ -109,7 +109,7 @@ function ProgressManager.markRoundCompleted(roundIndex)
 end
 
 -- Check if a round is completed
-function ProgressManager.bIsRoundCompleted(roundIndex)
+function ProgressManager.isRoundCompleted(roundIndex)
     if not currentProgress.completedRounds then
         return false
     end
