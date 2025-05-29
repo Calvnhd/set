@@ -1,5 +1,4 @@
 -- Menu Scene - Main menu with play button interaction
-
 local MenuView = require('views.menuView')
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
@@ -48,7 +47,7 @@ end
 -- Handle mouse press events
 function MenuScene.mousepressed(x, y, button)
     Logger.trace("Menu scene handling mouse press: (%d, %d) button %d", x, y, button)
-      if button == 1 then -- Left mouse button
+    if button == 1 then -- Left mouse button
         if MenuView.isClassicButtonClicked(x, y) then
             Logger.info("Classic mode button clicked")
             EventManager.emit(Events.SCENE.CHANGE_TO_GAME, 'classic')

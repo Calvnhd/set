@@ -1,6 +1,5 @@
 -- Event Registry - Centralized event name constants
 -- This module provides a single source of truth for all event names used throughout the application
-
 local Events = {
     -- Input-related events from InputController
     INPUT = {
@@ -9,12 +8,12 @@ local Events = {
         MOUSE_RELEASED = 'input:mousereleased',
         MOUSE_MOVED = 'input:mousemoved'
     },
-    
+
     -- Scene management events
     SCENE = {
         CHANGE_TO_GAME = 'scene:changeToGame',
         CHANGE_TO_MENU = 'scene:changeToMenu'
-    },    
+    },
     -- Game-related events
     GAME = {
         RESET = 'game:reset',
@@ -25,7 +24,7 @@ local Events = {
         REQUEST_MENU_TRANSITION = 'game:requestMenuTransition',
         ENDED = 'game:ended'
     },
-    
+
     -- Deck-related events
     DECK = {
         CREATED = 'deck:created',
@@ -34,7 +33,7 @@ local Events = {
         EMPTY = 'deck:empty',
         CARD_RETURNED = 'deck:cardReturned'
     },
-    
+
     -- Board-related events
     BOARD = {
         SIZE_CHANGED = 'board:sizeChanged',
@@ -44,17 +43,17 @@ local Events = {
         CARD_DESELECTED = 'board:deselected',
         CARD_ALL_DESELECTED = 'board:allDeselected'
     },
-    
+
     -- Score-related events
     SCORE = {
         CHANGED = 'score:changed'
     },
-    
+
     -- Hint-related events
     HINT = {
         CHANGED = 'hint:changed'
     },
-    
+
     -- Game Mode events
     GAME_MODE = {
         INITIALIZED = 'gameMode:initialized',
@@ -62,14 +61,14 @@ local Events = {
         CONFIG_CHANGED = 'gameMode:configChanged',
         ROUND_INDEX_CHANGED = 'gameMode:roundIndexChanged'
     },
-    
+
     -- Animation events
     ANIMATION = {
         COMPLETED = 'animation:completed',
         STARTED = 'animation:started',
         CLEARED = 'animations:cleared'
     },
-    
+
     -- Progress Manager events
     PROGRESS_MANAGER = {
         INITIALIZED = 'progressManager:initialized',
@@ -81,7 +80,7 @@ local Events = {
         PROGRESS_RESET = 'progressManager:progressReset',
         PROGRESS_DELETED = 'progressManager:progressDeleted'
     },
-    
+
     -- Round Manager events
     ROUND_MANAGER = {
         INITIALIZED = 'roundManager:initialized',

@@ -1,5 +1,4 @@
 -- Input Controller - Centralized input handling with event emission
-
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
 

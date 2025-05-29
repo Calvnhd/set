@@ -1,5 +1,4 @@
 -- Main entry point for refactored Set game
-
 local SceneManager = require('core.sceneManager')
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
@@ -17,7 +16,7 @@ function love.load()
     love.graphics.setBackgroundColor(0.34, 0.45, 0.47)
     -- Register scenes
     SceneManager.registerScene('menu', MenuScene)
-    SceneManager.registerScene('game', GameScene)    
+    SceneManager.registerScene('game', GameScene)
     -- Subscribe to scene change events
     EventManager.subscribe(Events.SCENE.CHANGE_TO_GAME, function(gameMode)
         Logger.info("Scene change requested: %s mode", gameMode)

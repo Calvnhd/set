@@ -1,5 +1,4 @@
 -- Deck Model - Manages deck operations with event notifications
-
 local CardModel = require('models.cardModel')
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
@@ -23,13 +22,13 @@ end
 -- Create a deck with custom attributes (rogue mode)
 function DeckModel.createWithAttributes(colors, shapes, numbers, fills)
     cards = {}
-    
+
     -- Use provided attributes or defaults
     local colorList = colors or DEFAULT_COLOR
     local shapeList = shapes or DEFAULT_SHAPE
     local numberList = numbers or DEFAULT_NUMBER
     local fillList = fills or DEFAULT_FILL
-    
+
     -- Generate all possible combinations of the attributes
     for _, color in ipairs(colorList) do
         for _, shape in ipairs(shapeList) do
@@ -38,10 +37,10 @@ function DeckModel.createWithAttributes(colors, shapes, numbers, fills)
                     local cardRef = CardModel.create(color, shape, number, fill)
                     table.insert(cards, cardRef)
                 end
-        end
+            end
         end
     end
-    
+
     EventManager.emit(Events.DECK.CREATED, #cards)
     return cards
 end
@@ -51,14 +50,9 @@ function DeckModel.createFromConfig(config)
     if not config or not config.attributes then
         return DeckModel.create()
     end
-    
+
     local attrs = config.attributes
-    return DeckModel.createWithAttributes(
-        attrs.color,
-        attrs.shape, 
-        attrs.number,
-        attrs.fill
-    )
+    return DeckModel.createWithAttributes(attrs.color, attrs.shape, attrs.number, attrs.fill)
 end
 
 -- Shuffle the deck using Fisher-Yates algorithm
@@ -68,13 +62,14 @@ function DeckModel.shuffle()
         local j = math.random(i)
         cards[i], cards[j] = cards[j], cards[i]
     end
-    
+
     EventManager.emit(Events.DECK.SHUFFLED)
     return cards
 end
 
 -- Take a card from the top of the deck
-function DeckModel.takeCard()    if #cards > 0 then
+function DeckModel.takeCard()
+    if #cards > 0 then
         local card = table.remove(cards, 1)
         EventManager.emit(Events.DECK.CARD_TAKEN, card, #cards)
         return card

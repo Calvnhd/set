@@ -1,5 +1,4 @@
 -- Progress Manager Service - Handle saving and loading game progress
-
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
 local GameModeModel = require('models.gameModeModel')
@@ -30,7 +29,7 @@ function ProgressManager.saveProgress()
     if not GameModeModel.bIsRogueMode() then
         return -- Only save progress in rogue mode
     end
-    
+
     currentProgress = {
         currentRound = GameModeModel.getCurrentRoundIndex(),
         score = GameModel.getScore(),
@@ -39,19 +38,20 @@ function ProgressManager.saveProgress()
         unlocked = true,
         lastSaved = os.time()
     }
-      local success = ProgressManager.writeProgressToFile(currentProgress)
+    local success = ProgressManager.writeProgressToFile(currentProgress)
     if success then
         EventManager.emit(Events.PROGRESS_MANAGER.PROGRESS_SAVED, currentProgress)
     else
         EventManager.emit(Events.PROGRESS_MANAGER.SAVE_FAILED)
     end
-    
+
     return success
 end
 
 -- Load saved game progress
 function ProgressManager.loadProgress()
-    local success, progress = ProgressManager.readProgressFromFile()    if success and progress then
+    local success, progress = ProgressManager.readProgressFromFile()
+    if success and progress then
         currentProgress = progress
         EventManager.emit(Events.PROGRESS_MANAGER.PROGRESS_LOADED, currentProgress)
         return true
@@ -73,11 +73,11 @@ function ProgressManager.applyProgressToGame()
     if not GameModeModel.bIsRogueMode() then
         return false
     end
-    
-    GameModeModel.setCurrentRoundIndex(currentProgress.currentRound)    
+
+    GameModeModel.setCurrentRoundIndex(currentProgress.currentRound)
     GameModel.setScore(currentProgress.score or 0)
     GameModel.setSetsFound(currentProgress.setsFound or 0)
-    
+
     EventManager.emit(Events.PROGRESS_MANAGER.PROGRESS_APPLIED, currentProgress)
     return true
 end
@@ -92,7 +92,7 @@ function ProgressManager.markRoundCompleted(roundIndex)
     if not currentProgress.completedRounds then
         currentProgress.completedRounds = {}
     end
-    
+
     -- Add to completed rounds if not already there
     local bAlreadyCompleted = false
     for _, completedRound in ipairs(currentProgress.completedRounds) do
@@ -101,10 +101,10 @@ function ProgressManager.markRoundCompleted(roundIndex)
             break
         end
     end
-      if not bAlreadyCompleted then
+    if not bAlreadyCompleted then
         table.insert(currentProgress.completedRounds, roundIndex)
     end
-    
+
     EventManager.emit(Events.PROGRESS_MANAGER.ROUND_COMPLETED, roundIndex)
 end
 
@@ -113,7 +113,7 @@ function ProgressManager.isRoundCompleted(roundIndex)
     if not currentProgress.completedRounds then
         return false
     end
-    
+
     for _, completedRound in ipairs(currentProgress.completedRounds) do
         if completedRound == roundIndex then
             return true
@@ -129,8 +129,9 @@ function ProgressManager.resetProgress()
         score = 0,
         setsFound = 0,
         completedRounds = {},
-        unlocked = true    }
-    
+        unlocked = true
+    }
+
     ProgressManager.deleteProgressFile()
     EventManager.emit(Events.PROGRESS_MANAGER.PROGRESS_RESET)
 end
@@ -148,24 +149,19 @@ end
 
 -- Write progress to file (simple format)
 function ProgressManager.writeProgressToFile(progress)
-    local content = string.format(
-        "currentRound=%d\nscore=%d\nsetsFound=%d\nlastSaved=%d\ncompletedRounds=%s",
-        progress.currentRound,
-        progress.score,
-        progress.setsFound,
-        progress.lastSaved or os.time(),
-        table.concat(progress.completedRounds or {}, ",")
-    )
-    
+    local content = string.format("currentRound=%d\nscore=%d\nsetsFound=%d\nlastSaved=%d\ncompletedRounds=%s",
+        progress.currentRound, progress.score, progress.setsFound, progress.lastSaved or os.time(),
+        table.concat(progress.completedRounds or {}, ","))
+
     local success, err = pcall(function()
         love.filesystem.write(SAVE_FILE, content)
     end)
-    
+
     if not success then
         print("Failed to write progress file: " .. tostring(err))
         return false
     end
-    
+
     return true
 end
 
@@ -174,15 +170,15 @@ function ProgressManager.readProgressFromFile()
     if not love.filesystem.getInfo(SAVE_FILE) then
         return false, nil -- File doesn't exist
     end
-    
+
     local success, content = pcall(love.filesystem.read, SAVE_FILE)
     if not success then
         print("Failed to read progress file")
         return false, nil
     end
-    
+
     local progress = {}
-    
+
     -- Parse simple key=value format
     for line in content:gmatch("[^\r\n]+") do
         local key, value = line:match("([^=]+)=(.+)")
@@ -202,12 +198,13 @@ function ProgressManager.readProgressFromFile()
             end
         end
     end
-    
+
     return true, progress
 end
 
 -- Delete progress file
-function ProgressManager.deleteProgressFile()    if love.filesystem.getInfo(SAVE_FILE) then
+function ProgressManager.deleteProgressFile()
+    if love.filesystem.getInfo(SAVE_FILE) then
         local success = pcall(love.filesystem.remove, SAVE_FILE)
         if success then
             EventManager.emit(Events.PROGRESS_MANAGER.PROGRESS_DELETED)

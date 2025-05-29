@@ -1,5 +1,4 @@
 -- Card Model - Data structure for cards separated from rendering
-
 local CardModel = {}
 CardModel.__index = CardModel
 
@@ -12,7 +11,7 @@ function CardModel.create(color, shape, number, fill)
     -- Generate a unique ID for this card
     local id = nextCardId
     nextCardId = nextCardId + 1
-    
+
     -- Store the card's data internally
     cardObjects[id] = {
         id = id,
@@ -22,9 +21,11 @@ function CardModel.create(color, shape, number, fill)
         fill = fill,
         bIsSelected = false
     }
-    
+
     -- Return a lightweight reference to this card
-    return { _cardId = id }
+    return {
+        _cardId = id
+    }
 end
 
 -- Get a card's attributes

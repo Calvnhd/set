@@ -1,5 +1,4 @@
 -- Game Model - Centralized game state container
-
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
 
@@ -12,15 +11,15 @@ local BOARD_SIZE = BOARD_COLUMNS * BOARD_ROWS
 
 -- Game state
 local gameState = {
-    board = {},  -- Cards on the board
-    discardedCards = {},  -- Cards that have been discarded
-    hintCards = {},  -- Indices of cards in a valid set for hint
+    board = {}, -- Cards on the board
+    discardedCards = {}, -- Cards that have been discarded
+    hintCards = {}, -- Indices of cards in a valid set for hint
     score = 0,
     bHintIsActive = false,
     bGameEnded = false,
     -- Round-based state
-    setsFound = 0,  -- Number of valid sets found in current round
-    currentSetSize = 3  -- Current required set size
+    setsFound = 0, -- Number of valid sets found in current round
+    currentSetSize = 3 -- Current required set size
 }
 
 -- Initialize/reset game state
@@ -30,14 +29,15 @@ function GameModel.reset()
     for i = 1, BOARD_SIZE do
         gameState.board[i] = nil
     end
-    
+
     gameState.discardedCards = {}
-    gameState.hintCards = {}    gameState.score = 0
+    gameState.hintCards = {}
+    gameState.score = 0
     gameState.bHintIsActive = false
     gameState.bGameEnded = false
     gameState.setsFound = 0
     gameState.currentSetSize = 3
-    
+
     EventManager.emit(Events.GAME.RESET)
 end
 
@@ -46,14 +46,14 @@ function GameModel.configureBoardSize(columns, rows)
     BOARD_COLUMNS = columns
     BOARD_ROWS = rows
     BOARD_SIZE = BOARD_COLUMNS * BOARD_ROWS
-    
+
     -- Resize board array if needed
     local newBoard = {}
     for i = 1, BOARD_SIZE do
         newBoard[i] = gameState.board[i] or nil
     end
     gameState.board = newBoard
-      EventManager.emit(Events.BOARD.SIZE_CHANGED, BOARD_COLUMNS, BOARD_ROWS, BOARD_SIZE)
+    EventManager.emit(Events.BOARD.SIZE_CHANGED, BOARD_COLUMNS, BOARD_ROWS, BOARD_SIZE)
 end
 
 -- Set the current required set size
@@ -82,7 +82,8 @@ function GameModel.getCardAtPosition(index)
     return nil
 end
 
-function GameModel.removeCardAtPosition(index)    if index >= 1 and index <= BOARD_SIZE and gameState.board[index] then
+function GameModel.removeCardAtPosition(index)
+    if index >= 1 and index <= BOARD_SIZE and gameState.board[index] then
         local cardRef = gameState.board[index]
         gameState.board[index] = nil
         EventManager.emit(Events.BOARD.CARD_REMOVED, index, cardRef)
@@ -120,7 +121,7 @@ end
 
 function GameModel.setScore(newScore)
     local oldScore = gameState.score
-    gameState.score = math.max(0, newScore)  -- Ensure score doesn't go below 0
+    gameState.score = math.max(0, newScore) -- Ensure score doesn't go below 0
     EventManager.emit(Events.SCORE.CHANGED, gameState.score, oldScore)
 end
 
@@ -137,7 +138,8 @@ function GameModel.getSetsFound()
     return gameState.setsFound
 end
 
-function GameModel.incrementSetsFound()    gameState.setsFound = gameState.setsFound + 1
+function GameModel.incrementSetsFound()
+    gameState.setsFound = gameState.setsFound + 1
     EventManager.emit(Events.GAME.SETS_FOUND_CHANGED, gameState.setsFound)
 end
 
@@ -152,7 +154,8 @@ function GameModel.resetSetsFound()
 end
 
 -- Hint management
-function GameModel.setHint(cardIndices)    gameState.hintCards = cardIndices or {}
+function GameModel.setHint(cardIndices)
+    gameState.hintCards = cardIndices or {}
     gameState.bHintIsActive = #gameState.hintCards > 0
     EventManager.emit(Events.HINT.CHANGED, gameState.hintCards, gameState.bHintIsActive)
 end
@@ -217,7 +220,7 @@ end
 function GameModel.getSelectedCards()
     local selected = {}
     local CardModel = require('models.cardModel')
-    
+
     for i = 1, BOARD_SIZE do
         local cardRef = gameState.board[i]
         if cardRef and CardModel.isSelected(cardRef) then

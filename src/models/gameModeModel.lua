@@ -1,5 +1,4 @@
 -- Game Mode Model - Track current game mode and configuration
-
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
 
@@ -21,7 +20,7 @@ function GameModeModel.initialize()
     currentMode = GAME_MODES.CLASSIC
     currentConfig = nil
     currentRoundIndex = 1
-    
+
     EventManager.emit(Events.GAME_MODE.INITIALIZED, currentMode)
 end
 
@@ -30,10 +29,10 @@ function GameModeModel.setMode(mode)
     if mode == GAME_MODES.CLASSIC or mode == GAME_MODES.ROGUE then
         local previousMode = currentMode
         currentMode = mode
-          -- Reset configuration when changing modes
+        -- Reset configuration when changing modes
         currentConfig = nil
         currentRoundIndex = 1
-        
+
         EventManager.emit(Events.GAME_MODE.CHANGED, currentMode, previousMode)
     else
         error("Invalid game mode: " .. tostring(mode))

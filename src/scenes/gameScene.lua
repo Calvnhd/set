@@ -1,5 +1,4 @@
 -- Game Scene - Main gameplay scene with full game functionality
-
 local BoardView = require('views.boardView')
 local GameUIView = require('views.gameUIView')
 local CardView = require('views.cardView')
@@ -18,7 +17,7 @@ function GameScene.enter(gameMode)
     GameController.initialize()
     -- Setup new game with specified mode
     GameController.setupNewGame(gameMode)
-      -- Subscribe to scene transition events
+    -- Subscribe to scene transition events
     EventManager.subscribe(Events.GAME.REQUEST_MENU_TRANSITION, GameScene.handleMenuTransition)
 end
 
@@ -50,7 +49,7 @@ end
 -- Draw all active animations
 function GameScene.drawAnimations()
     local animations = AnimationService.getAnimations()
-    
+
     for _, anim in ipairs(animations) do
         if anim.type == "burn" then
             CardView.drawBurningCard(anim)

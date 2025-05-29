@@ -1,5 +1,4 @@
 -- State Machine - Formal state management with transition validation
-
 local StateMachine = {}
 StateMachine.__index = StateMachine
 
@@ -22,35 +21,36 @@ function StateMachine:addTransition(fromState, toState, condition)
     if not self.transitions[fromState] then
         self.transitions[fromState] = {}
     end
-    self.transitions[fromState][toState] = condition or function() return true end
+    self.transitions[fromState][toState] = condition or function()
+        return true
+    end
 end
 
 -- Transition to a new state
 function StateMachine:transitionTo(newState)
     -- Check if transition is valid
-    if self.transitions[self.currentState] and 
-       self.transitions[self.currentState][newState] and
-       self.transitions[self.currentState][newState]() then
-        
+    if self.transitions[self.currentState] and self.transitions[self.currentState][newState] and
+        self.transitions[self.currentState][newState]() then
+
         -- Exit current state
         local currentStateObj = self.states[self.currentState]
         if currentStateObj and currentStateObj.exit then
             currentStateObj.exit()
         end
-        
+
         -- Change state
         local oldState = self.currentState
         self.currentState = newState
-        
+
         -- Enter new state
         local newStateObj = self.states[newState]
         if newStateObj and newStateObj.enter then
             newStateObj.enter()
         end
-        
+
         return true
     end
-    
+
     return false -- Transition not allowed
 end
 

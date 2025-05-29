@@ -1,5 +1,4 @@
 -- Developer Tools - Testing and debugging utilities for rogue mode
-
 local GameModeModel = require('models.gameModeModel')
 local RoundManager = require('services.roundManager')
 local ProgressManager = require('services.progressManager')
@@ -34,14 +33,16 @@ end
 
 -- Jump to specific round
 function DevTools.jumpToRound(roundIndex)
-    if not bDevModeEnabled then return false end
-    
+    if not bDevModeEnabled then
+        return false
+    end
+
     roundIndex = tonumber(roundIndex)
     if not roundIndex or roundIndex < 1 or roundIndex > RoundManager.getTotalRounds() then
         print("Invalid round index: " .. tostring(roundIndex))
         return false
     end
-    
+
     GameModeModel.setCurrentRoundIndex(roundIndex)
     local config = RoundManager.startRound(roundIndex)
     print("Jumped to round " .. roundIndex .. ": " .. (config and config.name or "Unknown"))
@@ -50,14 +51,16 @@ end
 
 -- Set current score
 function DevTools.setScore(score)
-    if not bDevModeEnabled then return false end
-    
+    if not bDevModeEnabled then
+        return false
+    end
+
     score = tonumber(score)
     if not score then
         print("Invalid score value")
         return false
     end
-    
+
     GameModel.setScore(score)
     print("Score set to: " .. score)
     return true
@@ -65,14 +68,16 @@ end
 
 -- Complete current round instantly
 function DevTools.completeCurrentRound()
-    if not bDevModeEnabled then return false end
-    
+    if not bDevModeEnabled then
+        return false
+    end
+
     local config = RoundManager.getCurrentRoundConfig()
     if not config then
         print("No active round")
         return false
     end
-    
+
     if config.endCondition.type == "score" then
         GameModel.setScore(config.endCondition.target)
         print("Score set to target: " .. config.endCondition.target)
@@ -80,14 +85,16 @@ function DevTools.completeCurrentRound()
         GameModel.setSetsFound(config.endCondition.target)
         print("Sets found set to target: " .. config.endCondition.target)
     end
-    
+
     return true
 end
 
 -- Reset all progress
 function DevTools.resetProgress()
-    if not bDevModeEnabled then return false end
-    
+    if not bDevModeEnabled then
+        return false
+    end
+
     ProgressManager.resetProgress()
     GameModeModel.setCurrentRoundIndex(1)
     GameModel.reset()
@@ -97,15 +104,17 @@ end
 
 -- Validate all round configurations
 function DevTools.validateAllConfigurations()
-    if not bDevModeEnabled then return false end
-    
+    if not bDevModeEnabled then
+        return false
+    end
+
     print("Validating round configurations...")
-    
+
     -- This would need access to the round definitions
     -- For now, we'll just validate the current round manager state
     local totalRounds = RoundManager.getTotalRounds()
     print("Total rounds found: " .. totalRounds)
-    
+
     for i = 1, totalRounds do
         local config = RoundManager.getCurrentRoundConfig()
         if config then
@@ -119,57 +128,63 @@ function DevTools.validateAllConfigurations()
             print("  Round " .. i .. ": No configuration found")
         end
     end
-    
+
     return true
 end
 
 -- Show current game state information
 function DevTools.showGameInfo()
-    if not bDevModeEnabled then return false end
-    
+    if not bDevModeEnabled then
+        return false
+    end
+
     print("\n=== GAME STATE INFO ===")
     print("Mode: " .. GameModeModel.getCurrentMode())
     print("Round: " .. GameModeModel.getCurrentRoundIndex() .. "/" .. RoundManager.getTotalRounds())
     print("Score: " .. GameModel.getScore())
     print("Sets Found: " .. GameModel.getSetsFound())
     print("Current Set Size: " .. GameModel.getCurrentSetSize())
-    
+
     local boardCols, boardRows = GameModel.getBoardDimensions()
     print("Board Size: " .. boardCols .. "x" .. boardRows)
-    
+
     local config = RoundManager.getCurrentRoundConfig()
     if config then
         print("Round Name: " .. config.name)
         print("End Condition: " .. config.endCondition.type .. " = " .. config.endCondition.target)
-        
+
         if RoundManager.isRoundComplete(GameModel.getScore(), GameModel.getSetsFound()) then
             print("Round Status: COMPLETE")
         else
             print("Round Status: IN PROGRESS")
         end
     end
-    
+
     local progress = ProgressManager.getProgressSummary()
     print("Completed Rounds: " .. progress.completedRounds)
     print("Has Saved Progress: " .. (ProgressManager.bHasSavedProgress() and "YES" or "NO"))
     print("========================\n")
-    
+
     return true
 end
 
 -- Process developer command
 function DevTools.processCommand(commandLine)
-    if not bDevModeEnabled then return false end
-    
+    if not bDevModeEnabled then
+        return false
+    end
+
     local parts = {}
     for part in commandLine:gmatch("%S+") do
         table.insert(parts, part)
     end
-    
-    if #parts == 0 then return false end
-    
+
+    if #parts == 0 then
+        return false
+    end
+
     local command = parts[1]:lower()
-    
+
     if command == "/round" and parts[2] then
         return DevTools.jumpToRound(parts[2])
     elseif command == "/score" and parts[2] then
@@ -190,10 +205,12 @@ end
 
 -- Create test round configuration
 function DevTools.createTestRound(name)
-    if not bDevModeEnabled then return nil end
-    
+    if not bDevModeEnabled then
+        return nil
+    end
+
     name = name or "Test Round"
-    
+
     local testRound = {
         id = "test_" .. tostring(math.random(1000, 9999)),
         name = name,
@@ -204,7 +221,10 @@ function DevTools.createTestRound(name)
             fill = {"empty", "solid"}
         },
         setSize = 2,
-        boardSize = {columns = 2, rows = 2},
+        boardSize = {
+            columns = 2,
+            rows = 2
+        },
         scoring = {
             validSet = 1,
             invalidSet = -1,
@@ -216,7 +236,7 @@ function DevTools.createTestRound(name)
             target = 3
         }
     }
-    
+
     local bValid, message = ConfigValidator.validateRoundConfig(testRound)
     if bValid then
         print("Test round created: " .. testRound.id)
@@ -229,25 +249,29 @@ end
 
 -- Benchmark round validation performance
 function DevTools.benchmarkValidation()
-    if not bDevModeEnabled then return false end
-    
+    if not bDevModeEnabled then
+        return false
+    end
+
     local testRound = DevTools.createTestRound("Benchmark Test")
-    if not testRound then return false end
-    
+    if not testRound then
+        return false
+    end
+
     local startTime = love.timer.getTime()
     local iterations = 1000
-    
+
     for i = 1, iterations do
         ConfigValidator.validateRoundConfig(testRound)
     end
-    
+
     local endTime = love.timer.getTime()
     local totalTime = endTime - startTime
     local avgTime = totalTime / iterations
-    
-    print(string.format("Validation benchmark: %d iterations in %.3fs (%.6fs per validation)",
-          iterations, totalTime, avgTime))
-    
+
+    print(string.format("Validation benchmark: %d iterations in %.3fs (%.6fs per validation)", iterations, totalTime,
+        avgTime))
+
     return true
 end
 
