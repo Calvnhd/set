@@ -13,7 +13,6 @@ function MenuScene.enter()
     -- Subscribe to input events
     EventManager.subscribe(Events.INPUT.KEY_PRESSED, MenuScene.keypressed)
     EventManager.subscribe(Events.INPUT.MOUSE_PRESSED, MenuScene.mousepressed)
-    Logger.trace("Menu scene subscribed to input events")
 end
 
 -- Exit the menu scene
@@ -22,7 +21,6 @@ function MenuScene.exit()
     -- Unsubscribe from events
     EventManager.unsubscribe(Events.INPUT.KEY_PRESSED, MenuScene.keypressed)
     EventManager.unsubscribe(Events.INPUT.MOUSE_PRESSED, MenuScene.mousepressed)
-    Logger.trace("Menu scene unsubscribed from input events")
 end
 
 -- Update menu (if needed for animations)
