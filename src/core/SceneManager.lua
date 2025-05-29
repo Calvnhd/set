@@ -6,6 +6,7 @@ local Logger = require('core.Logger')
 local EventRegistry = require('core.EventRegistry')
 local EventManager = require('core.EventManager')
 local SceneRegistry = require('scenes.SceneRegistry')
+local Colors = require('views.Colors')
 
 -- local variables
 local currentScene = nil
@@ -17,8 +18,7 @@ local registeredScenes = {}
 
 function SceneManager.initialize()
     Logger.trace("Initializing SceneManager")
-    -- Set background color
-    love.graphics.setBackgroundColor(0.34, 0.45, 0.47)
+    love.graphics.setBackgroundColor(Colors.MAP.BACKGROUND)
     -- Register scenes
     SceneManager.registerScene(SceneRegistry.MENU.NAME, SceneRegistry.MENU.SCENE)
     SceneManager.registerScene(SceneRegistry.GAME.NAME, SceneRegistry.GAME.SCENE)
@@ -59,6 +59,34 @@ function SceneManager.changeScene(sceneName, ...)
 
     -- Enter new scene with parameters
     currentScene.enter(...)
+end
+
+-- Love2D callbacks from main
+-- Delegates to current scene
+function SceneManager.update(dt)
+    if currentScene and currentScene.update then
+        currentScene.update(dt)
+    end
+end
+function SceneManager.draw()
+    if currentScene and currentScene.draw then
+        currentScene.draw()
+    end
+end
+function SceneManager.keypressed(key)
+    if currentScene and currentScene.keypressed then
+        currentScene.keypressed(key)
+    end
+end
+function SceneManager.mousepressed(x, y, button)
+    if currentScene and currentScene.mousepressed then
+        currentScene.mousepressed(x, y, button)
+    end
+end
+function SceneManager.mousereleased(x, y, button)
+    if currentScene and currentScene.mousereleased then
+        currentScene.mousereleased(x, y, button)
+    end
 end
 
 return SceneManager
