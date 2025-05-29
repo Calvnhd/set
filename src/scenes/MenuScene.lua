@@ -7,7 +7,6 @@ local Events = require('core.EventRegistry')
 local Logger = require('core.Logger')
 local MenuView = require('views.MenuView')
 
-
 ---------------
 -- functions --
 ---------------
@@ -35,6 +34,13 @@ function MenuScene.keypressed(key)
 end
 function MenuScene.mousepressed(x, y, button)
     Logger.trace("Menu scene handling mouse press: (%d, %d) button %d", x, y, button)
+    if button == 1 then -- Left mouse button
+        if MenuView.isClassicButtonClicked(x, y) then
+            Logger.info("Classic mode button clicked")
+        elseif MenuView.isRogueButtonClicked(x, y) then
+            Logger.info("Rogue mode button clicked")
+        end
+    end
 end
 
 -- Update menu (if needed for animations)

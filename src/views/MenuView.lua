@@ -82,4 +82,16 @@ function MenuView.draw()
     love.graphics.printf("Progressive", rogueButton.x, rogueButton.y + 65, rogueButton.width, "center")
 end
 
+-- Check if classic mode button was clicked
+function MenuView.isClassicButtonClicked(x, y)
+    return x >= classicButton.x and x <= classicButton.x + classicButton.width and y >= classicButton.y and y <=
+               classicButton.y + classicButton.height
+end
+
+-- Check if rogue mode button was clicked
+function MenuView.isRogueButtonClicked(x, y)
+    return x >= rogueButton.x and x <= rogueButton.x + rogueButton.width and y >= rogueButton.y and y <= rogueButton.y +
+               rogueButton.height
+end
+
 return MenuView
