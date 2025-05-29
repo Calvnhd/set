@@ -4,7 +4,10 @@ local EventRegistry = {
     -- Input-related events from InputController
     INPUT = {},
     -- Scene management events
-    SCENE = {},
+    SCENE = {
+        CHANGE_TO_GAME = 'scene:changeToGame',
+        CHANGE_TO_MENU = 'scene:changeToMenu'
+    },
     -- Game-related events
     GAME = {},
     -- Deck-related events

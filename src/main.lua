@@ -1,12 +1,19 @@
-local Logger = require('core.logger')
+-- Main entry point for Set
+local Logger = require('core.Logger')
+local EventRegistry = require('core.EventRegistry')
+local EventManager = require('core.EventManager')
+local SceneManager = require('core.SceneManager')
+local SceneRegistry = require('scenes.SceneRegistry')
+
+---------------
+-- functions --
+---------------
 
 function love.load()
     -- Initialize logging system first
     Logger.initialize()
     Logger.info("Game starting up")
-    -- Set background color
-    love.graphics.setBackgroundColor(0.34, 0.45, 0.47)
-
+    SceneManager.initialize()
     Logger.info("Game initialization complete")
 end
 

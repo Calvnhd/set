@@ -1,5 +1,5 @@
-local Logger = require('core.logger')
-local EventRegistry = require('core.events')
+local Logger = require('core.Logger')
+local EventRegistry = require('core.EventRegistry')
 
 -- Event Manager - Publisher-subscriber pattern for decoupled communication
 local EventManager = {}
