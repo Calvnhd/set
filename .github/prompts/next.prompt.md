@@ -1,6 +1,16 @@
-# SPEC: Logging system
-- Create a logging system for this game
-- i want to be able to place log messages in code to output a formatted string to a log file
-- logs should be of level trace, detailed, warning, error
-- i should be able to turn logs off globally if required
-- logs should be written to /logs/. folder in this repo.  /logs/. should be added to .gitignore
+# SPEC: Consolidate game modes underlying logic
+- presently this game uses two different modes 
+- both of these modes should remain as options for the player to play and experience
+- however, the underlying logic of these modes should be the same
+- rogue mode
+    - rogue mode is played through a progressive set of rounds, where the rules change each time
+    - each round has a customizable set of rules, including card attributes and board size
+    - the game ends when there are no more round left to play
+- classic mode
+    - classic mode is one round with classic set rules
+    - classic mode should use all the same functions and logic as rogue mode with the following conditions
+        - one round only
+        - the round definition is the equivalent of classic set
+- by ensuring classic mode is effectively a 1 round special case of rogue mode, we can use the same logic to control the flow of the game
+- in particular, classic mode should use the same functions to detect round end, and therefore game end
+- presently, classic mode never ends.  This is a bug that should be fixed by this spec.
