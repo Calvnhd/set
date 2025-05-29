@@ -29,7 +29,7 @@ function GameUIView.drawDeckInfo()
     yOffset = yOffset + lineHeight
 
     -- Display rogue mode specific information
-    if GameModeModel.bIsRogueMode() then
+    if GameModeModel.isRogueMode() then
         GameUIView.drawRogueInfo(windowWidth - 250, yOffset)
     end
 end
@@ -117,7 +117,7 @@ function GameUIView.drawGameEndScreen()
 
     -- Different text for different modes
     local titleText, scoreText
-    if GameModeModel.bIsRogueMode() then
+    if GameModeModel.isRogueMode() then
         local progress = RoundManager.getRoundProgress()
         titleText = "Rogue Mode Complete!"
         scoreText = "Final Score: " .. score
@@ -148,7 +148,7 @@ end
 
 -- Draw round transition screen (for rogue mode)
 function GameUIView.drawRoundTransition()
-    if not GameModeModel.bIsRogueMode() then
+    if not GameModeModel.isRogueMode() then
         return
     end
 

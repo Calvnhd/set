@@ -151,9 +151,8 @@ function DevTools.showGameInfo()
     local config = RoundManager.getCurrentRoundConfig()
     if config then
         print("Round Name: " .. config.name)
-        print("End Condition: " .. config.endCondition.type .. " = " .. config.endCondition.target)
-
-        if RoundManager.isRoundComplete(GameModel.getScore(), GameModel.getSetsFound()) then
+        print("End Condition: Automatic (check if set cannot be formed)")
+        if RoundManager.IsRoundComplete() then
             print("Round Status: COMPLETE")
         else
             print("Round Status: IN PROGRESS")
@@ -162,7 +161,7 @@ function DevTools.showGameInfo()
 
     local progress = ProgressManager.getProgressSummary()
     print("Completed Rounds: " .. progress.completedRounds)
-    print("Has Saved Progress: " .. (ProgressManager.bHasSavedProgress() and "YES" or "NO"))
+    print("Has Saved Progress: " .. (ProgressManager.hasSavedProgress() and "YES" or "NO"))
     print("========================\n")
 
     return true

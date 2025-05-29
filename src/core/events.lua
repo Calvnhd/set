@@ -13,8 +13,7 @@ local Events = {
     SCENE = {
         CHANGE_TO_GAME = 'scene:changeToGame',
         CHANGE_TO_MENU = 'scene:changeToMenu'
-    },
-    -- Game-related events
+    },    -- Game-related events
     GAME = {
         RESET = 'game:reset',
         SET_SIZE_CHANGED = 'game:setSizeChanged',
@@ -22,7 +21,8 @@ local Events = {
         SETS_FOUND_CHANGED = 'game:setsFoundChanged',
         SETS_FOUND_RESET = 'game:setsFoundReset',
         REQUEST_MENU_TRANSITION = 'game:requestMenuTransition',
-        ENDED = 'game:ended'
+        ENDED = 'game:ended',
+        CLASSIC_COMPLETED = 'game:classicCompleted'
     },
 
     -- Deck-related events

@@ -169,14 +169,14 @@ function Tests.testGameModeModel()
 
         -- Test initial state
         assert_equal(GameModeModel.getCurrentMode(), GAME_MODES.CLASSIC, "Should start in classic mode")
-        assert_true(GameModeModel.bIsClassicMode(), "Should be in classic mode")
-        assert_false(GameModeModel.bIsRogueMode(), "Should not be in rogue mode")
+        assert_true(GameModeModel.isClassicMode(), "Should be in classic mode")
+        assert_false(GameModeModel.isRogueMode(), "Should not be in rogue mode")
 
         -- Test switching to rogue mode
         GameModeModel.setMode(GAME_MODES.ROGUE)
         assert_equal(GameModeModel.getCurrentMode(), GAME_MODES.ROGUE, "Should switch to rogue mode")
-        assert_false(GameModeModel.bIsClassicMode(), "Should not be in classic mode")
-        assert_true(GameModeModel.bIsRogueMode(), "Should be in rogue mode")
+        assert_false(GameModeModel.isClassicMode(), "Should not be in classic mode")
+        assert_true(GameModeModel.isRogueMode(), "Should be in rogue mode")
 
         -- Test round index
         assert_equal(GameModeModel.getCurrentRoundIndex(), 1, "Should start at round 1")
@@ -196,12 +196,58 @@ function Tests.testRoundManager()
         -- Test starting a round
         local config = RoundManager.startRound(1)
         assert_true(config ~= nil, "Should return configuration for round 1")
-        assert_equal(config.id, "tutorial_1", "Should start with tutorial_1")
+        assert_equal(config.id, "tutorial_1", "Should start with tutorial_1") -- Test round completion checking - we need to mock some conditions
+        -- Since the new round completion depends on card states, we'll use test spies
 
-        -- Test round completion checking
-        assert_false(RoundManager.isRoundComplete(0, 0), "Should not be complete with zero score/sets")
-        assert_true(RoundManager.isRoundComplete(config.endCondition.target, 0),
-            "Should be complete when target reached")
+        -- Mock case 1: Deck not empty, board has valid sets
+        local originalDeckIsEmpty = DeckModel.isEmpty
+        local originalHasValidSetOfSize = RulesService.hasValidSetOfSize
+        -- Mock deck not empty and board has valid sets - round should not be complete
+        DeckModel.isEmpty = function()
+            return false
+        end
+        RulesService.hasValidSetOfSize = function()
+            return true
+        end
+        assert_false(RoundManager.IsRoundComplete(), "Round should not be complete when valid sets exist")
+
+        -- Mock deck empty and less than 3 cards on board - round should be complete
+        DeckModel.isEmpty = function()
+            return true
+        end
+        local originalGetBoard = GameModel.getBoard
+        GameModel.getBoard = function()
+            return {
+                [1] = "card1",
+                [2] = "card2"
+            }
+        end
+        assert_true(RoundManager.IsRoundComplete(), "Round should be complete when deck empty and < 3 cards on board")
+
+        -- Mock deck empty but board has valid sets - round should not be complete
+        GameModel.getBoard = function()
+            return {
+                [1] = "card1",
+                [2] = "card2",
+                [3] = "card3"
+            }
+        end
+        RulesService.hasValidSetOfSize = function()
+            return true
+        end
+        assert_false(RoundManager.IsRoundComplete(),
+            "Round should not be complete when valid sets exist even with empty deck")
+
+        -- Mock deck empty and no valid sets - round should be complete
+        RulesService.hasValidSetOfSize = function()
+            return false
+        end
+        assert_true(RoundManager.IsRoundComplete(), "Round should be complete when no valid sets can be formed")
+
+        -- Restore original functions
+        DeckModel.isEmpty = originalDeckIsEmpty
+        RulesService.hasValidSetOfSize = originalHasValidSetOfSize
+        GameModel.getBoard = originalGetBoard
 
         -- Test advancement
         assert_true(RoundManager.gameHasMoreRounds(), "Should have more rounds available")
@@ -289,7 +335,7 @@ function Tests.testProgressManager()
         ProgressManager.resetProgress()
 
         -- Test initial state
-        assert_false(ProgressManager.bHasSavedProgress(), "Should not have saved progress initially")
+        assert_false(ProgressManager.hasSavedProgress(), "Should not have saved progress initially")
 
         -- Set up some game state
         GameModeModel.setMode(GameModeModel.getGameModes().ROGUE)
@@ -300,7 +346,7 @@ function Tests.testProgressManager()
         -- Save progress
         local saveSuccess = ProgressManager.saveProgress()
         assert_true(saveSuccess, "Should save progress successfully")
-        assert_true(ProgressManager.bHasSavedProgress(), "Should have saved progress")
+        assert_true(ProgressManager.hasSavedProgress(), "Should have saved progress")
 
         -- Reset state
         GameModeModel.setCurrentRoundIndex(1)

@@ -2,7 +2,11 @@
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
 local GameModeModel = require('models.gameModeModel')
+local GameModel = require('models.gameModel')
+local DeckModel = require('models.deckModel')
+local RulesService = require('services.rulesService')
 local ConfigValidator = require('services.configValidator')
+local RoundDefinitions = require('config.roundDefinitions')
 
 local RoundManager = {}
 
@@ -15,6 +19,31 @@ function RoundManager.initialize()
     -- Load round definitions
     RoundManager.loadRoundDefinitions()
     EventManager.emit(Events.ROUND_MANAGER.INITIALIZED)
+end
+
+-- Load classic game configuration
+function RoundManager.loadClassicConfig()
+    if not RoundDefinitions.classic or #RoundDefinitions.classic == 0 then
+        error("Classic mode configuration is missing")
+    end
+    
+    -- Use the classic configuration sequence
+    currentRoundSequence = RoundDefinitions.classic
+    
+    -- Return the configuration for the only round in classic mode
+    return currentRoundSequence[1]
+end
+
+-- Validate the classic configuration
+function RoundManager.validateClassicConfig()
+    if not RoundDefinitions.classic or #RoundDefinitions.classic == 0 then
+        return false, "Classic mode configuration is not defined"
+    end
+    
+    local config = RoundDefinitions.classic[1]
+    local bValid, message = ConfigValidator.validateRoundConfig(config)
+    
+    return bValid, message
 end
 
 -- Load round definitions from configuration
@@ -156,14 +185,66 @@ function RoundManager.startRound(roundIndex)
     return config
 end
 
-function RoundManager.isRoundComplete(currentScore, setsFound)
-    local board = GameModel.getBoard()
-    local bDeckEmpty = DeckModel.isEmpty()
-    local currentSetSize = GameModel.getCurrentSetSize()
-    local bNoValidSet = not RulesService.hasValidSetOfSize(board, currentSetSize)
+-- Check if the current round is complete
+function RoundManager.IsRoundComplete()
+    -- Debug: Checking round end condition...
+    -- A round is considered complete if:
+    -- 1. The deck is empty and there are less than 3 cards on board, or
+    -- 2. It is not possible to create a set with the remaining cards
 
-    if bDeckEmpty and bNoValidSet then
-        GameModel.setGameEnded(true)
+    local board = GameModel.getBoard()
+    local boardCards = {}
+    local boardCount = 0
+
+    -- Count cards on the board
+    for _, cardRef in pairs(board) do
+        if cardRef then
+            boardCount = boardCount + 1
+            table.insert(boardCards, cardRef)
+        end
+    end    -- Condition 1: Deck is empty and less than 3 cards on board
+    local bDeckEmpty = DeckModel.isEmpty()
+    if bDeckEmpty and boardCount < 3 then
+        -- Debug: Round end: less than 3 cards remain
+        return true
+    end
+
+    -- Condition 2: Check if no valid set is possible with all remaining cards
+    local currentSetSize = GameModel.getCurrentSetSize()
+
+    -- First check board cards only
+    local bBoardHasSet = RulesService.hasValidSetOfSize(board, currentSetSize)
+    if bBoardHasSet then
+        -- Board already has a valid set, round is not complete
+        return false
+    end    -- If deck is empty, we've already checked the board
+    if bDeckEmpty then
+        -- Debug: Round end: Deck is empty and no valid sets remain
+        return true
+    end
+
+    -- Check if a valid set can be formed with board + deck cards
+    local allRemainingCards = {}
+    -- Add board cards
+    for _, cardRef in pairs(boardCards) do
+        table.insert(allRemainingCards, cardRef)
+    end
+    -- Add deck cards
+    local deckCards = DeckModel.getCards()
+    for _, cardRef in pairs(deckCards) do
+        table.insert(allRemainingCards, cardRef)
+    end
+    -- Create a virtual board with all remaining cards for checking
+    local virtualBoard = {}
+    for i, cardRef in ipairs(allRemainingCards) do
+        virtualBoard[i] = cardRef
+    end
+    -- Check if any set is possible with all remaining cards
+    local bHasPossibleSet = RulesService.hasValidSetOfSize(virtualBoard, currentSetSize)    if bHasPossibleSet then
+        return false
+    else
+        -- Debug: Round end: No valid sets remain in combined cards from board and deck
+        return true
     end
 end
 

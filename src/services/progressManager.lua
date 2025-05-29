@@ -26,7 +26,7 @@ end
 
 -- Save current game progress
 function ProgressManager.saveProgress()
-    if not GameModeModel.bIsRogueMode() then
+    if not GameModeModel.isRogueMode() then
         return -- Only save progress in rogue mode
     end
 
@@ -70,7 +70,7 @@ end
 
 -- Apply loaded progress to game state
 function ProgressManager.applyProgressToGame()
-    if not GameModeModel.bIsRogueMode() then
+    if not GameModeModel.isRogueMode() then
         return false
     end
 
@@ -215,7 +215,7 @@ function ProgressManager.deleteProgressFile()
 end
 
 -- Check if save file exists
-function ProgressManager.bHasSavedProgress()
+function ProgressManager.hasSavedProgress()
     return love.filesystem.getInfo(SAVE_FILE) ~= nil
 end
 

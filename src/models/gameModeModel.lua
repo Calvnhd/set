@@ -11,7 +11,7 @@ local GAME_MODES = {
 }
 
 -- Current game mode state
-local currentMode = GAME_MODES.CLASSIC
+local currentMode = nil
 local currentConfig = nil
 local currentRoundIndex = 1
 
@@ -45,12 +45,12 @@ function GameModeModel.getCurrentMode()
 end
 
 -- Check if currently in classic mode
-function GameModeModel.bIsClassicMode()
+function GameModeModel.isClassicMode()
     return currentMode == GAME_MODES.CLASSIC
 end
 
 -- Check if currently in rogue mode
-function GameModeModel.bIsRogueMode()
+function GameModeModel.isRogueMode()
     return currentMode == GAME_MODES.ROGUE
 end
 

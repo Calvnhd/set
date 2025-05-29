@@ -1,6 +1,30 @@
 -- Round Definitions Configuration - Define round sequences for rogue mode
 local RoundDefinitions = {}
 
+-- Classic Set configuration (for standard play)
+RoundDefinitions.classic = {{
+    id = "classic_set",
+    name = "Classic Set",
+    description = "Traditional Set rules with all attributes",
+    attributes = {
+        number = {1, 2, 3},
+        color = {"green", "blue", "red"},
+        shape = {"diamond", "oval", "squiggle"},
+        fill = {"empty", "solid", "stripes"}
+    },
+    setSize = 3,
+    boardSize = {columns = 4, rows = 3},
+    scoring = {
+        validSet = 1,
+        invalidSet = -1,
+        noSetCorrect = 1,
+        noSetIncorrect = -1
+    },
+    endCondition = {
+        type = "automatic" -- Game ends when no more sets can be formed
+    }
+}}
+
 -- Tutorial sequence with progressive attribute introduction
 RoundDefinitions.tutorial = {{
     id = "tutorial_1",

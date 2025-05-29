@@ -49,9 +49,22 @@ end
 -- Setup classic mode game
 function GameController.setupClassicGame()
     GameModel.reset()
-    DeckModel.create()
+    
+    -- Load classic mode configuration
+    local config = RoundManager.loadClassicConfig()
+    GameModeModel.setCurrentRoundIndex(1)
+    GameModeModel.setCurrentConfig(config)
+    
+    -- Apply configuration
+    GameController.applyRoundConfiguration(config)
+    
+    -- Create deck based on configuration
+    DeckModel.createFromConfig(config)
     DeckModel.shuffle()
     GameController.dealInitialCards()
+    
+    -- Check initial board state
+    GameController.checkRoundCompletion()
 end
 
 -- Setup rogue mode game
@@ -95,8 +108,11 @@ function GameController.handleRoundStarted(config, roundIndex)
 
     -- Clear board and deal new cards
     GameModel.reset()
-    GameController.applyRoundConfiguration(config) -- Reapply after reset
+    GameController.applyRoundConfiguration(config) 
+    -- Reapply after reset
     GameController.dealInitialCards()
+    -- this ensures that the round conditions actually make sense
+    GameController.checkRoundCompletion()
 end
 
 -- Handle all rounds complete
@@ -192,20 +208,14 @@ function GameController.processSelectedCards()
             cardRefs[i] = board[idx]
         end
 
-        local bIsValid, message = RulesService.validateSelectedCardsOfSize(selectedCards, board, currentSetSize)
-
-        if bIsValid then
+        local bIsValid, message = RulesService.validateSelectedCardsOfSize(selectedCards, board, currentSetSize)        if bIsValid then
             -- Valid set - remove cards and increment score
             GameController.removeValidSet(selectedCards)
             GameModel.incrementScore()
             GameModel.incrementSetsFound()
 
-            -- Check for round completion in rogue mode
-            if GameModeModel.bIsRogueMode() then
-                GameController.checkRoundCompletion()
-            else
-                GameController.checkGameEnd()
-            end
+            -- Check for round completion in both modes
+            GameController.checkRoundCompletion()
         else
             -- Invalid set - animate flash red and decrement score
             GameController.animateInvalidSet(selectedCards)
@@ -260,13 +270,14 @@ function GameController.drawCard()
 
     if not emptyPosition then
         return -- No empty positions
-    end
-
-    local cardRef = DeckModel.takeCard()
+    end    local cardRef = DeckModel.takeCard()
     if cardRef then
         GameModel.setCardAtPosition(emptyPosition, cardRef)
         -- Reset hint state when board changes
         GameModel.clearHint()
+        
+        -- Check if this card draw results in round completion
+        GameController.checkRoundCompletion()
     end
 end
 
@@ -336,7 +347,6 @@ function GameController.burnIncorrectCards(validSet)
                 animationsStarted = animationsStarted + 1
                 if animationsStarted == totalAnimations then
                     GameModel.clearHint()
-                    GameController.checkGameEnd()
                 end
             end)
     end
@@ -382,9 +392,7 @@ function GameController.handleCorrectNoSet()
             end
         end
     end
-
     GameModel.clearHint()
-    GameController.checkGameEnd()
 end
 
 -- Clear all card selections
@@ -402,35 +410,30 @@ function GameController.clearCardSelection()
     EventManager.emit(Events.BOARD.CARD_ALL_DESELECTED)
 end
 
--- Check if the current round is complete (rogue mode)
-function GameController.checkRoundCompletion()
-    local currentScore = GameModel.getScore()
-    local setsFound = GameModel.getSetsFound()
-
-    if RoundManager.isRoundComplete(currentScore, setsFound) then
-        -- Mark round as completed and save progress
-        local currentRound = GameModeModel.getCurrentRoundIndex()
-        ProgressManager.markRoundCompleted(currentRound)
-        ProgressManager.saveProgress()
-
-        if RoundManager.gameHasMoreRounds() then
-            -- Advance to next round
-            local nextConfig = RoundManager.advanceToNextRound()
-            -- The handleRoundStarted event will be triggered automatically
-        else
-            -- All rounds completed
+-- Check if the current round is complete
+function GameController.checkRoundCompletion() 
+    if RoundManager.IsRoundComplete() then
+        if GameModeModel.isClassicMode() then
+            -- Classic mode only has one round, so end the game when complete
             GameModel.setGameEnded(true)
+            EventManager.emit(Events.GAME.CLASSIC_COMPLETED)
+        else
+            -- Rogue mode progression
+            local currentRound = GameModeModel.getCurrentRoundIndex()
+            ProgressManager.markRoundCompleted(currentRound)
             ProgressManager.saveProgress()
-        end
-    else
-        -- Round not complete, check for normal game end conditions
-        GameController.checkGameEnd()
-    end
-end
 
--- Check if the game has ended
-function GameController.checkGameEnd()
-    return false
+            if RoundManager.gameHasMoreRounds() then
+                -- Advance to next round
+                local nextConfig = RoundManager.advanceToNextRound()
+                -- The handleRoundStarted event will be triggered automatically
+            else
+                -- All rounds completed
+                GameModel.setGameEnded(true)
+                ProgressManager.saveProgress()
+            end
+        end
+    end
 end
 
 -- Handle animation completion
