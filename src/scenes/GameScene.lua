@@ -25,7 +25,14 @@ function GameScene.enter(gameMode)
 end
 
 function GameScene.exit()
-    Logger.info("Entering game scene")
+    Logger.info("Exiting game scene")
+end
+
+function GameScene.onKeyPressed(key)
+    Logger.trace("Game scene handling key: %s", key)
+    if key == "escape" then
+        love.event.quit()
+    end
 end
 
 return GameScene
