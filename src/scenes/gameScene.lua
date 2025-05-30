@@ -1,22 +1,13 @@
--- Game Scene - Main gameplay scene with full game functionality
 local BoardView = require('views.boardView')
 local GameUIView = require('views.gameUIView')
 local CardView = require('views.cardView')
 local GameController = require('controllers.gameController')
 local AnimationService = require('services.animationService')
-local EventManager = require('core.eventManager')
-local Events = require('core.events')
-
-local GameScene = {}
 
 -- Enter the game scene
 function GameScene.enter(gameMode)
     -- Load card images
     CardView.loadImages()
-    -- Initialize game controller
-    GameController.initialize()
-    -- Setup new game with specified mode
-    GameController.setupNewGame(gameMode)
     -- Subscribe to scene transition events
     EventManager.subscribe(Events.GAME.REQUEST_MENU_TRANSITION, GameScene.handleMenuTransition)
 end
@@ -63,5 +54,3 @@ end
 function GameScene.handleMenuTransition()
     EventManager.emit(Events.SCENE.CHANGE_TO_MENU)
 end
-
-return GameScene

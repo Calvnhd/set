@@ -1,8 +1,7 @@
--- Game Controller - Game logic coordination between models/services/views
+
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
 local GameModel = require('models.gameModel')
-local GameModeModel = require('models.gameModeModel')
 local DeckModel = require('models.deckModel')
 local CardModel = require('models.cardModel')
 local RulesService = require('services.rulesService')
@@ -12,7 +11,6 @@ local AnimationService = require('services.animationService')
 local BoardView = require('views.boardView')
 local Events = require('core.events')
 
-local GameController = {}
 
 -- Initialize the game controller
 function GameController.initialize()
@@ -24,26 +22,8 @@ function GameController.initialize()
     EventManager.subscribe(Events.ROUND_MANAGER.ALL_ROUNDS_COMPLETE, GameController.handleAllRoundsComplete)
 
     -- Initialize supporting services
-    GameModeModel.initialize()
     RoundManager.initialize()
     ProgressManager.initialize()
-end
-
--- Setup a new game with specified mode
-function GameController.setupNewGame(gameMode)
-    gameMode = gameMode or GameModeModel.getCurrentMode()
-
-    -- Set the game mode
-    local GAME_MODES = GameModeModel.getGameModes()
-    if gameMode == GAME_MODES.CLASSIC or gameMode == 'classic' then
-        GameModeModel.setMode(GAME_MODES.CLASSIC)
-        GameController.setupClassicGame()
-    elseif gameMode == GAME_MODES.ROGUE or gameMode == 'rogue' then
-        GameModeModel.setMode(GAME_MODES.ROGUE)
-        GameController.setupRogueGame()
-    else
-        error("Unknown game mode: " .. tostring(gameMode))
-    end
 end
 
 -- Setup classic mode game
@@ -441,4 +421,3 @@ function GameController.handleAnimationCompleted(animId, animType)
     -- Could add specific logic here if needed
 end
 
-return GameController

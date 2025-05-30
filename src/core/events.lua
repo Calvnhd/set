@@ -1,11 +1,4 @@
 local Events = {
-    -- Input-related events from InputController
-    INPUT = {
-        KEY_PRESSED = 'input:keypressed',
-        MOUSE_PRESSED = 'input:mousepressed',
-        MOUSE_RELEASED = 'input:mousereleased',
-        MOUSE_MOVED = 'input:mousemoved'
-    },
     -- Game-related events
     GAME = {
         RESET = 'game:reset',
