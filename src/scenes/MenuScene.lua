@@ -3,7 +3,7 @@ local MenuScene = {}
 
 -- required modules
 local EventManager = require('core.EventManager')
-local Events = require('core.EventRegistry')
+local Events = require('config.EventRegistry')
 local Logger = require('core.Logger')
 local MenuView = require('views.MenuView')
 

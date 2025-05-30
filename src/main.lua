@@ -1,9 +1,9 @@
 -- Main entry point for Set
 local Logger = require('core.Logger')
-local EventRegistry = require('core.EventRegistry')
+local EventRegistry = require('config.EventRegistry')
 local EventManager = require('core.EventManager')
 local SceneManager = require('core.SceneManager')
-local SceneRegistry = require('scenes.SceneRegistry')
+local SceneRegistry = require('config.SceneRegistry')
 
 ---------------
 -- functions --
