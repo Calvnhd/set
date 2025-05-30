@@ -21,19 +21,19 @@ function MenuScene.exit()
     Logger.trace("Exiting menu scene")
 end
 
--- Love2D callbacks 
--- Called via main -> SceneManager -> current scene
+-- Love2D callbacks. Called via main -> SceneManager -> current scene
 function MenuScene.draw()
     MenuView.draw()
 end
-function MenuScene.keypressed(key)
+-- Input events, delegated by SceneManager
+function MenuScene.onKeyPressed(key)
     Logger.trace("Menu scene handling key: %s", key)
     if key == "escape" then
         Logger.info("Escape key pressed. Quitting game")
         love.event.quit()
     end
 end
-function MenuScene.mousepressed(x, y, button)
+function MenuScene.onMousePressed(x, y, button)
     Logger.trace("Menu scene handling mouse press: (%d, %d) button %d", x, y, button)
     if button == 1 then -- Left mouse button
         if MenuView.isClassicButtonClicked(x, y) then
@@ -45,9 +45,5 @@ function MenuScene.mousepressed(x, y, button)
         end
     end
 end
-
--- Update menu (if needed for animations)
--- function MenuScene.update(dt)
--- end
 
 return MenuScene

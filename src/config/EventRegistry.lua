@@ -2,7 +2,10 @@
 -- This module provides a single source of truth for all event names used throughout the application
 local EventRegistry = {
     -- Input-related events from InputController
-    INPUT = {},
+    INPUT = {
+        KEY_PRESSED = 'input:keyPressed',
+        MOUSE_PRESSED = 'input:mousePressed'
+    },
     -- Scene management events
     SCENE = {
         REQUEST_CHANGE = 'scene:requestChange',

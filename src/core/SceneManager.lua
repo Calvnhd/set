@@ -24,6 +24,9 @@ function SceneManager.initialize()
     SceneManager.registerScene(Constants.SCENE.GAME, GameScene)
     -- Subscribe to scene change events
     EventManager.subscribe(Events.SCENE.REQUEST_CHANGE, SceneManager.onSceneChangeRequested)
+    -- Subscribe to input events
+    EventManager.subscribe(Events.INPUT.KEY_PRESSED, SceneManager.onKeyPressed)
+    EventManager.subscribe(Events.INPUT.MOUSE_PRESSED, SceneManager.onMousePressed)
     -- Start with menu scene
     SceneManager.changeScene(Constants.SCENE.MENU)
 end
@@ -63,8 +66,7 @@ function SceneManager.changeScene(sceneName, ...)
     currentScene.enter(...)
 end
 
--- Love2D callbacks from main
--- Delegates to current scene
+-- Love2D callbacks from main, delegates to current scene
 function SceneManager.update(dt)
     if currentScene and currentScene.update then
         currentScene.update(dt)
@@ -75,19 +77,15 @@ function SceneManager.draw()
         currentScene.draw()
     end
 end
-function SceneManager.keypressed(key)
-    if currentScene and currentScene.keypressed then
-        currentScene.keypressed(key)
+-- input events, delegates to current scene
+function SceneManager.onKeyPressed(key)
+    if currentScene and currentScene.onKeyPressed then
+        currentScene.onKeyPressed(key)
     end
 end
-function SceneManager.mousepressed(x, y, button)
-    if currentScene and currentScene.mousepressed then
-        currentScene.mousepressed(x, y, button)
-    end
-end
-function SceneManager.mousereleased(x, y, button)
-    if currentScene and currentScene.mousereleased then
-        currentScene.mousereleased(x, y, button)
+function SceneManager.onMousePressed(x, y, button)
+    if currentScene and currentScene.onMousePressed then
+        currentScene.onMousePressed(x, y, button)
     end
 end
 

@@ -3,6 +3,7 @@ local Logger = require('core.Logger')
 local EventRegistry = require('config.EventRegistry')
 local EventManager = require('core.EventManager')
 local SceneManager = require('core.SceneManager')
+local InputController = require('controllers.InputController')
 
 ---------------
 -- functions --
@@ -27,19 +28,12 @@ end
 
 function love.keypressed(key)
     Logger.trace("Key pressed: %s", key)
-    SceneManager.keypressed(key)
-
+    InputController.keypressed(key)
 end
 
 function love.mousepressed(x, y, button)
     Logger.trace("Mouse pressed: (%d, %d) button %d", x, y, button)
-    SceneManager.mousepressed(x, y, button)
-
-end
-
-function love.mousereleased(x, y, button)
-    SceneManager.mousereleased(x, y, button)
-
+    InputController.mousepressed(x, y, button)
 end
 
 function love.quit()
