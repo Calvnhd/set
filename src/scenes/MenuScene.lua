@@ -38,10 +38,10 @@ function MenuScene.mousepressed(x, y, button)
     if button == 1 then -- Left mouse button
         if MenuView.isClassicButtonClicked(x, y) then
             Logger.info("Classic mode button clicked")
-            EventManager.emit(Events.SCENE.REQUEST_CHANGE, Constants.SCENE.GAME)
+            EventManager.emit(Events.SCENE.REQUEST_CHANGE, Constants.SCENE.GAME, Constants.GAME_MODE.CLASSIC)
         elseif MenuView.isRogueButtonClicked(x, y) then
             Logger.info("Rogue mode button clicked")
-            EventManager.emit(Events.SCENE.REQUEST_CHANGE, Constants.SCENE.GAME)
+            EventManager.emit(Events.SCENE.REQUEST_CHANGE, Constants.SCENE.GAME, Constants.GAME_MODE.ROGUE)
         end
     end
 end

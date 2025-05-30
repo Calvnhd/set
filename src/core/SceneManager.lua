@@ -36,13 +36,13 @@ function SceneManager.registerScene(sceneName, scene)
     Logger.info("Scene registered: %s", sceneName)
 end
 
-function SceneManager.onSceneChangeRequested(sceneName)
+function SceneManager.onSceneChangeRequested(sceneName, ...)
     if not sceneName then
         Logger.error("Scene change requested, but sceneName is nil")
         error("Scene change requested, but sceneName is nil")
     else
         Logger.info("Requested scene change to: " .. sceneName)
-        SceneManager.changeScene(sceneName)
+        SceneManager.changeScene(sceneName, ...)
     end
 end
 
@@ -54,14 +54,11 @@ function SceneManager.changeScene(sceneName, ...)
         error("Scene '" .. sceneName .. "' not found")
     end
     Logger.info("Changing scene to: %s", sceneName)
-
     -- Exit current scene
     if currentScene and currentScene.exit then
-        Logger.trace("Exiting current scene")
         currentScene.exit()
     end
     currentScene = newScene
-
     -- Enter new scene with parameters
     currentScene.enter(...)
 end
