@@ -3,9 +3,9 @@ local SceneManager = {}
 
 -- required modules
 local Logger = require('core.Logger')
-local EventRegistry = require('config.EventRegistry')
+local Events = require('config.EventRegistry')
 local EventManager = require('core.EventManager')
-local SceneRegistry = require('config.SceneRegistry')
+local Constants = require('config.Constants')
 local MenuScene = require('scenes.MenuScene')
 local GameScene = require('scenes.GameScene')
 
@@ -20,17 +20,12 @@ local registeredScenes = {}
 function SceneManager.initialize()
     Logger.trace("Initializing SceneManager")
     -- Register scenes
-    SceneManager.registerScene(SceneRegistry.MENU, MenuScene)
-    SceneManager.registerScene(SceneRegistry.GAME, GameScene)
+    SceneManager.registerScene(Constants.SCENE.MENU, MenuScene)
+    SceneManager.registerScene(Constants.SCENE.GAME, GameScene)
     -- Subscribe to scene change events
-    EventManager.subscribe(EventRegistry.SCENE.CHANGE_TO_GAME, function()
-        SceneManager.changeScene(SceneRegistry.GAME)
-    end)
-    EventManager.subscribe(EventRegistry.SCENE.CHANGE_TO_MENU, function()
-        SceneManager.changeScene(SceneRegistry.MENU)
-    end)
+    EventManager.subscribe(Events.SCENE.REQUEST_CHANGE, SceneManager.onSceneChangeRequested)
     -- Start with menu scene
-    SceneManager.changeScene(SceneRegistry.MENU)
+    SceneManager.changeScene(Constants.SCENE.MENU)
 end
 
 -- Register a scene
@@ -39,6 +34,16 @@ end
 function SceneManager.registerScene(sceneName, scene)
     registeredScenes[sceneName] = scene
     Logger.info("Scene registered: %s", sceneName)
+end
+
+function SceneManager.onSceneChangeRequested(sceneName)
+    if not sceneName then
+        Logger.error("Scene change requested, but sceneName is nil")
+        error("Scene change requested, but sceneName is nil")
+    else
+        Logger.info("Requested scene change to: " .. sceneName)
+        SceneManager.changeScene(sceneName)
+    end
 end
 
 -- Change to a new scene

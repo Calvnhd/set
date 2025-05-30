@@ -5,6 +5,7 @@ local EventRegistry = {
     INPUT = {},
     -- Scene management events
     SCENE = {
+        REQUEST_CHANGE = 'scene:requestChange',
         CHANGE_TO_GAME = 'scene:changeToGame',
         CHANGE_TO_MENU = 'scene:changeToMenu'
     },

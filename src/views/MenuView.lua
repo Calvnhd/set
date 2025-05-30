@@ -3,7 +3,7 @@ local MenuView = {}
 
 -- required modules
 local Logger = require('core.Logger')
-local Colors = require('views.Colors')
+local Colors = require('config.ColorRegistry')
 
 -----------------
 -- UI elements --
