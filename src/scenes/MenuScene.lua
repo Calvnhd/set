@@ -25,6 +25,7 @@ end
 function MenuScene.draw()
     MenuView.draw()
 end
+
 -- Input events, delegated by SceneManager
 function MenuScene.onKeyPressed(key)
     Logger.trace("Menu scene handling key: %s", key)

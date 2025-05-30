@@ -1,10 +1,16 @@
-local Logger = require('core.Logger')
-local EventRegistry = require('config.EventRegistry')
-
 -- Event Manager - Publisher-subscriber pattern for decoupled communication
 local EventManager = {}
 
+-- required modules
+local Logger = require('core.Logger')
+local EventRegistry = require('config.EventRegistry')
+
+-- local variables
 local listeners = {} -- Table to store event subscriptions
+
+---------------
+-- functions --
+---------------
 
 -- Verify if an event exists in the Events registry
 -- Returns true if the event name exists in the Events registry, false otherwise
@@ -33,7 +39,7 @@ end
 
 -- Subscribe to an event.  Adds a callback to the listeners table for a specific event
 function EventManager.subscribe(eventName, callback)
-        EventManager.checkEventExists(eventName)
+    EventManager.checkEventExists(eventName)
     if not listeners[eventName] then
         listeners[eventName] = {}
     end
