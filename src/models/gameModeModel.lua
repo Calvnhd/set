@@ -22,7 +22,7 @@ function GameModeModel.setMode(newMode)
     GameModeModel.resetState()
     if GameModeModel.checkModeExists(newMode) then
         state.currentMode = newMode
-    else 
+    else
         Logger.error("Error with newMode.  Setting mode to CLASSIC by default.")
         state = Constants.GAME_MODE.CLASSIC
     end
@@ -56,7 +56,5 @@ function GameModeModel.resetState()
     state.currentConfig = nil
     state.currentRoundIndex = 1
 end
-
-
 
 return GameModeModel
