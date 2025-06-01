@@ -1,11 +1,9 @@
 
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
-local GameModel = require('models.gameModel')
 local DeckModel = require('models.deckModel')
 local CardModel = require('models.cardModel')
 local RulesService = require('services.rulesService')
-local RoundManager = require('services.roundManager')
 local ProgressManager = require('services.progressManager')
 local AnimationService = require('services.animationService')
 local BoardView = require('views.boardView')
@@ -26,26 +24,7 @@ function GameController.initialize()
     ProgressManager.initialize()
 end
 
--- Setup classic mode game
-function GameController.setupClassicGame()
-    GameModel.reset()
-    
-    -- Load classic mode configuration
-    local config = RoundManager.loadClassicConfig()
-    GameModeModel.setCurrentRoundIndex(1)
-    GameModeModel.setCurrentConfig(config)
-    
-    -- Apply configuration
-    GameController.applyRoundConfiguration(config)
-    
-    -- Create deck based on configuration
-    DeckModel.createFromConfig(config)
-    DeckModel.shuffle()
-    GameController.dealInitialCards()
-    
-    -- Check initial board state
-    GameController.checkRoundCompletion()
-end
+
 
 -- Setup rogue mode game
 function GameController.setupRogueGame()
@@ -61,22 +40,7 @@ function GameController.setupRogueGame()
     GameController.dealInitialCards()
 end
 
--- Apply round configuration to game state
-function GameController.applyRoundConfiguration(config)
-    if not config then
-        return
-    end
 
-    -- Set board size
-    if config.boardSize then
-        GameModel.configureBoardSize(config.boardSize.columns, config.boardSize.rows)
-    end
-
-    -- Set required set size
-    if config.setSize then
-        GameModel.setCurrentSetSize(config.setSize)
-    end
-end
 
 -- Handle round started event
 function GameController.handleRoundStarted(config, roundIndex)
@@ -100,16 +64,7 @@ function GameController.handleAllRoundsComplete()
     GameModel.setGameEnded(true)
 end
 
--- Deal initial cards to the board
-function GameController.dealInitialCards()
-    local boardSize = GameModel.getBoardSize()
-    for i = 1, boardSize do
-        local cardRef = DeckModel.takeCard()
-        if cardRef then
-            GameModel.setCardAtPosition(i, cardRef)
-        end
-    end
-end
+
 
 -- Handle keyboard input
 function GameController.handleKeypress(key)

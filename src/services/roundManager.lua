@@ -11,156 +11,22 @@ local RoundDefinitions = require('config.roundDefinitions')
 local RoundManager = {}
 
 -- Round definitions storage
-local roundDefinitions = {}
-local currentRoundSequence = {}
 
--- Initialize the round manager
-function RoundManager.initialize()
-    -- Load round definitions
-    RoundManager.loadRoundDefinitions()
-    EventManager.emit(Events.ROUND_MANAGER.INITIALIZED)
-end
 
--- Load classic game configuration
-function RoundManager.loadClassicConfig()
-    if not RoundDefinitions.classic or #RoundDefinitions.classic == 0 then
-        error("Classic mode configuration is missing")
-    end
-    
-    -- Use the classic configuration sequence
-    currentRoundSequence = RoundDefinitions.classic
-    
-    -- Return the configuration for the only round in classic mode
-    return currentRoundSequence[1]
-end
+
 
 -- Validate the classic configuration
 function RoundManager.validateClassicConfig()
     if not RoundDefinitions.classic or #RoundDefinitions.classic == 0 then
         return false, "Classic mode configuration is not defined"
     end
-    
+
     local config = RoundDefinitions.classic[1]
     local bValid, message = ConfigValidator.validateRoundConfig(config)
-    
+
     return bValid, message
 end
 
--- Load round definitions from configuration
-function RoundManager.loadRoundDefinitions()
-    -- For now, we'll use the configuration from the spec
-    -- This will be moved to external config files later
-    currentRoundSequence = {{
-        id = "tutorial_1",
-        name = "Getting Started",
-        attributes = {
-            number = {1, 2},
-            color = {"green", "blue"},
-            shape = {"diamond", "oval"},
-            fill = {"empty", "solid"}
-        },
-        setSize = 3,
-        boardSize = {
-            columns = 3,
-            rows = 4
-        },
-        scoring = {
-            validSet = 1,
-            invalidSet = -1,
-            noSetCorrect = 1,
-            noSetIncorrect = -1
-        }
-    }, {
-        id = "tutorial_2",
-        name = "Add Red Color",
-        attributes = {
-            number = {1, 2},
-            color = {"green", "blue", "red"},
-            shape = {"diamond"},
-            fill = {"empty", "solid"}
-        },
-        setSize = 3,
-        boardSize = {
-            columns = 3,
-            rows = 3
-        },
-        scoring = {
-            validSet = 1,
-            invalidSet = -1,
-            noSetCorrect = 1,
-            noSetIncorrect = -1
-        }
-    }, {
-        id = "tutorial_3",
-        name = "Add Oval Shape",
-        attributes = {
-            number = {1, 2},
-            color = {"green", "blue", "red"},
-            shape = {"diamond", "oval"},
-            fill = {"empty", "solid"}
-        },
-        setSize = 3,
-        boardSize = {
-            columns = 3,
-            rows = 3
-        },
-        scoring = {
-            validSet = 1,
-            invalidSet = -1,
-            noSetCorrect = 1,
-            noSetIncorrect = -1
-        }
-    }, {
-        id = "tutorial_4",
-        name = "Add Stripes Fill",
-        attributes = {
-            number = {1, 2},
-            color = {"green", "blue", "red"},
-            shape = {"diamond", "oval"},
-            fill = {"empty", "solid", "stripes"}
-        },
-        setSize = 3,
-        boardSize = {
-            columns = 3,
-            rows = 3
-        },
-        scoring = {
-            validSet = 1,
-            invalidSet = -1,
-            noSetCorrect = 1,
-            noSetIncorrect = -1
-        }
-    }, {
-        id = "tutorial_5",
-        name = "Add Number Three",
-        attributes = {
-            number = {1, 2, 3},
-            color = {"green", "blue", "red"},
-            shape = {"diamond", "oval"},
-            fill = {"empty", "solid", "stripes"}
-        },
-        setSize = 3,
-        boardSize = {
-            columns = 4,
-            rows = 3
-        },
-        scoring = {
-            validSet = 2,
-            invalidSet = -1,
-            noSetCorrect = 1,
-            noSetIncorrect = -1
-        }
-    }}
-
-    -- Validate the round sequence
-    local bValid, message = ConfigValidator.validateRoundSequence(currentRoundSequence)
-    if not bValid then
-        error("Invalid round configuration: " .. message)
-    end
-
-    roundDefinitions = currentRoundSequence
-    EventManager.emit(Events.ROUND_MANAGER.DEFINITIONS_LOADED, #roundDefinitions)
-end
 
 -- Get the current round configuration
 function RoundManager.getCurrentRoundConfig()
@@ -202,7 +68,7 @@ function RoundManager.IsRoundComplete()
             boardCount = boardCount + 1
             table.insert(boardCards, cardRef)
         end
-    end    -- Condition 1: Deck is empty and less than 3 cards on board
+    end -- Condition 1: Deck is empty and less than 3 cards on board
     local bDeckEmpty = DeckModel.isEmpty()
     if bDeckEmpty and boardCount < 3 then
         -- Debug: Round end: less than 3 cards remain
@@ -217,7 +83,7 @@ function RoundManager.IsRoundComplete()
     if bBoardHasSet then
         -- Board already has a valid set, round is not complete
         return false
-    end    -- If deck is empty, we've already checked the board
+    end -- If deck is empty, we've already checked the board
     if bDeckEmpty then
         -- Debug: Round end: Deck is empty and no valid sets remain
         return true
@@ -240,7 +106,8 @@ function RoundManager.IsRoundComplete()
         virtualBoard[i] = cardRef
     end
     -- Check if any set is possible with all remaining cards
-    local bHasPossibleSet = RulesService.hasValidSetOfSize(virtualBoard, currentSetSize)    if bHasPossibleSet then
+    local bHasPossibleSet = RulesService.hasValidSetOfSize(virtualBoard, currentSetSize)
+    if bHasPossibleSet then
         return false
     else
         -- Debug: Round end: No valid sets remain in combined cards from board and deck
@@ -294,4 +161,3 @@ function RoundManager.reset()
     EventManager.emit(Events.ROUND_MANAGER.RESET)
 end
 
-return RoundManager

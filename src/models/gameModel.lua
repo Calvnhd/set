@@ -1,45 +1,5 @@
--- Game Model - Centralized game state container
 local EventManager = require('core.eventManager')
 local Events = require('core.events')
-
-local GameModel = {}
-
--- Game constants (can be overridden for rogue mode)
-local BOARD_COLUMNS = 4
-local BOARD_ROWS = 3
-local BOARD_SIZE = BOARD_COLUMNS * BOARD_ROWS
-
--- Game state
-local gameState = {
-    board = {}, -- Cards on the board
-    discardedCards = {}, -- Cards that have been discarded
-    hintCards = {}, -- Indices of cards in a valid set for hint
-    score = 0,
-    bHintIsActive = false,
-    bGameEnded = false,
-    -- Round-based state
-    setsFound = 0, -- Number of valid sets found in current round
-    currentSetSize = 3 -- Current required set size
-}
-
--- Initialize/reset game state
-function GameModel.reset()
-    -- Initialize board with all nil values (size may change in rogue mode)
-    gameState.board = {}
-    for i = 1, BOARD_SIZE do
-        gameState.board[i] = nil
-    end
-
-    gameState.discardedCards = {}
-    gameState.hintCards = {}
-    gameState.score = 0
-    gameState.bHintIsActive = false
-    gameState.bGameEnded = false
-    gameState.setsFound = 0
-    gameState.currentSetSize = 3
-
-    EventManager.emit(Events.GAME.RESET)
-end
 
 -- Configure board dimensions (for rogue mode)
 function GameModel.configureBoardSize(columns, rows)
@@ -230,4 +190,3 @@ function GameModel.getSelectedCards()
     return selected
 end
 
-return GameModel
