@@ -118,7 +118,6 @@ function ConfigValidator.validateScoring(scoring)
     return true, "Scoring is valid"
 end
 
-
 -- Validate a sequence of round configurations
 function ConfigValidator.validateRoundSequence(rounds)
     if type(rounds) ~= "table" then

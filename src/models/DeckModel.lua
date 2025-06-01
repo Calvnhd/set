@@ -11,7 +11,7 @@ local cards = {}
 
 local DEFAULT_COLOR = {Constants.COLOR.BLUE, Constants.COLOR.GREEN, Constants.COLOR.RED}
 local DEFAULT_SHAPE = {Constants.SHAPE.DIAMOND, Constants.SHAPE.OVAL, Constants.SHAPE.SQUIGGLE}
-local DEFAULT_NUMBER = {1 , 2 , 3}
+local DEFAULT_NUMBER = {1, 2, 3}
 local DEFAULT_FILL = {Constants.FILL.EMPTY, Constants.FILL.SOLID, Constants.FILL.STRIPES}
 
 ---------------
@@ -20,6 +20,7 @@ local DEFAULT_FILL = {Constants.FILL.EMPTY, Constants.FILL.SOLID, Constants.FILL
 
 -- Create a deck of cards with default attributes (classic mode)
 function DeckModel.createDefault()
+    Logger.trace("Creating default deck")
     return DeckModel.createWithAttributes(DEFAULT_COLOR, DEFAULT_SHAPE, DEFAULT_NUMBER, DEFAULT_FILL)
 end
 
@@ -49,6 +50,7 @@ end
 
 -- Create deck from round configuration
 function DeckModel.createFromConfig(config)
+    Logger.trace("Creating deck from config")
     if not config or not config.attributes then
         return DeckModel.create()
     end
@@ -58,6 +60,7 @@ end
 
 -- Shuffle the deck using Fisher-Yates algorithm
 function DeckModel.shuffle()
+    Logger.trace("Shuffling deck")
     math.randomseed(os.time())
     for i = #cards, 2, -1 do
         local j = math.random(i)
@@ -68,6 +71,7 @@ end
 
 -- Take a card from the top of the deck
 function DeckModel.takeCard()
+    Logger.trace("Removing card from deck")
     if #cards > 0 then
         local card = table.remove(cards, 1)
         return card
@@ -78,6 +82,7 @@ end
 
 -- Return a card to the deck
 function DeckModel.returnCard(cardRef)
+    Logger.trace("Returning card to deck")
     table.insert(cards, cardRef)
 end
 

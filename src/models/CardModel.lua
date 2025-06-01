@@ -15,6 +15,7 @@ local nextCardId = 1
 
 -- Create a new card with the given attributes
 function CardModel.create(color, shape, number, fill)
+    Logger.trace("Creating card: "..number..", "..color..", "..shape..", "..fill)
     -- Generate a unique ID for this card
     local id = nextCardId
     nextCardId = nextCardId + 1

@@ -2,6 +2,7 @@
 local GameModel = {}
 
 -- required modules
+local Logger = require('core.Logger')
 
 -- local variables
 local gameState = {
@@ -12,7 +13,7 @@ local gameState = {
     bHintIsActive = false,
     bGameEnded = false,
     setsFound = 0, -- Number of valid sets found in current round
-    currentSetSize = 3 
+    currentSetSize = 3
 }
 
 ---------------
@@ -22,7 +23,14 @@ local gameState = {
 -- Initialize/reset game state
 function GameModel.initializeGame(config)
     -- Initialize board to the expected size with all nil values
-    local boardSize = config.boardSize.columns * config.boardSize.rows
+    local firstRound = config[1]
+    if config then
+        Logger.trace("intializing game: " .. firstRound.name)
+    else
+        Logger.error("Cannot initialize game without config")
+        error("Cannot initialize game without config")
+    end
+    local boardSize = firstRound.boardSize.columns * firstRound.boardSize.rows
     gameState.board = {}
     for i = 1, boardSize do
         gameState.board[i] = nil
@@ -34,6 +42,10 @@ function GameModel.initializeGame(config)
     gameState.bGameEnded = false
     gameState.setsFound = 0
     gameState.currentSetSize = config.setSize
+end
+
+function GameModel.getBoardSize()
+    return #gameState.board
 end
 
 return GameModel
