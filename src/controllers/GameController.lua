@@ -4,7 +4,6 @@ local GameController = {}
 -- required modules
 local Logger = require('core.Logger')
 local Constants = require('config.Constants')
-local GameModeModel = require('models.GameModeModel')
 local GameModel = require('models.GameModel')
 local DeckModel = require('models.DeckModel')
 local RoundDefinitions = require('config.RoundDefinitions')
@@ -25,15 +24,29 @@ function GameController.initialize()
 end
 
 function GameController.setUpNewGame(gameMode)
-    RoundState.RoundSequence = GameController.loadRoundSequenceForMode(gameMode)
-    local firstRound = RoundState.RoundSequence[1]
+    GameController.resetRoundState()
+    if gameMode == Constants.GAME_MODE.CLASSIC then
+        Logger.info("Setting up CLASSIC game")
+        RoundState.RoundSequence = GameController.fetchRoundSequence("classic")
+    elseif gameMode == Constants.GAME_MODE.ROGUE then
+        Logger.info("Setting up ROGUE game")
+        RoundState.RoundSequence = GameController.fetchRoundSequence("rogue")
+    else
+        Logger.error("Specified game mode does not have a matching round definition")
+        error("Specified game mode does not have a matching round definition")
+    end
+    GameController.initializeCurrentRound()
+end
+
+function GameController.initializeCurrentRound()
+    local round = RoundState.RoundSequence[RoundState.currentRoundIndex]
     -- Debug print the config
-    Logger.trace("--- BEGIN CONFIG FIRST ROUND DUMP ---")
-    GameController.debugPrintConfig(firstRound)
-    Logger.trace("--- END CONFIG FIRST ROUND DUMP ---")
+    Logger.trace("--- BEGIN CONFIG ROUND DUMP ---")
+    GameController.debugPrintConfig(round)
+    Logger.trace("--- END CONFIG ROUND DUMP ---")
     -- Apply configuration
-    GameModel.initializeRound(firstRound)
-    DeckModel.createFromConfig(firstRound)
+    GameModel.initializeRound(round)
+    DeckModel.createFromConfig(round)
     DeckModel.shuffle()
     GameController.dealInitialCards()
     -- Check initial board state.  Probably move this into config validation
@@ -43,20 +56,6 @@ end
 function GameController.resetRoundState()
     RoundState.RoundSequence = {}
     RoundState.currentRoundIndex = 1
-end
-
-function GameController.loadRoundSequenceForMode(gameMode)
-    GameController.resetRoundState()
-    if gameMode == Constants.GAME_MODE.CLASSIC then
-        Logger.info("Setting up CLASSIC game")
-        return GameController.fetchRoundSequence("classic")
-    elseif gameMode == Constants.GAME_MODE.ROGUE then
-        Logger.info("Setting up ROGUE game")
-        return GameController.fetchRoundSequence("rogue")
-    else
-        Logger.error("Specified game mode does not have a matching round definition")
-        error("Specified game mode does not have a matching round definition")
-    end
 end
 
 -- fetches and validates a round config taken from RoundDefinitions

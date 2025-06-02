@@ -6,6 +6,7 @@ local EventManager = require('core.EventManager')
 local Events = require('config.EventRegistry')
 local Logger = require('core.Logger')
 local GameController = require('controllers.GameController')
+local CardView = require('views.cardView')
 
 ---------------
 -- functions --
@@ -22,6 +23,8 @@ function GameScene.enter(gameMode)
     GameController.initialize()
     -- Setup new game with specified mode
     GameController.setUpNewGame(gameMode)
+     -- Load card images
+    CardView.loadImages()
 end
 
 function GameScene.exit()
