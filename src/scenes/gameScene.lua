@@ -1,13 +1,11 @@
 local BoardView = require('views.boardView')
 local GameUIView = require('views.gameUIView')
-local CardView = require('views.cardView')
 local GameController = require('controllers.gameController')
 local AnimationService = require('services.animationService')
 
 -- Enter the game scene
 function GameScene.enter(gameMode)
-    -- Load card images
-    CardView.loadImages()
+   
     -- Subscribe to scene transition events
     EventManager.subscribe(Events.GAME.REQUEST_MENU_TRANSITION, GameScene.handleMenuTransition)
 end

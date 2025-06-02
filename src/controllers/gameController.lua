@@ -18,29 +18,9 @@ function GameController.initialize()
     EventManager.subscribe(Events.ANIMATION.COMPLETED, GameController.handleAnimationCompleted)
     EventManager.subscribe(Events.ROUND_MANAGER.ROUND_STARTED, GameController.handleRoundStarted)
     EventManager.subscribe(Events.ROUND_MANAGER.ALL_ROUNDS_COMPLETE, GameController.handleAllRoundsComplete)
-
     -- Initialize supporting services
-    RoundManager.initialize()
     ProgressManager.initialize()
 end
-
-
-
--- Setup rogue mode game
-function GameController.setupRogueGame()
-    GameModel.reset()
-
-    -- Start the first round
-    local config = RoundManager.startRound(1)
-    GameController.applyRoundConfiguration(config)
-
-    -- Create deck based on round configuration
-    DeckModel.createFromConfig(config)
-    DeckModel.shuffle()
-    GameController.dealInitialCards()
-end
-
-
 
 -- Handle round started event
 function GameController.handleRoundStarted(config, roundIndex)
