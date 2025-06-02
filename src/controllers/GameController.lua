@@ -5,9 +5,16 @@ local GameController = {}
 local Logger = require('core.Logger')
 local Constants = require('config.Constants')
 local GameModeModel = require('models.GameModeModel')
-local RoundManager = require('services.RoundManager')
 local GameModel = require('models.GameModel')
 local DeckModel = require('models.DeckModel')
+local RoundDefinitions = require('config.RoundDefinitions')
+local ConfigValidator = require('services.ConfigValidator')
+
+-- Round state
+local RoundState = {
+    RoundSequence = {},
+    currentRoundIndex = 1
+}
 
 ---------------
 -- functions --
@@ -18,36 +25,52 @@ function GameController.initialize()
 end
 
 function GameController.setUpNewGame(gameMode)
-    if GameModeModel.getMode() == Constants.GAME_MODE.CLASSIC then
-        GameController.setUpClassic()
-    elseif GameModeModel.getMode() == Constants.GAME_MODE.ROGUE then
-        GameController.setUpRogue()
+    RoundState.RoundSequence = GameController.loadRoundSequenceForMode(gameMode)
+    local firstRound = RoundState.RoundSequence[1]
+    -- Debug print the config
+    Logger.trace("--- BEGIN CONFIG FIRST ROUND DUMP ---")
+    GameController.debugPrintConfig(firstRound)
+    Logger.trace("--- END CONFIG FIRST ROUND DUMP ---")
+    -- Apply configuration
+    GameModel.initializeRound(firstRound)
+    DeckModel.createFromConfig(firstRound)
+    DeckModel.shuffle()
+    GameController.dealInitialCards()
+    -- Check initial board state.  Probably move this into config validation
+    -- GameController.checkRoundCompletion()
+end
+
+function GameController.resetRoundState()
+    RoundState.RoundSequence = {}
+    RoundState.currentRoundIndex = 1
+end
+
+function GameController.loadRoundSequenceForMode(gameMode)
+    GameController.resetRoundState()
+    if gameMode == Constants.GAME_MODE.CLASSIC then
+        Logger.info("Setting up CLASSIC game")
+        return GameController.fetchRoundSequence("classic")
+    elseif gameMode == Constants.GAME_MODE.ROGUE then
+        Logger.info("Setting up ROGUE game")
+        return GameController.fetchRoundSequence("rogue")
+    else
+        Logger.error("Specified game mode does not have a matching round definition")
+        error("Specified game mode does not have a matching round definition")
     end
 end
 
-function GameController.setUpClassic()
-    Logger.info("Setting up CLASSIC game")
-    local config = RoundManager.setRoundSequence("classic")
-    -- Debug print the config
-    Logger.trace("--- BEGIN CONFIG DUMP ---")
-    GameController.debugPrintConfig(config[1]) -- Print first round config
-    Logger.trace("--- END CONFIG DUMP ---")
-    -- Apply configuration
-    GameModel.initializeGame(config)
-    DeckModel.createFromConfig(config[1])
-    DeckModel.shuffle()
-    GameController.dealInitialCards()
-
-    -- Check initial board state.  Probably move this into config validation
-    -- GameController.checkRoundCompletion()
-
+-- fetches and validates a round config taken from RoundDefinitions
+function GameController.fetchRoundSequence(sequenceType)
+    Logger.info("Setting new round sequence: " .. sequenceType)
+    local sequence = RoundDefinitions.getSequence(sequenceType)
+    local bValid, message = ConfigValidator.validateRoundSequence(sequence)
+    if not bValid then
+        Logger.error("Invalid round configuration: " .. message)
+        error("Invalid round configuration: " .. message)
+    end
+    return sequence
 end
 
-function GameController.setUpRogue()
-    Logger.info("Setting up ROGUE game")
-end
-
--- Deal initial cards to the board
 function GameController.dealInitialCards()
     local boardSize = GameModel.getBoardSize()
     for i = 1, boardSize do
@@ -58,7 +81,6 @@ function GameController.dealInitialCards()
     end
 end
 
--- Add this function to your code
 function GameController.debugPrintConfig(config, indent)
     indent = indent or 0
     local indentStr = string.rep("  ", indent)

@@ -21,16 +21,9 @@ local gameState = {
 ---------------
 
 -- Initialize/reset game state
-function GameModel.initializeGame(config)
+function GameModel.initializeRound(roundConfig)
     -- Initialize board to the expected size with all nil values
-    local firstRound = config[1]
-    if config then
-        Logger.trace("intializing game: " .. firstRound.name)
-    else
-        Logger.error("Cannot initialize game without config")
-        error("Cannot initialize game without config")
-    end
-    local boardSize = firstRound.boardSize.columns * firstRound.boardSize.rows
+    local boardSize = roundConfig.boardSize.columns * roundConfig.boardSize.rows
     gameState.board = {}
     for i = 1, boardSize do
         gameState.board[i] = nil
@@ -41,7 +34,7 @@ function GameModel.initializeGame(config)
     gameState.bHintIsActive = false
     gameState.bGameEnded = false
     gameState.setsFound = 0
-    gameState.currentSetSize = config.setSize
+    gameState.currentSetSize = roundConfig.setSize
 end
 
 function GameModel.getBoardSize()

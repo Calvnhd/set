@@ -13,6 +13,29 @@ local VALID_ATTRIBUTES = {
 -- functions --
 ---------------
 
+-- Validate a sequence of round configurations
+function ConfigValidator.validateRoundSequence(rounds)
+    if type(rounds) ~= "table" then
+        return false, "Round sequence must be a table"
+    end
+    if #rounds == 0 then
+        return false, "Round sequence must contain at least one round"
+    end
+    local usedIds = {}
+    for i, config in ipairs(rounds) do
+        local bValid, message = ConfigValidator.validateRoundConfig(config)
+        if not bValid then
+            return false, "Round " .. i .. ": " .. message
+        end
+        -- Check for duplicate IDs
+        if usedIds[config.id] then
+            return false, "Duplicate round ID: " .. config.id
+        end
+        usedIds[config.id] = true
+    end
+    return true, "Round sequence is valid"
+end
+
 -- Validate a round configuration
 function ConfigValidator.validateRoundConfig(config)
     if type(config) ~= "table" then
@@ -116,29 +139,6 @@ function ConfigValidator.validateScoring(scoring)
         end
     end
     return true, "Scoring is valid"
-end
-
--- Validate a sequence of round configurations
-function ConfigValidator.validateRoundSequence(rounds)
-    if type(rounds) ~= "table" then
-        return false, "Round sequence must be a table"
-    end
-    if #rounds == 0 then
-        return false, "Round sequence must contain at least one round"
-    end
-    local usedIds = {}
-    for i, config in ipairs(rounds) do
-        local bValid, message = ConfigValidator.validateRoundConfig(config)
-        if not bValid then
-            return false, "Round " .. i .. ": " .. message
-        end
-        -- Check for duplicate IDs
-        if usedIds[config.id] then
-            return false, "Duplicate round ID: " .. config.id
-        end
-        usedIds[config.id] = true
-    end
-    return true, "Round sequence is valid"
 end
 
 return ConfigValidator

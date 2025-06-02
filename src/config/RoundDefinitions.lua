@@ -1,7 +1,7 @@
 -- Round Definitions Configuration - Define round sequences for rogue mode
 local RoundDefinitions = {}
 
--- Classic Set configuration (for standard play)
+-- A single round of classic Set for standard play
 RoundDefinitions.classic = {{
     id = "classic_set",
     name = "Classic Set",
@@ -25,8 +25,8 @@ RoundDefinitions.classic = {{
     }
 }}
 
--- Tutorial sequence with progressive attribute introduction
-RoundDefinitions.tutorial = {{
+-- Mulitple rounds with progressive attribute introduction
+RoundDefinitions.rogue = {{
     id = "tutorial_1",
     name = "Getting Started",
     description = "Learn the basics with simple 3-card sets",
@@ -101,7 +101,7 @@ RoundDefinitions.tutorial = {{
 
 -- Get a specific round sequence
 function RoundDefinitions.getSequence(sequenceName)
-    return RoundDefinitions[sequenceName] or RoundDefinitions.tutorial
+    return RoundDefinitions[sequenceName] or RoundDefinitions.classic
 end
 
 return RoundDefinitions
