@@ -1,14 +1,12 @@
-
-local EventManager = require('core.eventManager')
-local Events = require('core.events')
-local DeckModel = require('models.deckModel')
-local CardModel = require('models.cardModel')
-local RulesService = require('services.rulesService')
-local ProgressManager = require('services.progressManager')
-local AnimationService = require('services.animationService')
-local BoardView = require('views.boardView')
-local Events = require('core.events')
-
+local EventManager = require('core.EventManager')
+local Events = require('core.Events')
+local DeckModel = require('models.DeckModel')
+local CardModel = require('models.CardModel')
+local RulesService = require('services.RulesService')
+local ProgressManager = require('services.ProgressManager')
+local AnimationService = require('services.AnimationService')
+local BoardView = require('views.BoardView')
+local Events = require('core.Events')
 
 -- Initialize the game controller
 function GameController.initialize()
@@ -32,7 +30,7 @@ function GameController.handleRoundStarted(config, roundIndex)
 
     -- Clear board and deal new cards
     GameModel.reset()
-    GameController.applyRoundConfiguration(config) 
+    GameController.applyRoundConfiguration(config)
     -- Reapply after reset
     GameController.dealInitialCards()
     -- this ensures that the round conditions actually make sense
@@ -43,8 +41,6 @@ end
 function GameController.handleAllRoundsComplete()
     GameModel.setGameEnded(true)
 end
-
-
 
 -- Handle keyboard input
 function GameController.handleKeypress(key)
@@ -123,7 +119,8 @@ function GameController.processSelectedCards()
             cardRefs[i] = board[idx]
         end
 
-        local bIsValid, message = RulesService.validateSelectedCardsOfSize(selectedCards, board, currentSetSize)        if bIsValid then
+        local bIsValid, message = RulesService.validateSelectedCardsOfSize(selectedCards, board, currentSetSize)
+        if bIsValid then
             -- Valid set - remove cards and increment score
             GameController.removeValidSet(selectedCards)
             GameModel.incrementScore()
@@ -185,12 +182,13 @@ function GameController.drawCard()
 
     if not emptyPosition then
         return -- No empty positions
-    end    local cardRef = DeckModel.takeCard()
+    end
+    local cardRef = DeckModel.takeCard()
     if cardRef then
         GameModel.setCardAtPosition(emptyPosition, cardRef)
         -- Reset hint state when board changes
         GameModel.clearHint()
-        
+
         -- Check if this card draw results in round completion
         GameController.checkRoundCompletion()
     end
@@ -326,7 +324,7 @@ function GameController.clearCardSelection()
 end
 
 -- Check if the current round is complete
-function GameController.checkRoundCompletion() 
+function GameController.checkRoundCompletion()
     if RoundManager.IsRoundComplete() then
         if GameModeModel.isClassicMode() then
             -- Classic mode only has one round, so end the game when complete

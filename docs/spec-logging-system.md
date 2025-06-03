@@ -98,7 +98,7 @@ The system integrates with the existing EventManager pattern and follows the pro
 
 **Development Workflow**: Developers can easily add logging to existing functions without modifying core game logic, following the pattern:
 ```lua
-local Logger = require('core.logger')
+local Logger = require('core.Logger ')
 Logger.info("Function called with parameters: %s, %s", param1, param2)
 ```
 

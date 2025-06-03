@@ -1,11 +1,11 @@
 -- Test Suite - Automated tests for rogue mode functionality
-local ConfigValidator = require('services.configValidator')
-local GameModeModel = require('models.gameModeModel')
-local RoundManager = require('services.roundManager')
-local ProgressManager = require('services.progressManager')
-local GameModel = require('models.gameModel')
-local RulesService = require('services.rulesService')
-local DeckModel = require('models.deckModel')
+local ConfigValidator = require('services.ConfigValidator')
+local GameModeModel = require('models.GameModeModel')
+local RoundManager = require('services.RoundManager')
+local ProgressManager = require('services.ProgressManager')
+local GameModel = require('models.GameModel')
+local RulesService = require('services.RulesService')
+local DeckModel = require('models.DeckModel')
 
 local Tests = {}
 

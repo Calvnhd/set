@@ -1,8 +1,8 @@
 -- Game UI View - Score, deck info, and game end screen
-local GameModel = require('models.gameModel')
-local GameModeModel = require('models.gameModeModel')
-local DeckModel = require('models.deckModel')
-local RoundManager = require('services.roundManager')
+local GameModel = require('models.GameModel')
+local GameModeModel = require('models.GameModeModel')
+local DeckModel = require('models.DeckModel')
+local RoundManager = require('services.RoundManager')
 
 local GameUIView = {}
 

@@ -1,7 +1,7 @@
-local BoardView = require('views.boardView')
-local GameUIView = require('views.gameUIView')
-local GameController = require('controllers.gameController')
-local AnimationService = require('services.animationService')
+local BoardView = require('views.BoardView')
+local GameUIView = require('views.GameUIView')
+local GameController = require('controllers.GameController')
+local AnimationService = require('services.AnimationService')
 
 -- Enter the game scene
 function GameScene.enter(gameMode)
@@ -21,18 +21,6 @@ end
 -- Update game state
 function GameScene.update(dt)
     AnimationService.update(dt)
-end
-
--- Draw the game
-function GameScene.draw()
-    -- Set background color
-    love.graphics.setBackgroundColor(0.34, 0.45, 0.47)
-    -- Draw board
-    BoardView.draw()
-    -- Draw animations
-    GameScene.drawAnimations()
-    -- Draw UI elements
-    GameUIView.draw()
 end
 
 -- Draw all active animations

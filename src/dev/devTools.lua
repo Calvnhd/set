@@ -1,9 +1,9 @@
 -- Developer Tools - Testing and debugging utilities for rogue mode
-local GameModeModel = require('models.gameModeModel')
-local RoundManager = require('services.roundManager')
-local ProgressManager = require('services.progressManager')
-local ConfigValidator = require('services.configValidator')
-local GameModel = require('models.gameModel')
+local GameModeModel = require('models.GameModeModel')
+local RoundManager = require('services.RoundManager')
+local ProgressManager = require('services.ProgressManager')
+local ConfigValidator = require('services.ConfigValidator')
+local GameModel = require('models.GameModel')
 
 local DevTools = {}
 

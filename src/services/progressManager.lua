@@ -1,8 +1,8 @@
 -- Progress Manager Service - Handle saving and loading game progress
-local EventManager = require('core.eventManager')
-local Events = require('core.events')
-local GameModeModel = require('models.gameModeModel')
-local GameModel = require('models.gameModel')
+local EventManager = require('core.EventManager')
+local Events = require('core.Events')
+local GameModeModel = require('models.GameModeModel')
+local GameModel = require('models.GameModel')
 
 local ProgressManager = {}
 

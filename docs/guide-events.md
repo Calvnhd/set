@@ -25,7 +25,7 @@ The EventManager provides four main functions:
 The Events registry provides constant strings for all event names, organized by category:
 
 ```lua
-local Events = require('core.events')
+local Events = require('core.Events')
 
 -- Input events
 Events.INPUT.KEY_PRESSED       -- 'input:keypressed'
@@ -45,8 +45,8 @@ Events.GAME.GAME_OVER          -- 'game:gameOver'
 ### Subscribing to Events
 
 ```lua
-local EventManager = require('core.eventManager')
-local Events = require('core.events')
+local EventManager = require('core.EventManager')
+local Events = require('core.Events')
 
 -- Define a callback function
 local function onKeyPressed(key)
@@ -60,8 +60,8 @@ EventManager.subscribe(Events.INPUT.KEY_PRESSED, onKeyPressed)
 ### Emitting Events
 
 ```lua
-local EventManager = require('core.eventManager')
-local Events = require('core.events')
+local EventManager = require('core.EventManager')
+local Events = require('core.Events')
 
 -- Emit an event with parameters
 EventManager.emit(Events.INPUT.KEY_PRESSED, "space")
@@ -86,9 +86,9 @@ Here's how the menu scene uses the event system for input handling:
 
 ```lua
 local MenuView = require('views.menuView')
-local EventManager = require('core.eventManager')
-local Events = require('core.events')
-local Logger = require('core.logger')
+local EventManager = require('core.EventManager')
+local Events = require('core.Events')
+local Logger = require('core.Logger ')
 
 local MenuScene = {}
 

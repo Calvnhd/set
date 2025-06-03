@@ -151,7 +151,7 @@ Progress files are stored in LÖVE2D's save directory using a simple key=value f
 
 ### Configuration Testing
 ```lua
-local ConfigValidator = require('services.configValidator')
+local ConfigValidator = require('services.ConfigValidator')
 local valid, message = ConfigValidator.validateRoundConfig(myRoundConfig)
 if not valid then
     print("Configuration error: " .. message)
@@ -160,7 +160,7 @@ end
 
 ### Progress Debugging
 ```lua
-local ProgressManager = require('services.progressManager')
+local ProgressManager = require('services.ProgressManager')
 local summary = ProgressManager.getProgressSummary()
 print("Current round: " .. summary.currentRound)
 print("Completed rounds: " .. summary.completedRounds)

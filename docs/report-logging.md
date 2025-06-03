@@ -123,7 +123,7 @@ LOG_LEVELS = { TRACE=1, DETAILED=2, WARNING=3, ERROR=4 }
 ## Usage Examples
 
 ```lua
-local Logger = require('core.logger')
+local Logger = require('core.Logger ')
 
 -- Basic logging
 Logger.trace("Detailed debugging information")

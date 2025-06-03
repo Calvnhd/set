@@ -1,5 +1,5 @@
-local EventManager = require('core.eventManager')
-local Events = require('core.events')
+local EventManager = require('core.EventManager')
+local Events = require('core.Events')
 
 -- Configure board dimensions (for rogue mode)
 function GameModel.configureBoardSize(columns, rows)
@@ -27,13 +27,7 @@ function GameModel.getCurrentSetSize()
     return gameState.currentSetSize
 end
 
--- Board management
-function GameModel.setCardAtPosition(index, cardRef)
-    if index >= 1 and index <= BOARD_SIZE then
-        gameState.board[index] = cardRef
-        EventManager.emit(Events.BOARD.CARD_PLACED, index, cardRef)
-    end
-end
+
 
 function GameModel.getCardAtPosition(index)
     if index >= 1 and index <= BOARD_SIZE then
@@ -52,17 +46,13 @@ function GameModel.removeCardAtPosition(index)
     return nil
 end
 
-function GameModel.getBoard()
-    return gameState.board
-end
+
 
 function GameModel.getBoardSize()
     return BOARD_SIZE
 end
 
-function GameModel.getBoardDimensions()
-    return BOARD_COLUMNS, BOARD_ROWS
-end
+
 
 -- Discard pile management
 function GameModel.addToDiscardPile(cardRef)
@@ -120,13 +110,9 @@ function GameModel.setHint(cardIndices)
     EventManager.emit(Events.HINT.CHANGED, gameState.hintCards, gameState.bHintIsActive)
 end
 
-function GameModel.getHintCards()
-    return gameState.hintCards
-end
 
-function GameModel.isHintActive()
-    return gameState.bHintIsActive
-end
+
+
 
 function GameModel.clearHint()
     GameModel.setHint({})
@@ -179,7 +165,7 @@ end
 -- Get all selected cards on the board
 function GameModel.getSelectedCards()
     local selected = {}
-    local CardModel = require('models.cardModel')
+    local CardModel = require('models.CardModel')
 
     for i = 1, BOARD_SIZE do
         local cardRef = gameState.board[i]

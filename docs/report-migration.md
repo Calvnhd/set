@@ -373,7 +373,7 @@ The implementation followed the suggested 5-stage approach:
 1. **Unit Testing Framework**:
    ```lua
    -- tests/rulesService_test.lua
-   local RulesService = require('services.rulesService')
+   local RulesService = require('services.RulesService')
    local TestFramework = require('tests.framework')
    ```
 

@@ -1,6 +1,6 @@
 -- Animation Service - Animation management separated from card rendering
-local EventManager = require('core.eventManager')
-local Events = require('core.events')
+local EventManager = require('core.EventManager')
+local Events = require('core.Events')
 
 local AnimationService = {}
 
@@ -81,7 +81,7 @@ end
 
 -- Create a burn animation
 function AnimationService.createBurnAnimation(cardRef, x, y, width, height, onComplete)
-    local CardModel = require('models.cardModel')
+    local CardModel = require('models.CardModel')
     local cardData = CardModel._getInternalData(cardRef)
 
     local animId = "burn_" .. cardData.id .. "_" .. os.time()
@@ -111,7 +111,7 @@ end
 
 -- Create a flash red animation
 function AnimationService.createFlashRedAnimation(cardRef, x, y, width, height, onComplete)
-    local CardModel = require('models.cardModel')
+    local CardModel = require('models.CardModel')
     local cardData = CardModel._getInternalData(cardRef)
 
     local animId = "flash_" .. cardData.id .. "_" .. os.time()
@@ -144,7 +144,7 @@ end
 
 -- Get animations for a specific card
 function AnimationService.getCardAnimations(cardRef)
-    local CardModel = require('models.cardModel')
+    local CardModel = require('models.CardModel')
     local cardData = CardModel._getInternalData(cardRef)
     local cardAnimations = {}
 

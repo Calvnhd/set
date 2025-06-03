@@ -1,5 +1,5 @@
 -- Rules Service - Set game rule validation logic extracted from UI
-local CardModel = require('models.cardModel')
+local CardModel = require('models.CardModel')
 
 local RulesService = {}
 
