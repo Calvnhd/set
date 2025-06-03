@@ -2,12 +2,20 @@
 local CardModel = {}
 CardModel.__index = CardModel
 
+-- required modules
+local Logger = require('core.Logger')
+
 -- Card objects cache - storing internal data for all created cards
 local cardObjects = {}
 local nextCardId = 1
 
+---------------
+-- functions --
+---------------
+
 -- Create a new card with the given attributes
 function CardModel.create(color, shape, number, fill)
+    Logger.trace("Creating card: "..number..", "..color..", "..shape..", "..fill)
     -- Generate a unique ID for this card
     local id = nextCardId
     nextCardId = nextCardId + 1
