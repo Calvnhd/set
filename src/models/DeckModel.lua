@@ -76,6 +76,7 @@ function DeckModel.takeCard()
         local card = table.remove(cards, 1)
         return card
     else
+        Logger.warning("DeckModel.takeCard() returning nil")
         return nil
     end
 end

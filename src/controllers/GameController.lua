@@ -71,6 +71,7 @@ function GameController.fetchRoundSequence(sequenceType)
 end
 
 function GameController.dealInitialCards()
+    Logger.trace("dealing initial cards")
     local boardSize = GameModel.getBoardSize()
     for i = 1, boardSize do
         local cardRef = DeckModel.takeCard()

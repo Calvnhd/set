@@ -6,6 +6,9 @@ local Logger = require('core.Logger')
 
 -- local variables
 local gameState = {
+    boardColumns = 0,
+    boardRows = 0,
+    boardSize = 0,
     board = {}, -- Cards on the board
     discardedCards = {}, -- Cards that have been discarded
     hintCards = {}, -- Indices of cards in a valid set for hint
@@ -23,9 +26,11 @@ local gameState = {
 -- Initialize/reset game state
 function GameModel.initializeRound(roundConfig)
     -- Initialize board to the expected size with all nil values
-    local boardSize = roundConfig.boardSize.columns * roundConfig.boardSize.rows
+    gameState.boardColumns = roundConfig.boardSize.columns
+    gameState.boardRows = roundConfig.boardSize.rows
+    gameState.boardSize = gameState.boardColumns * gameState.boardRows
     gameState.board = {}
-    for i = 1, boardSize do
+    for i = 1, gameState.boardSize do
         gameState.board[i] = nil
     end
     gameState.discardedCards = {}
@@ -38,7 +43,31 @@ function GameModel.initializeRound(roundConfig)
 end
 
 function GameModel.getBoardSize()
-    return #gameState.board
+    -- consider using # if it's guaranteed to be initialized correctly
+    return gameState.boardSize
+end
+
+function GameModel.getBoardDimensions()
+    return gameState.boardColumns, gameState.boardRows
+end
+
+function GameModel.getBoard()
+    return gameState.board
+end
+
+function GameModel.getHintCards()
+    return gameState.hintCards
+end
+
+function GameModel.isHintActive()
+    return gameState.bHintIsActive
+end
+
+-- Board management
+function GameModel.setCardAtPosition(index, cardRef)
+    if index >= 1 and index <= gameState.boardSize then
+        gameState.board[index] = cardRef
+    end
 end
 
 return GameModel

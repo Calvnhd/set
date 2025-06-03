@@ -4,6 +4,8 @@ local CardView = {}
 -- required modules
 local Logger = require('core.Logger')
 local Constants = require('config.Constants')
+local CardModel = require('models.CardModel')
+local Colors = require('config.ColorRegistry')
 
 -- local variables
 local cardImages = {}
@@ -36,43 +38,46 @@ end
 -- Draw a single card
 function CardView.draw(cardRef, x, y, width, height, bIsInHint)
     local cardData = CardModel._getInternalData(cardRef)
-
-    -- Draw card background with pale complementary color
-    if cardData.bIsSelected then
-        love.graphics.setColor(unpack(COLORS.ui.selected))
+    if cardData then
+        Logger.trace("drawing single card")
     else
-        local r, g, b, a = getPaleComplementaryColor(cardData.color)
-        love.graphics.setColor(r, g, b, a)
+        Logger.error("no cardData!")
     end
-    love.graphics.rectangle("fill", x, y, width, height, 8, 8)
+    -- Draw card background with pale complementary color
+    -- if cardData.bIsSelected then
+    -- love.graphics.setColor(Colors.MAP.CARD.SELECTED)
+    -- else
+    -- love.graphics.setColor(Colors.MAP.CARD.MENU_BUTTONS)
+    -- end
+    -- love.graphics.rectangle("fill", x, y, width, height, 8, 8)
 
     -- Draw border
-    if cardData.bIsSelected then
-        love.graphics.setColor(unpack(COLORS.ui.selectedBorder))
-        love.graphics.setLineWidth(4)
-    elseif bIsInHint then
-        love.graphics.setColor(unpack(COLORS.ui.hintBorder))
-        love.graphics.setLineWidth(4)
-    else
-        love.graphics.setColor(unpack(COLORS.ui.normalBorder))
-        love.graphics.setLineWidth(2)
-    end
-    love.graphics.rectangle("line", x, y, width, height, 8, 8)
-
-    -- Set color for symbols
-    if COLORS.symbol[cardData.color] then
-        love.graphics.setColor(unpack(COLORS.symbol[cardData.color]))
-    end
-
-    -- Get the image for this shape and fill
-    local image = cardImages[cardData.shape][cardData.fill]
-    if not image then
-        print("Warning: Missing image for " .. cardData.shape .. "-" .. cardData.fill)
-        return
-    end
-
-    -- Draw the symbols
-    CardView.drawSymbols(image, cardData.number, x, y, width, height)
+    -- if cardData.bIsSelected then
+    --    love.graphics.setColor(unpack(COLORS.ui.selectedBorder))
+    --    love.graphics.setLineWidth(4)
+    -- elseif bIsInHint then
+    --    love.graphics.setColor(unpack(COLORS.ui.hintBorder))
+    --    love.graphics.setLineWidth(4)
+    -- else
+    --    love.graphics.setColor(unpack(COLORS.ui.normalBorder))
+    --    love.graphics.setLineWidth(2)
+    -- end
+    -- love.graphics.rectangle("line", x, y, width, height, 8, 8)
+    --
+    ---- Set color for symbols
+    -- if COLORS.symbol[cardData.color] then
+    --    love.graphics.setColor(unpack(COLORS.symbol[cardData.color]))
+    -- end
+    --
+    ---- Get the image for this shape and fill
+    -- local image = cardImages[cardData.shape][cardData.fill]
+    -- if not image then
+    --    print("Warning: Missing image for " .. cardData.shape .. "-" .. cardData.fill)
+    --    return
+    -- end
+    --
+    ---- Draw the symbols
+    -- CardView.drawSymbols(image, cardData.number, x, y, width, height)
 end
 
 -- Draw symbols on a card

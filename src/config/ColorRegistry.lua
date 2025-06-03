@@ -49,7 +49,8 @@ local MAP = {
         SELECTED_BORDER = COLORS.GREEN_2,
         HINT_BORDER = COLORS.BLUE_3,
         NORMAL_BORDER = COLORS.PURPLE_4
-    }
+    },
+    BOARD_BACKGROUND = COLORS.WHITE
 }
 
 -- Return both tables
