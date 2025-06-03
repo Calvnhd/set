@@ -7,6 +7,9 @@ local Events = require('config.EventRegistry')
 local Logger = require('core.Logger')
 local GameController = require('controllers.GameController')
 local CardView = require('views.cardView')
+local GameUIView = require('views.GameUIView')
+local BoardView = require('views.BoardView')
+local Colors = require('config.ColorRegistry')
 
 ---------------
 -- functions --
@@ -29,6 +32,21 @@ end
 
 function GameScene.exit()
     Logger.info("Exiting game scene")
+end
+
+-- Draw the game
+function GameScene.draw()
+    -- Set background color
+    love.graphics.setBackgroundColor(Colors.MAP.BACKGROUND)
+    -- Draw board
+    BoardView.draw()
+    -- Draw animations
+    GameScene.drawAnimations()
+    -- Draw UI elements
+    GameUIView.draw()
+end
+
+function GameScene.drawAnimations()
 end
 
 function GameScene.onKeyPressed(key)
