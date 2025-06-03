@@ -5,6 +5,7 @@ local GameController = {}
 local Logger = require('core.Logger')
 local Constants = require('config.Constants')
 local GameModel = require('models.GameModel')
+local CardModel = require('models.CardModel')
 local DeckModel = require('models.DeckModel')
 local RoundDefinitions = require('config.RoundDefinitions')
 local ConfigValidator = require('services.ConfigValidator')
@@ -76,6 +77,17 @@ function GameController.dealInitialCards()
     for i = 1, boardSize do
         local cardRef = DeckModel.takeCard()
         if cardRef then
+            if not cardRef._cardId then
+                Logger.trace("GameController received card with missing _cardId")
+            else
+                local cardData = CardModel._getInternalData(cardRef)
+                if not cardData then
+                    Logger.trace(string.format("GameController received card with ID %s (no associated data)", tostring(cardRef._cardId)))
+                else
+                    Logger.trace(string.format("GameController received card: %s %s %s %d (ID: %s)", tostring(cardData.color),
+                        tostring(cardData.shape), tostring(cardData.fill), cardData.number, tostring(cardRef._cardId)))
+                end
+            end
             GameModel.setCardAtPosition(i, cardRef)
         end
     end

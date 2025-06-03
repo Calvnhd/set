@@ -53,8 +53,13 @@ local MAP = {
     BOARD_BACKGROUND = COLORS.WHITE
 }
 
--- Return both tables
+function withAlpha(colorTable, alpha)
+    return {colorTable[1], colorTable[2], colorTable[3], alpha}
+end
+
+-- Return both tables and the utility function
 return {
     COLORS = COLORS,
-    MAP = MAP
+    MAP = MAP,
+    withAlpha = withAlpha
 }

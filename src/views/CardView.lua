@@ -38,18 +38,16 @@ end
 -- Draw a single card
 function CardView.draw(cardRef, x, y, width, height, bIsInHint)
     local cardData = CardModel._getInternalData(cardRef)
-    if cardData then
-        Logger.trace("drawing single card")
-    else
+    if not cardData then
         Logger.error("no cardData!")
+        error("no cardData!")
     end
-    -- Draw card background with pale complementary color
-    -- if cardData.bIsSelected then
-    -- love.graphics.setColor(Colors.MAP.CARD.SELECTED)
-    -- else
-    -- love.graphics.setColor(Colors.MAP.CARD.MENU_BUTTONS)
-    -- end
-    -- love.graphics.rectangle("fill", x, y, width, height, 8, 8)
+    if cardData.bIsSelected then
+        love.graphics.setColor(unpack(Colors.MAP.CARD.SELECTED))
+    else
+        love.graphics.setColor(unpack(Colors.withAlpha(Colors.MAP.MENU_BUTTONS, 0.2)))
+    end
+    love.graphics.rectangle("fill", x, y, width, height, 8, 8)
 
     -- Draw border
     -- if cardData.bIsSelected then
