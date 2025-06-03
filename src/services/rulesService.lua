@@ -1,45 +1,94 @@
 -- Rules Service - Set game rule validation logic extracted from UI
-
 local CardModel = require('models.cardModel')
 
 local RulesService = {}
 
--- Check if three cards form a valid Set
-function RulesService.isValidSet(card1Ref, card2Ref, card3Ref)
-    local card1 = CardModel._getInternalData(card1Ref)
-    local card2 = CardModel._getInternalData(card2Ref)
-    local card3 = CardModel._getInternalData(card3Ref)
-
-    -- Helper function to check if all values are the same or all different
-    local function checkAttribute(attr1, attr2, attr3)
-        if attr1 == attr2 and attr2 == attr3 then
-            -- All three are the same
-            return true
-        elseif attr1 ~= attr2 and attr2 ~= attr3 and attr1 ~= attr3 then
-            -- All three are different
-            return true
-        else
-            -- Some are the same, some are different
-            return false
-        end
+-- Check if cards form a valid Set (variable size)
+function RulesService.isValidSetOfSize(cardRefs, setSize)
+    if #cardRefs ~= setSize then
+        return false
     end
-    
-    -- Check each attribute (color, shape, number, fill)
-    local colorValid = checkAttribute(card1.color, card2.color, card3.color)
-    local shapeValid = checkAttribute(card1.shape, card2.shape, card3.shape)
-    local numberValid = checkAttribute(card1.number, card2.number, card3.number)
-    local fillValid = checkAttribute(card1.fill, card2.fill, card3.fill)
-    
+
+    if setSize < 3 then
+        return false -- Minimum set size is 3 for proper Set rules
+    end
+
+    -- Get internal card data
+    local cards = {}
+    for i, cardRef in ipairs(cardRefs) do
+        cards[i] = CardModel._getInternalData(cardRef)
+    end
+
+    -- Helper function to check if all values in an array are the same or all different
+    local function checkAttributeArray(values)
+        local first = values[1]
+        local bAllSame = true
+        local bAllDifferent = true
+
+        -- Check if all are the same
+        for i = 2, #values do
+            if values[i] ~= first then
+                bAllSame = false
+                break
+            end
+        end
+
+        if bAllSame then
+            return true
+        end
+
+        -- Check if all are different
+        for i = 1, #values - 1 do
+            for j = i + 1, #values do
+                if values[i] == values[j] then
+                    bAllDifferent = false
+                    break
+                end
+            end
+            if not bAllDifferent then
+                break
+            end
+        end
+
+        return bAllDifferent
+    end
+
+    -- Extract attribute arrays
+    local colors = {}
+    local shapes = {}
+    local numbers = {}
+    local fills = {}
+
+    for i, card in ipairs(cards) do
+        colors[i] = card.color
+        shapes[i] = card.shape
+        numbers[i] = card.number
+        fills[i] = card.fill
+    end
+
+    -- Check each attribute
+    local colorValid = checkAttributeArray(colors)
+    local shapeValid = checkAttributeArray(shapes)
+    local numberValid = checkAttributeArray(numbers)
+    local fillValid = checkAttributeArray(fills)
+
     -- It's a valid set only if ALL attributes pass the check
     return colorValid and shapeValid and numberValid and fillValid
 end
 
--- Find a valid set on the board (returns indices of 3 cards or nil if none found)
-function RulesService.findValidSet(board)
-    -- Count cards on the board to check if we have at least 3
+-- Check if three cards form a valid Set (backward compatibility)
+function RulesService.isValidSet(card1Ref, card2Ref, card3Ref)
+    return RulesService.isValidSetOfSize({card1Ref, card2Ref, card3Ref}, 3)
+end
+
+-- Find a valid set on the board (variable size)
+function RulesService.findValidSetOfSize(board, setSize)
+    setSize = setSize or 3 -- Default to 3 for backward compatibility
+
+    -- Count cards on the board
     local cardCount = 0
     local cardIndices = {}
-    
+
     for i = 1, #board do
         if board[i] then
             cardCount = cardCount + 1
@@ -47,48 +96,86 @@ function RulesService.findValidSet(board)
         end
     end
 
-    -- Need at least 3 cards to form a set
-    if cardCount < 3 then
+    -- Need at least setSize cards to form a set
+    if cardCount < setSize then
         return nil
     end
 
-    -- Try all possible combinations of 3 cards
-    for i = 1, #cardIndices - 2 do
-        for j = i + 1, #cardIndices - 1 do
-            for k = j + 1, #cardIndices do
-                local idx1, idx2, idx3 = cardIndices[i], cardIndices[j], cardIndices[k]
-                if RulesService.isValidSet(board[idx1], board[idx2], board[idx3]) then
-                    return {idx1, idx2, idx3}
+    -- Generate all combinations of setSize cards
+    local function generateCombinations(arr, k)
+        local result = {}
+
+        local function combine(start, current)
+            if #current == k then
+                local combo = {}
+                for i, v in ipairs(current) do
+                    combo[i] = v
                 end
+                table.insert(result, combo)
+                return
+            end
+
+            for i = start, #arr do
+                table.insert(current, arr[i])
+                combine(i + 1, current)
+                table.remove(current)
             end
         end
+
+        combine(1, {})
+        return result
     end
-    
+
+    local combinations = generateCombinations(cardIndices, setSize)
+
+    -- Check each combination
+    for _, combo in ipairs(combinations) do
+        local cardRefs = {}
+        for i, idx in ipairs(combo) do
+            cardRefs[i] = board[idx]
+        end
+
+        if RulesService.isValidSetOfSize(cardRefs, setSize) then
+            return combo
+        end
+    end
+
     -- No valid set found
     return nil
 end
 
--- Check if there are any valid sets on the board
+-- Check if there are any valid sets on the board (variable size)
+function RulesService.hasValidSetOfSize(board, setSize)
+    return RulesService.findValidSetOfSize(board, setSize) ~= nil
+end
+
+-- Check if there are any valid sets on the board (backward compatibility)
 function RulesService.hasValidSet(board)
     return RulesService.findValidSet(board) ~= nil
 end
 
--- Validate if cards can form a set (used for selected cards validation)
-function RulesService.validateSelectedCards(selectedIndices, board)
-    if #selectedIndices ~= 3 then
-        return false, "Must select exactly 3 cards"
+-- Validate if cards can form a set (variable size)
+function RulesService.validateSelectedCardsOfSize(selectedIndices, board, setSize)
+    if #selectedIndices ~= setSize then
+        return false, "Must select exactly " .. setSize .. " cards"
     end
-    
-    local card1 = board[selectedIndices[1]]
-    local card2 = board[selectedIndices[2]]
-    local card3 = board[selectedIndices[3]]
-    
-    if not card1 or not card2 or not card3 then
-        return false, "Invalid card selection"
+
+    local cardRefs = {}
+    for i, idx in ipairs(selectedIndices) do
+        local card = board[idx]
+        if not card then
+            return false, "Invalid card selection"
+        end
+        cardRefs[i] = card
     end
-    
-    local bIsValid = RulesService.isValidSet(card1, card2, card3)
+
+    local bIsValid = RulesService.isValidSetOfSize(cardRefs, setSize)
     return bIsValid, bIsValid and "Valid set!" or "Not a valid set"
+end
+
+-- Validate if cards can form a set (backward compatibility)
+function RulesService.validateSelectedCards(selectedIndices, board)
+    return RulesService.validateSelectedCardsOfSize(selectedIndices, board, 3)
 end
 
 return RulesService

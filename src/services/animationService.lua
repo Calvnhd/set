@@ -1,6 +1,6 @@
 -- Animation Service - Animation management separated from card rendering
-
 local EventManager = require('core.eventManager')
+local Events = require('core.events')
 
 local AnimationService = {}
 
@@ -16,36 +16,38 @@ local ANIMATION_TYPES = {
 -- Update all animations
 function AnimationService.update(dt)
     local animationsCompleted = {}
-    
+
     -- Process each animating card
     for i, anim in ipairs(animatingCards) do
         -- Update the animation timer
         anim.timer = anim.timer + dt
-        
+
         -- Calculate progress (0 to 1)
         local progress = math.min(anim.timer / anim.duration, 1)
-        
+
         -- Update animation-specific properties
         if anim.type == ANIMATION_TYPES.BURN then
             AnimationService._updateBurnAnimation(anim, progress)
         elseif anim.type == ANIMATION_TYPES.FLASH_RED then
             AnimationService._updateFlashRedAnimation(anim, progress)
         end
-        
+
         -- Check if animation is complete
         if progress >= 1 then
             table.insert(animationsCompleted, i)
-            
+
             -- Call completion callback if it hasn't been called already
             if anim.onComplete and not anim.bCompletionCalled then
                 anim.onComplete()
-                EventManager.emit('animation:completed', anim.id, anim.type)
+                EventManager.emit(Events.ANIMATION.COMPLETED, anim.id, anim.type)
             end
         end
     end
-    
+
     -- Remove completed animations in reverse order to avoid index issues
-    table.sort(animationsCompleted, function(a, b) return a > b end)
+    table.sort(animationsCompleted, function(a, b)
+        return a > b
+    end)
     for _, index in ipairs(animationsCompleted) do
         table.remove(animatingCards, index)
     end
@@ -57,7 +59,7 @@ function AnimationService._updateBurnAnimation(anim, progress)
     local phaseLength = 1 / 4 -- Each phase is 1/4 of the total animation
     anim.phase = math.min(4, math.floor(progress / phaseLength) + 1)
     anim.phaseProgress = (progress - (anim.phase - 1) * phaseLength) / phaseLength
-    
+
     -- Handle early completion callback for phase 4
     if anim.phase == 4 and anim.phaseProgress > 0.9 and not anim.bCompletionCalled then
         anim.bCompletionCalled = true
@@ -81,9 +83,9 @@ end
 function AnimationService.createBurnAnimation(cardRef, x, y, width, height, onComplete)
     local CardModel = require('models.cardModel')
     local cardData = CardModel._getInternalData(cardRef)
-    
+
     local animId = "burn_" .. cardData.id .. "_" .. os.time()
-    
+
     local anim = {
         id = animId,
         card = cardData,
@@ -101,10 +103,9 @@ function AnimationService.createBurnAnimation(cardRef, x, y, width, height, onCo
         onComplete = onComplete,
         bCompletionCalled = false
     }
-    
     table.insert(animatingCards, anim)
-    EventManager.emit('animation:started', animId, ANIMATION_TYPES.BURN, cardRef)
-    
+    EventManager.emit(Events.ANIMATION.STARTED, animId, ANIMATION_TYPES.BURN, cardRef)
+
     return anim
 end
 
@@ -112,9 +113,9 @@ end
 function AnimationService.createFlashRedAnimation(cardRef, x, y, width, height, onComplete)
     local CardModel = require('models.cardModel')
     local cardData = CardModel._getInternalData(cardRef)
-    
+
     local animId = "flash_" .. cardData.id .. "_" .. os.time()
-    
+
     local anim = {
         id = animId,
         card = cardData,
@@ -130,10 +131,9 @@ function AnimationService.createFlashRedAnimation(cardRef, x, y, width, height, 
         onComplete = onComplete,
         bCompletionCalled = false
     }
-    
     table.insert(animatingCards, anim)
-    EventManager.emit('animation:started', animId, ANIMATION_TYPES.FLASH_RED, cardRef)
-    
+    EventManager.emit(Events.ANIMATION.STARTED, animId, ANIMATION_TYPES.FLASH_RED, cardRef)
+
     return anim
 end
 
@@ -147,20 +147,20 @@ function AnimationService.getCardAnimations(cardRef)
     local CardModel = require('models.cardModel')
     local cardData = CardModel._getInternalData(cardRef)
     local cardAnimations = {}
-    
+
     for _, anim in ipairs(animatingCards) do
         if anim.card.id == cardData.id then
             table.insert(cardAnimations, anim)
         end
     end
-    
+
     return cardAnimations
 end
 
 -- Clear all animations
 function AnimationService.clearAll()
     animatingCards = {}
-    EventManager.emit('animations:cleared')
+    EventManager.emit(Events.ANIMATION.CLEARED)
 end
 
 -- Check if any animations are running

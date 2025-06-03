@@ -1,23 +1,26 @@
 -- Menu Scene - Main menu with play button interaction
-
 local MenuView = require('views.menuView')
 local EventManager = require('core.eventManager')
+local Events = require('core.events')
+local Logger = require('core.logger')
 
 local MenuScene = {}
 
 -- Enter the menu scene
 function MenuScene.enter()
+    Logger.info("Entering menu scene")
     MenuView.initialize()
     -- Subscribe to input events
-    EventManager.subscribe('input:keypressed', MenuScene.keypressed)
-    EventManager.subscribe('input:mousepressed', MenuScene.mousepressed)
+    EventManager.subscribe(Events.INPUT.KEY_PRESSED, MenuScene.keypressed)
+    EventManager.subscribe(Events.INPUT.MOUSE_PRESSED, MenuScene.mousepressed)
 end
 
 -- Exit the menu scene
 function MenuScene.exit()
+    Logger.info("Exiting menu scene")
     -- Unsubscribe from events
-    EventManager.unsubscribe('input:keypressed', MenuScene.keypressed)
-    EventManager.unsubscribe('input:mousepressed', MenuScene.mousepressed)
+    EventManager.unsubscribe(Events.INPUT.KEY_PRESSED, MenuScene.keypressed)
+    EventManager.unsubscribe(Events.INPUT.MOUSE_PRESSED, MenuScene.mousepressed)
 end
 
 -- Update menu (if needed for animations)
@@ -32,16 +35,23 @@ end
 
 -- Handle keyboard input
 function MenuScene.keypressed(key)
+    Logger.trace("Menu scene handling key: %s", key)
     if key == "escape" then
+        Logger.info("Escape key pressed - quitting game")
         love.event.quit()
     end
 end
 
 -- Handle mouse press events
 function MenuScene.mousepressed(x, y, button)
+    Logger.trace("Menu scene handling mouse press: (%d, %d) button %d", x, y, button)
     if button == 1 then -- Left mouse button
-        if MenuView.isPlayButtonClicked(x, y) then
-            EventManager.emit('scene:changeToGame')
+        if MenuView.isClassicButtonClicked(x, y) then
+            Logger.info("Classic mode button clicked")
+            EventManager.emit(Events.SCENE.CHANGE_TO_GAME, 'classic')
+        elseif MenuView.isRogueButtonClicked(x, y) then
+            Logger.info("Rogue mode button clicked")
+            EventManager.emit(Events.SCENE.CHANGE_TO_GAME, 'rogue')
         end
     end
 end
