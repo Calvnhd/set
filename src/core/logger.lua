@@ -82,7 +82,7 @@ local function writeLog(level, originOrMessage, messageOrArg, ...)
     end
     
     -- Handle both new and old calling patterns
-    local origin = "SYSTEM"
+    local origin = "X"
     local message = originOrMessage
     local args = {...}
     

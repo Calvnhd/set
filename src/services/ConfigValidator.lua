@@ -1,10 +1,12 @@
 -- Configuration Validator - Validates various configuration objects
 local ConfigValidator = {}
 
+local Constants = require('config.Constants')
+
 -- Valid attribute names and their possible values
 local VALID_ATTRIBUTES = {
     number = {1, 2, 3},
-    color = {"red", "green", "blue"},
+    color = {Constants.COLOR.GREEN, Constants.COLOR.BLUE, Constants.COLOR.RED},
     shape = {"diamond", "oval", "squiggle"},
     fill = {"empty", "solid", "stripes"}
 }

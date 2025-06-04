@@ -1,3 +1,7 @@
+
+-- required modules
+local Constants = require('config.Constants')
+
 -- Utility function to convert hex to RGB values (0-1 range for LÖVE2D)
 local function hexToRGB(hex)
     local r = tonumber(hex:sub(1, 2), 16) / 255
@@ -39,18 +43,24 @@ local MAP = {
     MENU_BUTTONS = COLORS.PURPLE_2,
     TEXT = COLORS.WHITE,
     CARD = {
-        BACKGROUND = COLORS.WHITE,
         SYMBOL = {
             RED = COLORS.RED,
             GREEN = COLORS.GREEN_3,
             BLUE = COLORS.BLUE_1
         },
-        SELECTED = COLORS.YELLOW,
+        BACKGROUND = COLORS.WHITE,
+        BORDER = COLORS.PURPLE_4,
+        SELECTED_BACKGROUND = COLORS.YELLOW,
         SELECTED_BORDER = COLORS.GREEN_2,
-        HINT_BORDER = COLORS.BLUE_3,
-        NORMAL_BORDER = COLORS.PURPLE_4
+        HINT_BORDER = COLORS.BLUE_3
     },
     BOARD_BACKGROUND = COLORS.WHITE
+}
+
+local SYMBOL_COLOR_MAPPING = {
+    [Constants.COLOR.RED] = MAP.CARD.SYMBOL.RED,
+    [Constants.COLOR.GREEN] = MAP.CARD.SYMBOL.GREEN,
+    [Constants.COLOR.BLUE] = MAP.CARD.SYMBOL.BLUE
 }
 
 function withAlpha(colorTable, alpha)
@@ -61,5 +71,6 @@ end
 return {
     COLORS = COLORS,
     MAP = MAP,
-    withAlpha = withAlpha
+    withAlpha = withAlpha,
+    SYMBOL_COLOR_MAPPING = SYMBOL_COLOR_MAPPING
 }

@@ -1,6 +1,9 @@
 -- Round Definitions Configuration - Define round sequences for rogue mode
 local RoundDefinitions = {}
 
+-- required modules
+local Constants = require('config.Constants')
+
 -- A single round of classic Set for standard play
 RoundDefinitions.classic = {{
     id = "classic_set",
@@ -8,7 +11,7 @@ RoundDefinitions.classic = {{
     description = "Traditional Set rules with all attributes",
     attributes = {
         number = {1, 2, 3},
-        color = {"green", "blue", "red"},
+        color = {Constants.COLOR.GREEN, Constants.COLOR.BLUE, Constants.COLOR.RED},
         shape = {"diamond", "oval", "squiggle"},
         fill = {"empty", "solid", "stripes"}
     },
@@ -32,7 +35,7 @@ RoundDefinitions.rogue = {{
     description = "Learn the basics with simple 3-card sets",
     attributes = {
         number = {1, 2},
-        color = {"green", "blue"},
+        color = {Constants.COLOR.GREEN, Constants.COLOR.BLUE},
         shape = {"diamond", "oval"},
         fill = {"empty", "solid"}
     },
@@ -53,7 +56,7 @@ RoundDefinitions.rogue = {{
     description = "More color variety with 3-card sets",
     attributes = {
         number = {1, 2},
-        color = {"green", "blue", "red"},
+        color = {Constants.COLOR.GREEN, Constants.COLOR.BLUE, Constants.COLOR.RED},
         shape = {"diamond"},
         fill = {"empty", "solid"}
     },
@@ -78,7 +81,7 @@ RoundDefinitions.rogue = {{
     description = "Introducing shape variety",
     attributes = {
         number = {1, 2},
-        color = {"green", "blue", "red"},
+        color = {Constants.COLOR.GREEN, Constants.COLOR.BLUE, Constants.COLOR.RED},
         shape = {"diamond", "oval"},
         fill = {"empty", "solid"}
     },

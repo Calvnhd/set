@@ -9,6 +9,8 @@ local Colors = require('config.ColorRegistry')
 
 -- local variables
 local cardImages = {}
+local symbolColors = Colors.SYMBOL_COLOR_MAPPING
+local cardColors = Colors.MAP.CARD
 
 ---------------
 -- functions --
@@ -39,43 +41,40 @@ end
 function CardView.draw(cardRef, x, y, width, height, bIsInHint)
     local cardData = CardModel._getInternalData(cardRef)
     if not cardData then
-        Logger.error("no cardData!")
+        Logger.error("CardView", "no cardData!")
         error("no cardData!")
     end
     if cardData.bIsSelected then
-        love.graphics.setColor(unpack(Colors.MAP.CARD.SELECTED))
+        love.graphics.setColor(unpack(cardColors.SELECTED_BACKGROUND))
     else
-        love.graphics.setColor(unpack(Colors.withAlpha(Colors.MAP.MENU_BUTTONS, 0.2)))
+        love.graphics.setColor(unpack(cardColors.BACKGROUND))
     end
     love.graphics.rectangle("fill", x, y, width, height, 8, 8)
-
     -- Draw border
-    -- if cardData.bIsSelected then
-    --    love.graphics.setColor(unpack(COLORS.ui.selectedBorder))
-    --    love.graphics.setLineWidth(4)
-    -- elseif bIsInHint then
-    --    love.graphics.setColor(unpack(COLORS.ui.hintBorder))
-    --    love.graphics.setLineWidth(4)
-    -- else
-    --    love.graphics.setColor(unpack(COLORS.ui.normalBorder))
-    --    love.graphics.setLineWidth(2)
-    -- end
-    -- love.graphics.rectangle("line", x, y, width, height, 8, 8)
-    --
-    ---- Set color for symbols
-    -- if COLORS.symbol[cardData.color] then
-    --    love.graphics.setColor(unpack(COLORS.symbol[cardData.color]))
-    -- end
-    --
-    ---- Get the image for this shape and fill
-    -- local image = cardImages[cardData.shape][cardData.fill]
-    -- if not image then
-    --    print("Warning: Missing image for " .. cardData.shape .. "-" .. cardData.fill)
-    --    return
-    -- end
-    --
-    ---- Draw the symbols
-    -- CardView.drawSymbols(image, cardData.number, x, y, width, height)
+    if cardData.bIsSelected then
+        love.graphics.setColor(unpack(cardColors.SELECTED_BORDER))
+        love.graphics.setLineWidth(4)
+    elseif bIsInHint then
+        love.graphics.setColor(unpack(cardColors.HINT_BORDER))
+        love.graphics.setLineWidth(4)
+    else
+        love.graphics.setColor(unpack(cardColors.BORDER))
+        love.graphics.setLineWidth(2)
+    end
+    love.graphics.rectangle("line", x, y, width, height, 8, 8)
+    -- Set color for symbols based on the card's color
+    local symbolColor = symbolColors[cardData.color] or {0, 0, 0, 1}
+    love.graphics.setColor(unpack(symbolColor))
+
+    -- Get the image for this shape and fill
+    local image = cardImages[cardData.shape][cardData.fill]
+    if not image then
+        Logger.error("CardView", "Missing image for " .. cardData.shape .. "-" .. cardData.fill)
+        error("Missing image for " .. cardData.shape .. "-" .. cardData.fill)
+        return
+    end
+    -- Draw the symbols
+    CardView.drawSymbols(image, cardData.number, x, y, width, height)
 end
 
 -- Draw symbols on a card
@@ -137,12 +136,10 @@ function CardView.drawBurningCard(anim)
         love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
 
         -- Fade shapes toward black
-        local blackAmount = progress
-        if COLORS.symbol[anim.card.color] then
-            local symbolColor = COLORS.symbol[anim.card.color]
-            love.graphics.setColor(symbolColor[1] * (1 - blackAmount), symbolColor[2] * (1 - blackAmount),
-                symbolColor[3] * (1 - blackAmount), 1)
-        end
+        local blackAmount = progress 
+        local symbolColor = symbolColors[anim.card.color] or {0, 0, 0, 1}
+        love.graphics.setColor(symbolColor[1] * (1 - blackAmount), symbolColor[2] * (1 - blackAmount),
+            symbolColor[3] * (1 - blackAmount), 1)
 
     elseif phase == 2 then
         -- Phase 2: Card fades to bright orange/red
@@ -217,12 +214,10 @@ function CardView.drawFlashingRedCard(anim)
 
     love.graphics.setColor(1, 0.2, 0.2)
     love.graphics.setLineWidth(4)
-    love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-    -- Set color for symbols
-    if COLORS.symbol[anim.card.color] then
-        love.graphics.setColor(unpack(COLORS.symbol[anim.card.color]))
-    end
+    love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8) -- Set color for symbols based on the card's color
+    -- Use the mapped color or default to black if not found
+    local symbolColor = symbolColors[anim.card.color] or {0, 0, 0, 1}
+    love.graphics.setColor(unpack(symbolColor))
 
     local image = cardImages[anim.card.shape][anim.card.fill]
     if image then
