@@ -44,7 +44,6 @@ end
 
 function GameModel.getBoardSize()
     -- consider using # if it's guaranteed to be initialized correctly
-    Logger.trace("returning board size of "..gameState.boardSize)
     return gameState.boardSize
 end
 

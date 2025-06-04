@@ -51,16 +51,15 @@ function Logger.initialize()
         print("[LOGGER] Failed to open log file:", error)
         logFileHandle = nil
         -- Continue without file logging - graceful fallback
-    end
-    bInitialized = true
-    Logger.info("Logger initialized - " .. config.logFile)
+    end    bInitialized = true
+    Logger.info("LOGGER", "Initialized - %s", config.logFile)
     return true
 end
 
 -- Shutdown the logging system
 function Logger.shutdown()
     if logFileHandle then
-        Logger.info("Logger shutting down")
+        Logger.info("LOGGER", "Shutting down")
         logFileHandle:close()
         logFileHandle = nil
     end
@@ -68,7 +67,7 @@ function Logger.shutdown()
 end
 
 -- Core logging function with level filtering and formatting
-local function writeLog(level, message, ...)
+local function writeLog(level, originOrMessage, messageOrArg, ...)
     -- Early return for performance when logging is disabled
     if not config.bEnabled then
         return
@@ -81,10 +80,22 @@ local function writeLog(level, message, ...)
     if not bInitialized then
         Logger.initialize()
     end
-    -- Format the message with variadic arguments (printf-style)
+    
+    -- Handle both new and old calling patterns
+    local origin = "SYSTEM"
+    local message = originOrMessage
+    local args = {...}
+    
+    -- If there are at least two arguments, the first is origin and the second is message
+    if messageOrArg ~= nil then
+        origin = originOrMessage
+        message = messageOrArg
+        -- args stays the same
+    end
+      -- Format the message with variadic arguments (printf-style)
     local formattedMessage = message
-    if select('#', ...) > 0 then
-        local bFormatSuccess, result = pcall(string.format, message, ...)
+    if #args > 0 then
+        local bFormatSuccess, result = pcall(string.format, message, unpack(args))
         if bFormatSuccess then
             formattedMessage = result
         else
@@ -92,8 +103,9 @@ local function writeLog(level, message, ...)
             formattedMessage = message .. " [FORMAT ERROR: " .. result .. "]"
         end
     end
-    -- Build the log line with timestamp and level
-    local logLine = "[" .. os.date("%Y-%m-%d %H:%M:%S") .. "][" .. LEVEL_NAMES[level] .. "] " .. formattedMessage
+    
+    -- Build the log line with timestamp, origin, and level
+    local logLine = "[" .. os.date("%Y-%m-%d %H:%M:%S") .. "][" .. origin .. "][" .. LEVEL_NAMES[level] .. "] " .. formattedMessage
     -- Dual output capability - console
     if config.bWriteToConsole then
         print(logLine)
@@ -115,17 +127,17 @@ local function writeLog(level, message, ...)
 end
 
 -- Public API functions
-function Logger.trace(message, ...)
-    writeLog(LOG_LEVELS.TRACE, message, ...)
+function Logger.trace(originOrMessage, messageOrArg, ...)
+    writeLog(LOG_LEVELS.TRACE, originOrMessage, messageOrArg, ...)
 end
-function Logger.info(message, ...)
-    writeLog(LOG_LEVELS.INFO, message, ...)
+function Logger.info(originOrMessage, messageOrArg, ...)
+    writeLog(LOG_LEVELS.INFO, originOrMessage, messageOrArg, ...)
 end
-function Logger.warning(message, ...)
-    writeLog(LOG_LEVELS.WARNING, message, ...)
+function Logger.warning(originOrMessage, messageOrArg, ...)
+    writeLog(LOG_LEVELS.WARNING, originOrMessage, messageOrArg, ...)
 end
-function Logger.error(message, ...)
-    writeLog(LOG_LEVELS.ERROR, message, ...)
+function Logger.error(originOrMessage, messageOrArg, ...)
+    writeLog(LOG_LEVELS.ERROR, originOrMessage, messageOrArg, ...)
 end
 
 -- Log file rotation with proper file handle management
