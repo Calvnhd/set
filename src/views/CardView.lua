@@ -17,21 +17,22 @@ local cardColors = Colors.MAP.CARD
 ---------------
 
 function CardView.loadImages()
+    Logger.trace("CardView", "Loading card images")
     cardImages = {
-        oval = {
-            solid = love.graphics.newImage("images/oval-fill-54x96.png"),
-            stripes = love.graphics.newImage("images/oval-stripes-54x96.png"),
-            empty = love.graphics.newImage("images/oval-empty-54x96.png")
+        [Constants.SHAPE.OVAL] = {
+            [Constants.FILL.SOLID] = love.graphics.newImage("images/oval-fill-54x96.png"),
+            [Constants.FILL.STRIPES] = love.graphics.newImage("images/oval-stripes-54x96.png"),
+            [Constants.FILL.EMPTY] = love.graphics.newImage("images/oval-empty-54x96.png")
         },
-        diamond = {
-            solid = love.graphics.newImage("images/diamond-fill-54x96.png"),
-            stripes = love.graphics.newImage("images/diamond-stripes-54x96.png"),
-            empty = love.graphics.newImage("images/diamond-empty-54x96.png")
+        [Constants.SHAPE.DIAMOND] = {
+            [Constants.FILL.SOLID] = love.graphics.newImage("images/diamond-fill-54x96.png"),
+            [Constants.FILL.STRIPES] = love.graphics.newImage("images/diamond-stripes-54x96.png"),
+            [Constants.FILL.EMPTY] = love.graphics.newImage("images/diamond-empty-54x96.png")
         },
-        squiggle = {
-            solid = love.graphics.newImage("images/squiggle-fill-54x96.png"),
-            stripes = love.graphics.newImage("images/squiggle-stripes-54x96.png"),
-            empty = love.graphics.newImage("images/squiggle-empty-54x96.png")
+        [Constants.SHAPE.SQUIGGLE] = {
+            [Constants.FILL.SOLID] = love.graphics.newImage("images/squiggle-fill-54x96.png"),
+            [Constants.FILL.STRIPES] = love.graphics.newImage("images/squiggle-stripes-54x96.png"),
+            [Constants.FILL.EMPTY] = love.graphics.newImage("images/squiggle-empty-54x96.png")
         }
     }
     return cardImages
@@ -39,6 +40,11 @@ end
 
 -- Draw a single card
 function CardView.draw(cardRef, x, y, width, height, bIsInHint)
+     -- Ensure images are loaded
+    if not next(cardImages) then
+        Logger.warning("CardView", "Images not loaded, loading now...")
+        CardView.loadImages()
+    end
     local cardData = CardModel._getInternalData(cardRef)
     if not cardData then
         Logger.error("CardView", "no cardData!")

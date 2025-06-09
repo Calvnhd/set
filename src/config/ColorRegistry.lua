@@ -10,6 +10,7 @@ local function hexToRGB(hex)
     return {r, g, b, 1}
 end
 
+-- Full color palette
 -- https://lospec.com/palette-list/florentine24
 local COLORS = {
     GREEN_1 = hexToRGB("175145"), -- #175145
@@ -38,6 +39,7 @@ local COLORS = {
     BROWN_1 = hexToRGB("712835") -- #712835
 }
 
+-- Maps colors from the palette to specific elements of the game
 local MAP = {
     BACKGROUND = COLORS.BLUE_1,
     MENU_BUTTONS = COLORS.PURPLE_2,
@@ -57,6 +59,7 @@ local MAP = {
     BOARD_BACKGROUND = COLORS.WHITE
 }
 
+-- Maps symbol color constants to actual colors
 local SYMBOL_COLOR_MAPPING = {
     [Constants.COLOR.RED] = MAP.CARD.SYMBOL.RED,
     [Constants.COLOR.GREEN] = MAP.CARD.SYMBOL.GREEN,

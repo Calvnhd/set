@@ -26,8 +26,6 @@ function GameScene.enter(gameMode)
     GameController.initialize()
     -- Setup new game with specified mode
     GameController.setUpNewGame(gameMode)
-     -- Load card images
-    CardView.loadImages()
 end
 
 function GameScene.exit()

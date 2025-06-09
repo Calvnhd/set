@@ -4,6 +4,11 @@ local RoundDefinitions = {}
 -- required modules
 local Constants = require('config.Constants')
 
+-- simplify constant Use
+local colors = Constants.COLOR
+local shapes = Constants.SHAPE
+local fill = Constants.FILL
+
 -- A single round of classic Set for standard play
 RoundDefinitions.classic = {{
     id = "classic_set",
@@ -11,9 +16,9 @@ RoundDefinitions.classic = {{
     description = "Traditional Set rules with all attributes",
     attributes = {
         number = {1, 2, 3},
-        color = {Constants.COLOR.GREEN, Constants.COLOR.BLUE, Constants.COLOR.RED},
-        shape = {"diamond", "oval", "squiggle"},
-        fill = {"empty", "solid", "stripes"}
+        color = {colors.GREEN, colors.BLUE, colors.RED},
+        shape = {shapes.DIAMOND, shapes.OVAL, shapes.SQUIGGLE},
+        fill = {fill.EMPTY, fill.SOLID, fill.STRIPES}
     },
     setSize = 3,
     boardSize = {
@@ -35,9 +40,9 @@ RoundDefinitions.rogue = {{
     description = "Learn the basics with simple 3-card sets",
     attributes = {
         number = {1, 2},
-        color = {Constants.COLOR.GREEN, Constants.COLOR.BLUE},
-        shape = {"diamond", "oval"},
-        fill = {"empty", "solid"}
+        color = {colors.GREEN, colors.BLUE},
+        shape = {shapes.DIAMOND, shapes.OVAL},
+        fill = {fill.EMPTY, fill.SOLID}
     },
     setSize = 3,
     boardSize = {
@@ -56,9 +61,9 @@ RoundDefinitions.rogue = {{
     description = "More color variety with 3-card sets",
     attributes = {
         number = {1, 2},
-        color = {Constants.COLOR.GREEN, Constants.COLOR.BLUE, Constants.COLOR.RED},
-        shape = {"diamond"},
-        fill = {"empty", "solid"}
+        color = {colors.GREEN, colors.BLUE, colors.RED},
+        shape = {shapes.DIAMOND},
+        fill = {fill.EMPTY, fill.SOLID}
     },
     setSize = 3,
     boardSize = {
@@ -70,10 +75,6 @@ RoundDefinitions.rogue = {{
         invalidSet = -1,
         noSetCorrect = 1,
         noSetIncorrect = -1
-    },
-    endCondition = {
-        type = "score",
-        target = 5
     }
 }, {
     id = "tutorial_3",
@@ -81,9 +82,9 @@ RoundDefinitions.rogue = {{
     description = "Introducing shape variety",
     attributes = {
         number = {1, 2},
-        color = {Constants.COLOR.GREEN, Constants.COLOR.BLUE, Constants.COLOR.RED},
-        shape = {"diamond", "oval"},
-        fill = {"empty", "solid"}
+        color = {colors.GREEN, colors.BLUE, colors.RED},
+        shape = {shapes.DIAMOND, shapes.OVAL},
+        fill = {fill.EMPTY, fill.SOLID}
     },
     setSize = 3,
     boardSize = {
@@ -95,10 +96,6 @@ RoundDefinitions.rogue = {{
         invalidSet = -1,
         noSetCorrect = 1,
         noSetIncorrect = -1
-    },
-    endCondition = {
-        type = "score",
-        target = 7
     }
 }}
 

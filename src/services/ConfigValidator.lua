@@ -3,12 +3,17 @@ local ConfigValidator = {}
 
 local Constants = require('config.Constants')
 
+-- simplify constant Use
+local colors = Constants.COLOR
+local shapes = Constants.SHAPE
+local fill = Constants.FILL
+
 -- Valid attribute names and their possible values
 local VALID_ATTRIBUTES = {
     number = {1, 2, 3},
-    color = {Constants.COLOR.GREEN, Constants.COLOR.BLUE, Constants.COLOR.RED},
-    shape = {"diamond", "oval", "squiggle"},
-    fill = {"empty", "solid", "stripes"}
+    color = {colors.GREEN, colors.BLUE, colors.RED},
+    shape = {shapes.DIAMOND, shapes.OVAL, shapes.SQUIGGLE},
+    fill = {fill.EMPTY, fill.SOLID, fill.STRIPES}
 }
 
 ---------------
