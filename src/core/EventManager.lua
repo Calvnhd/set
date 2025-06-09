@@ -17,7 +17,7 @@ local listeners = {} -- Table to store event subscriptions
 function EventManager.checkEventExists(eventName)
     -- Nil check
     if not eventName then
-        Logger.error("Event does not exist: eventName is nil")
+        Logger.error("EventManager", "Event does not exist: eventName is nil")
         error("Event does not exist: eventName is nil")
         return false
     end
@@ -32,7 +32,7 @@ function EventManager.checkEventExists(eventName)
             end
         end
     end
-    Logger.error("Event does not exist: " .. eventName)
+    Logger.error("EventManager", "Event does not exist: " .. eventName)
     error("Event does not exist: " .. eventName)
     return false
 end
@@ -61,7 +61,7 @@ end
 -- Emit an event to all subscribers
 function EventManager.emit(eventName, ...)
     EventManager.checkEventExists(eventName)
-    Logger.trace("Event emitted: " .. eventName)
+    Logger.trace("EventManager", "Event emitted: " .. eventName)
     if listeners[eventName] then
         for _, callback in ipairs(listeners[eventName]) do
             callback(...)

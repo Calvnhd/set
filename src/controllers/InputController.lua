@@ -12,13 +12,13 @@ local Logger = require('core.Logger')
 
 -- Handle keyboard input
 function InputController.keypressed(key)
-    Logger.trace("Key pressed: %s", key)
+    Logger.trace("InputController", "Key pressed: %s", key)
     EventManager.emit(Events.INPUT.KEY_PRESSED, key)
 end
 
 -- Handle mouse press events
 function InputController.mousepressed(x, y, button)
-    Logger.trace("Mouse pressed: (%d, %d) button %d", x, y, button)
+    Logger.trace("InputController", "Mouse pressed: (%d, %d) button %d", x, y, button)
     EventManager.emit(Events.INPUT.MOUSE_PRESSED, x, y, button)
 end
 

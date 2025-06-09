@@ -11,9 +11,9 @@ local InputController = require('controllers.InputController')
 
 function love.load()
     Logger.initialize()
-    Logger.info("Game starting up")
+    Logger.info("Main", "Game starting up")
     SceneManager.initialize()
-    Logger.info("Game initialization complete")
+    Logger.info("Main", "Game initialization complete")
 end
 
 function love.update(dt)
@@ -33,6 +33,6 @@ function love.mousepressed(x, y, button)
 end
 
 function love.quit()
-    Logger.info("Game shutting down")
+    Logger.info("Main", "Game shutting down")
     Logger.shutdown()
 end

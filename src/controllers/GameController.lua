@@ -21,19 +21,19 @@ local RoundState = {
 ---------------
 
 function GameController.initialize()
-    Logger.info('Initializing game controller')
+    Logger.info("GameController", "Initializing game controller")
 end
 
 function GameController.setUpNewGame(gameMode)
     GameController.resetRoundState()
     if gameMode == Constants.GAME_MODE.CLASSIC then
-        Logger.info("Setting up CLASSIC game")
+        Logger.info("GameController",  "Setting up CLASSIC game")
         RoundState.RoundSequence = GameController.fetchRoundSequence("classic")
     elseif gameMode == Constants.GAME_MODE.ROGUE then
-        Logger.info("Setting up ROGUE game")
+        Logger.info("GameController",  "Setting up ROGUE game")
         RoundState.RoundSequence = GameController.fetchRoundSequence("rogue")
     else
-        Logger.error("Specified game mode does not have a matching round definition")
+        Logger.error("GameController",  "Specified game mode does not have a matching round definition")
         error("Specified game mode does not have a matching round definition")
     end
     GameController.initializeCurrentRound()
@@ -42,9 +42,9 @@ end
 function GameController.initializeCurrentRound()
     local round = RoundState.RoundSequence[RoundState.currentRoundIndex]
     -- Debug print the config
-    Logger.trace("--- BEGIN CONFIG ROUND DUMP ---")
-    GameController.debugPrintConfig(round)
-    Logger.trace("--- END CONFIG ROUND DUMP ---")
+    -- Logger.trace("GameController", "--- BEGIN CONFIG ROUND DUMP ---")
+    -- GameController.debugPrintConfig(round)
+    -- Logger.trace("GameController", "--- END CONFIG ROUND DUMP ---")
     -- Apply configuration
     GameModel.initializeRound(round)
     DeckModel.createFromConfig(round)
@@ -61,57 +61,47 @@ end
 
 -- fetches and validates a round config taken from RoundDefinitions
 function GameController.fetchRoundSequence(sequenceType)
-    Logger.info("Setting new round sequence: " .. sequenceType)
+    Logger.info("GameController",  "Setting new round sequence: " .. sequenceType)
     local sequence = RoundDefinitions.getSequence(sequenceType)
     local bValid, message = ConfigValidator.validateRoundSequence(sequence)
     if not bValid then
-        Logger.error("Invalid round configuration: " .. message)
+        Logger.error("GameController",  "Invalid round configuration: " .. message)
         error("Invalid round configuration: " .. message)
     end
     return sequence
 end
 
 function GameController.dealInitialCards()
-    Logger.trace("dealing initial cards")
+    Logger.trace("GameController", "dealing initial cards")
     local boardSize = GameModel.getBoardSize()
     for i = 1, boardSize do
         local cardRef = DeckModel.takeCard()
         if cardRef then
-            if not cardRef._cardId then
-                Logger.trace("GameController received card with missing _cardId")
-            else
-                local cardData = CardModel._getInternalData(cardRef)
-                if not cardData then
-                    Logger.trace(string.format("GameController received card with ID %s (no associated data)", tostring(cardRef._cardId)))
-                else
-                    Logger.trace(string.format("GameController received card: %s %s %s %d (ID: %s)", tostring(cardData.color),
-                        tostring(cardData.shape), tostring(cardData.fill), cardData.number, tostring(cardRef._cardId)))
-                end
-            end
+            local cardData = CardModel._getInternalData(cardRef)
             GameModel.setCardAtPosition(i, cardRef)
         end
     end
 end
 
-function GameController.debugPrintConfig(config, indent)
-    indent = indent or 0
-    local indentStr = string.rep("  ", indent)
-
-    if type(config) ~= "table" then
-        Logger.trace(indentStr .. tostring(config))
-        return
-    end
-
-    for k, v in pairs(config) do
-        if type(v) == "table" then
-            Logger.trace(indentStr .. k .. " = {")
-            GameController.debugPrintConfig(v, indent + 1)
-            Logger.trace(indentStr .. "}")
-        else
-            Logger.trace(indentStr .. k .. " = " .. tostring(v))
-        end
-    end
-end
+-- function GameController.debugPrintConfig(config, indent)
+--     indent = indent or 0
+--     local indentStr = string.rep("  ", indent)
+-- 
+--     if type(config) ~= "table" then
+--         Logger.trace("GameController", indentStr .. tostring(config))
+--         return
+--     end
+-- 
+--     for k, v in pairs(config) do
+--         if type(v) == "table" then
+--             Logger.trace("GameController", indentStr .. k .. " = {")
+--             GameController.debugPrintConfig(v, indent + 1)
+--             Logger.trace("GameController", indentStr .. "}")
+--         else
+--             Logger.trace("GameController", indentStr .. k .. " = " .. tostring(v))
+--         end
+--     end
+-- end
 
 return GameController
 

@@ -16,12 +16,12 @@ local Colors = require('config.ColorRegistry')
 ---------------
 
 function GameScene.enter(gameMode)
-    Logger.info("Entering game scene")
+    Logger.info("GameScene", "Entering game scene")
     if not gameMode then
-        Logger.error("No gameMode specified")
+        Logger.error("GameScene", "No gameMode specified")
         error("No gameMode specified")
     end
-    Logger.info("Loading gameMode " .. gameMode)
+    Logger.info("GameScene", "Loading gameMode " .. gameMode)
     -- Initialize game controller
     GameController.initialize()
     -- Setup new game with specified mode
@@ -29,7 +29,7 @@ function GameScene.enter(gameMode)
 end
 
 function GameScene.exit()
-    Logger.info("Exiting game scene")
+    Logger.info("GameScene", "Exiting game scene")
 end
 
 -- Draw the game
@@ -48,7 +48,7 @@ function GameScene.drawAnimations()
 end
 
 function GameScene.onKeyPressed(key)
-    Logger.trace("Game scene handling key: %s", key)
+    Logger.trace("GameScene", "Game scene handling key: %s", key)
     if key == "escape" then
         love.event.quit()
     end

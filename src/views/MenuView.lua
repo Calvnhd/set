@@ -45,7 +45,7 @@ function MenuView.initialize()
 
     rogueButton.x = windowWidth / 2 - rogueButton.width / 2
     rogueButton.y = startY + 60 + buttonSpacing
-    Logger.trace("MenuView initialized")
+    Logger.trace("MenuView", "MenuView initialized")
 end
 
 -- Draw the menu

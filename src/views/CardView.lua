@@ -17,7 +17,6 @@ local cardColors = Colors.MAP.CARD
 ---------------
 
 function CardView.loadImages()
-    Logger.trace("CardView", "Loading card images")
     cardImages = {
         [Constants.SHAPE.OVAL] = {
             [Constants.FILL.SOLID] = love.graphics.newImage("images/oval-fill-54x96.png"),
@@ -35,16 +34,12 @@ function CardView.loadImages()
             [Constants.FILL.EMPTY] = love.graphics.newImage("images/squiggle-empty-54x96.png")
         }
     }
+    Logger.trace("CardView", "Card images loaded")
     return cardImages
 end
 
 -- Draw a single card
 function CardView.draw(cardRef, x, y, width, height, bIsInHint)
-     -- Ensure images are loaded
-    if not next(cardImages) then
-        Logger.warning("CardView", "Images not loaded, loading now...")
-        CardView.loadImages()
-    end
     local cardData = CardModel._getInternalData(cardRef)
     if not cardData then
         Logger.error("CardView", "no cardData!")
@@ -71,7 +66,11 @@ function CardView.draw(cardRef, x, y, width, height, bIsInHint)
     -- Set color for symbols based on the card's color
     local symbolColor = symbolColors[cardData.color] or {0, 0, 0, 1}
     love.graphics.setColor(unpack(symbolColor))
-
+     -- Ensure images are loaded
+    if not next(cardImages) then
+        Logger.info("CardView", "Images not yet loaded. Loading now...")
+        CardView.loadImages()
+    end
     -- Get the image for this shape and fill
     local image = cardImages[cardData.shape][cardData.fill]
     if not image then

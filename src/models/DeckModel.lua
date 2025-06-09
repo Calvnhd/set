@@ -18,37 +18,37 @@ local DEFAULT_FILL = {Constants.FILL.EMPTY, Constants.FILL.SOLID, Constants.FILL
 -- functions --
 ---------------
 
-function DeckModel.printDeck()
-    Logger.trace("--- BEGIN DECK DUMP ---")
-    Logger.trace(string.format("Deck contains %d cards", #cards))
-    
-    for i, cardRef in ipairs(cards) do
-        if not cardRef then
-            Logger.trace(string.format("[%d]: nil card reference", i))
-        elseif not cardRef._cardId then
-            Logger.trace(string.format("[%d]: invalid card reference (missing _cardId)", i))
-        else
-            local cardData = CardModel._getInternalData(cardRef)
-            if not cardData then
-                Logger.trace(string.format("[%d]: card ID %s has no associated data", i, tostring(cardRef._cardId)))
-            else
-                Logger.trace(string.format("[%d]: %s %s %s %d (ID: %s)", 
-                    i, 
-                    tostring(cardData.color),
-                    tostring(cardData.shape),
-                    tostring(cardData.fill),
-                    cardData.number,
-                    tostring(cardRef._cardId)
-                ))
-            end
-        end
-    end
-    Logger.trace("--- END DECK DUMP ---")
-end
+-- function DeckModel.printDeck()
+--     Logger.trace("DeckModel", "--- BEGIN DECK DUMP ---")
+--     Logger.trace("DeckModel", string.format("Deck contains %d cards", #cards))
+--     
+--     for i, cardRef in ipairs(cards) do
+--         if not cardRef then
+--             Logger.trace("DeckModel", string.format("[%d]: nil card reference", i))
+--         elseif not cardRef._cardId then
+--             Logger.trace("DeckModel", string.format("[%d]: invalid card reference (missing _cardId)", i))
+--         else
+--             local cardData = CardModel._getInternalData(cardRef)
+--             if not cardData then
+--                 Logger.trace("DeckModel", string.format("[%d]: card ID %s has no associated data", i, tostring(cardRef._cardId)))
+--             else
+--                 Logger.trace("DeckModel", string.format("[%d]: %s %s %s %d (ID: %s)", 
+--                     i, 
+--                     tostring(cardData.color),
+--                     tostring(cardData.shape),
+--                     tostring(cardData.fill),
+--                     cardData.number,
+--                     tostring(cardRef._cardId)
+--                 ))
+--             end
+--         end
+--     end
+--     Logger.trace("DeckModel", "--- END DECK DUMP ---")
+-- end
 
 -- Create a deck of cards with default attributes (classic mode)
 function DeckModel.createDefault()
-    Logger.trace("Creating default deck")
+    Logger.trace("DeckModel", "Creating default deck")
     return DeckModel.createWithAttributes(DEFAULT_COLOR, DEFAULT_SHAPE, DEFAULT_NUMBER, DEFAULT_FILL)
 end
 
@@ -73,13 +73,13 @@ function DeckModel.createWithAttributes(colors, shapes, numbers, fills)
             end
         end
     end
-    DeckModel.printDeck()
+    -- DeckModel.printDeck()
     return cards
 end
 
 -- Create deck from round configuration
 function DeckModel.createFromConfig(config)
-    Logger.trace("Creating deck from config")
+    Logger.trace("DeckModel", "Creating deck from config")
     if not config or not config.attributes then
         return DeckModel.create()
     end
@@ -89,43 +89,27 @@ end
 
 -- Shuffle the deck using Fisher-Yates algorithm
 function DeckModel.shuffle()
-    Logger.trace("Shuffling deck")
+    Logger.trace("DeckModel", "Shuffling deck")
     math.randomseed(os.time())
     for i = #cards, 2, -1 do
         local j = math.random(i)
         cards[i], cards[j] = cards[j], cards[i]
     end
-    DeckModel.printDeck()
+    -- DeckModel.printDeck()
     return cards
 end
 
 -- Take a card from the top of the deck
 function DeckModel.takeCard()
-    Logger.trace("Removing card from deck")
     if #cards > 0 then
         local card = table.remove(cards, 1)
-        Logger.trace(string.format("Deck contains %d cards", #cards))
+        Logger.trace("DeckModel", string.format("Removed card from deck.  %d cards remaining", #cards))
         if card then
-            if not card._cardId then
-                Logger.trace("DeckModel Took card with missing _cardId")
-            else
-                local cardData = CardModel._getInternalData(card)
-                if not cardData then
-                    Logger.trace(string.format("DeckModel Took card with ID %s (no associated data)", tostring(card._cardId)))
-                else
-                    Logger.trace(string.format("DeckModel Took card: %s %s %s %d (ID: %s)", 
-                        tostring(cardData.color),
-                        tostring(cardData.shape),
-                        tostring(cardData.fill),
-                        cardData.number,
-                        tostring(card._cardId)
-                    ))
-                end
-            end
+            local cardData = CardModel._getInternalData(card)
         end
         return card
     else
-        Logger.error("DeckModel.takeCard() returning nil")
+        Logger.error("DeckModel", "DeckModel.takeCard() returning nil")
         error("DeckModel.takeCard() returning nil")
         return nil
     end
@@ -133,8 +117,8 @@ end
 
 -- Return a card to the deck
 function DeckModel.returnCard(cardRef)
-    Logger.trace("Returning card to deck")
-    DeckModel.printDeck()
+    Logger.trace("DeckModel", "Returning card to deck")
+    -- DeckModel.printDeck()
     table.insert(cards, cardRef)
 end
 

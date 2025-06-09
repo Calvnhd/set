@@ -18,7 +18,7 @@ local registeredScenes = {}
 ---------------
 
 function SceneManager.initialize()
-    Logger.trace("Initializing SceneManager")
+    Logger.trace("SceneManager", "Initializing SceneManager")
     -- Register scenes
     SceneManager.registerScene(Constants.SCENE.MENU, MenuScene)
     SceneManager.registerScene(Constants.SCENE.GAME, GameScene)
@@ -36,15 +36,15 @@ end
 -- sceneModule: the actual scene object, SceneRegistry.<SCENETYPE>.SCENE
 function SceneManager.registerScene(sceneName, scene)
     registeredScenes[sceneName] = scene
-    Logger.info("Scene registered: %s", sceneName)
+    Logger.info("SceneManager", "Scene registered: %s", sceneName)
 end
 
 function SceneManager.onSceneChangeRequested(sceneName, ...)
     if not sceneName then
-        Logger.error("Scene change requested, but sceneName is nil")
+        Logger.error("SceneManager", "Scene change requested, but sceneName is nil")
         error("Scene change requested, but sceneName is nil")
     else
-        Logger.info("Requested scene change to: " .. sceneName)
+        Logger.info("SceneManager", "Requested scene change to: " .. sceneName)
         SceneManager.changeScene(sceneName, ...)
     end
 end
@@ -53,10 +53,10 @@ end
 function SceneManager.changeScene(sceneName, ...)
     local newScene = registeredScenes[sceneName]
     if not newScene then
-        Logger.error("Scene '%s' not registered", sceneName)
+        Logger.error("SceneManager", "Scene '%s' not registered", sceneName)
         error("Scene '" .. sceneName .. "' not found")
     end
-    Logger.info("Changing scene to: %s", sceneName)
+    Logger.info("SceneManager", "Changing scene to: %s", sceneName)
     -- Exit current scene
     if currentScene and currentScene.exit then
         currentScene.exit()
