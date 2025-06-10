@@ -16,7 +16,6 @@ local gameState = {
     score = 0,
     bHintIsActive = false,
     bGameEnded = false,
-    setsFound = 0, -- Number of valid sets found in current round
     currentSetSize = 3
 }
 
@@ -39,7 +38,6 @@ function GameModel.initializeRound(roundConfig)
     gameState.score = 0
     gameState.bHintIsActive = false
     gameState.bGameEnded = false
-    gameState.setsFound = 0
     gameState.currentSetSize = roundConfig.setSize
 end
 
@@ -110,6 +108,19 @@ function GameModel.addToDiscardPile(cardRef)
     local cardStr = CardModel.cardAttributesToString(cardRef)
     Logger.trace("GameModel", "Adding card to discard pile:\t" .. cardStr)
     table.insert(gameState.discardedCards, cardRef)
+end
+
+-- Score management
+function GameModel.setScore(newScore)
+    local oldScore = gameState.score
+    gameState.score = math.max(0, newScore)
+    Logger.info("GameModel", string.format("Updating score:\t%d -> %d", oldScore, gameState.score))
+end
+function GameModel.incrementScore()
+    GameModel.setScore(gameState.score + 1)
+end
+function GameModel.decrementScore()
+    GameModel.setScore(gameState.score - 1)
 end
 
 return GameModel

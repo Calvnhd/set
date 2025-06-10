@@ -173,17 +173,15 @@ function GameController.processSelectedCards()
         local bIsValid, message = RulesService.validateSelectedCardsOfSize(selectedCards, board, currentSetSize)
         Logger.trace("GameController", "Result: " .. message)
         if bIsValid then
-            -- Valid set - remove cards and increment score
+            -- Remove cards and increment score
             GameController.removeValidSet(selectedCards)
+            GameModel.incrementScore()
             Logger.error("You've hit a dead end, Calvin")
-            -- GameModel.incrementScore()
-            -- GameModel.incrementSetsFound()
-            -- Check for round completion in both modes
             -- GameController.checkRoundCompletion()
         else
-            -- Invalid set - animate flash red and decrement score
+            -- Animate flash red and decrement score
             -- GameController.animateInvalidSet(selectedCards)
-            -- GameModel.decrementScore()
+            GameModel.decrementScore()
         end
     end
 end

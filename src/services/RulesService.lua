@@ -81,7 +81,6 @@ function RulesService.isValidSetOfSize(cardRefs, setSize)
         fills[i] = card.fill
     end
     -- Check each attribute
-    Logger.trace("RulesService", "Checking for valid attributes...")
     local bColorValid = checkAttributeArray(colors)
     local bShapeValid = checkAttributeArray(shapes)
     local bNumberValid = checkAttributeArray(numbers)
