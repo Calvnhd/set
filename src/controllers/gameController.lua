@@ -5,8 +5,6 @@ local CardModel = require('models.CardModel')
 local RulesService = require('services.RulesService')
 local ProgressManager = require('services.ProgressManager')
 local AnimationService = require('services.AnimationService')
-local BoardView = require('views.BoardView')
-local Events = require('core.Events')
 
 -- Initialize the game controller
 function GameController.initialize()
@@ -44,31 +42,15 @@ end
 
 -- Handle keyboard input
 function GameController.handleKeypress(key)
-    -- If game has ended, only respond to spacebar to start a new game
-    if GameModel.hasGameEnded() then
-        if key == "space" then
-            GameController.setupNewGame()
-            return
-        else
-            return -- Ignore all other keypresses in game end state
-        end
-    end
+    
 
-    if key == "s" then
-        local selectedCards = GameModel.getSelectedCards()
-        if #selectedCards == 3 then
-            GameController.processSelectedCards()
-            return
-        end
-    end
+    
 
-    -- Clear card selection on any other key input
-    GameController.clearCardSelection()
+    
 
     if key == "d" then
         GameController.drawCard()
-    elseif key == "h" then
-        GameController.toggleHint()
+    
     elseif key == "x" then
         GameController.checkNoSetOnBoard()
     elseif key == "escape" then
@@ -84,75 +66,15 @@ function GameController.handleMousePress(x, y, button)
     end
 
     if button == 1 then -- Left mouse button
-        local clickedCardIndex = BoardView.getCardAtPosition(x, y)
-        if clickedCardIndex then
-            local board = GameModel.getBoard()
-            local cardRef = board[clickedCardIndex]
-            local selectedCards = GameModel.getSelectedCards()
-            local bClickedCardIsSelected = CardModel.isSelected(cardRef)
-            -- Get current set size for this game mode
-            local currentSetSize = GameModel.getCurrentSetSize()
+       
 
-            -- If we already have the required number of cards selected and trying to select a new one, do nothing
-            if #selectedCards == currentSetSize and not bClickedCardIsSelected then
-                return
-            end
-            -- Toggle the card's selection state
-            CardModel.toggleSelected(cardRef)
-            EventManager.emit(Events.BOARD.CARD_SELECTION_CHANGED, clickedCardIndex, CardModel.isSelected(cardRef))
-
-            -- Disable hint mode when a card is selected
-            GameModel.clearHint()
         end
     end
 end
 
--- Process selected cards (validate and remove if valid set)
-function GameController.processSelectedCards()
-    local selectedCards = GameModel.getSelectedCards()
-    local board = GameModel.getBoard()
-    local currentSetSize = GameModel.getCurrentSetSize()
 
-    if #selectedCards == currentSetSize then
-        local cardRefs = {}
-        for i, idx in ipairs(selectedCards) do
-            cardRefs[i] = board[idx]
-        end
 
-        local bIsValid, message = RulesService.validateSelectedCardsOfSize(selectedCards, board, currentSetSize)
-        if bIsValid then
-            -- Valid set - remove cards and increment score
-            GameController.removeValidSet(selectedCards)
-            GameModel.incrementScore()
-            GameModel.incrementSetsFound()
 
-            -- Check for round completion in both modes
-            GameController.checkRoundCompletion()
-        else
-            -- Invalid set - animate flash red and decrement score
-            GameController.animateInvalidSet(selectedCards)
-            GameModel.decrementScore()
-        end
-    end
-end
-
--- Remove a valid set of cards
-function GameController.removeValidSet(selectedIndices)
-    local board = GameModel.getBoard()
-
-    -- Sort in reverse order so indices remain valid during removal
-    table.sort(selectedIndices, function(a, b)
-        return a > b
-    end)
-
-    -- Remove the cards from board and add to discard pile
-    for _, idx in ipairs(selectedIndices) do
-        local cardRef = GameModel.removeCardAtPosition(idx)
-        if cardRef then
-            GameModel.addToDiscardPile(cardRef)
-        end
-    end
-end
 
 -- Animate invalid set (flash red)
 function GameController.animateInvalidSet(selectedIndices)
@@ -194,20 +116,7 @@ function GameController.drawCard()
     end
 end
 
--- Toggle hint mode
-function GameController.toggleHint()
-    if GameModel.isHintActive() then
-        GameModel.clearHint()
-        return
-    end
 
-    local board = GameModel.getBoard()
-    local currentSetSize = GameModel.getCurrentSetSize()
-    local validSet = RulesService.findValidSetOfSize(board, currentSetSize)
-    if validSet then
-        GameModel.setHint(validSet)
-    end
-end
 
 -- Check if there's no set on the board
 function GameController.checkNoSetOnBoard()
@@ -308,20 +217,7 @@ function GameController.handleCorrectNoSet()
     GameModel.clearHint()
 end
 
--- Clear all card selections
-function GameController.clearCardSelection()
-    local board = GameModel.getBoard()
-    local boardSize = GameModel.getBoardSize()
 
-    for i = 1, boardSize do
-        local cardRef = board[i]
-        if cardRef then
-            CardModel.setSelected(cardRef, false)
-        end
-    end
-
-    EventManager.emit(Events.BOARD.CARD_ALL_DESELECTED)
-end
 
 -- Check if the current round is complete
 function GameController.checkRoundCompletion()

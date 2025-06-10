@@ -36,15 +36,7 @@ function GameModel.getCardAtPosition(index)
     return nil
 end
 
-function GameModel.removeCardAtPosition(index)
-    if index >= 1 and index <= BOARD_SIZE and gameState.board[index] then
-        local cardRef = gameState.board[index]
-        gameState.board[index] = nil
-        EventManager.emit(Events.BOARD.CARD_REMOVED, index, cardRef)
-        return cardRef
-    end
-    return nil
-end
+
 
 
 
@@ -54,34 +46,21 @@ end
 
 
 
--- Discard pile management
-function GameModel.addToDiscardPile(cardRef)
-    table.insert(gameState.discardedCards, cardRef)
-    EventManager.emit(Events.GAME.CARD_DISCARDED, cardRef)
-end
+
 
 function GameModel.getDiscardedCards()
     return gameState.discardedCards
 end
 
--- Score management
 function GameModel.getScore()
     return gameState.score
 end
 
-function GameModel.setScore(newScore)
-    local oldScore = gameState.score
-    gameState.score = math.max(0, newScore) -- Ensure score doesn't go below 0
-    EventManager.emit(Events.SCORE.CHANGED, gameState.score, oldScore)
-end
 
-function GameModel.incrementScore()
-    GameModel.setScore(gameState.score + 1)
-end
 
-function GameModel.decrementScore()
-    GameModel.setScore(gameState.score - 1)
-end
+
+
+
 
 -- Sets found management (for round progression)
 function GameModel.getSetsFound()
@@ -103,20 +82,13 @@ function GameModel.resetSetsFound()
     EventManager.emit(Events.GAME.SETS_FOUND_RESET)
 end
 
--- Hint management
-function GameModel.setHint(cardIndices)
-    gameState.hintCards = cardIndices or {}
-    gameState.bHintIsActive = #gameState.hintCards > 0
-    EventManager.emit(Events.HINT.CHANGED, gameState.hintCards, gameState.bHintIsActive)
-end
 
 
 
 
 
-function GameModel.clearHint()
-    GameModel.setHint({})
-end
+
+
 
 -- Game end state
 function GameModel.setGameEnded(bEnded)
@@ -126,9 +98,7 @@ function GameModel.setGameEnded(bEnded)
     end
 end
 
-function GameModel.hasGameEnded()
-    return gameState.bGameEnded
-end
+
 
 -- Helper functions for coordinate conversion
 function GameModel.indexToGridPos(index)
@@ -162,17 +132,5 @@ function GameModel.countCardsOnBoard()
     return count
 end
 
--- Get all selected cards on the board
-function GameModel.getSelectedCards()
-    local selected = {}
-    local CardModel = require('models.CardModel')
 
-    for i = 1, BOARD_SIZE do
-        local cardRef = gameState.board[i]
-        if cardRef and CardModel.isSelected(cardRef) then
-            table.insert(selected, i)
-        end
-    end
-    return selected
-end
 
