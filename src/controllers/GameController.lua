@@ -153,6 +153,9 @@ function GameController.onKeyPressed(key)
     end
     -- Clear card selection on any other key input
     GameController.clearCardSelection()
+    if key == "h" then
+        GameController.toggleHint()
+    end
 end
 
 -- Process selected cards (validate and remove if valid set)
@@ -168,10 +171,11 @@ function GameController.processSelectedCards()
             cardRefs[i] = board[selectedBoardIndex]
         end
         local bIsValid, message = RulesService.validateSelectedCardsOfSize(selectedCards, board, currentSetSize)
-        Logger.trace("GameController", "Result: "..message)
+        Logger.trace("GameController", "Result: " .. message)
         if bIsValid then
             -- Valid set - remove cards and increment score
-            -- GameController.removeValidSet(selectedCards)
+            GameController.removeValidSet(selectedCards)
+            error("You've hit a dead end, Calvin")
             -- GameModel.incrementScore()
             -- GameModel.incrementSetsFound()
             -- Check for round completion in both modes
@@ -197,8 +201,38 @@ function GameController.clearCardSelection()
     end
 end
 
+-- Remove a valid set of cards
+function GameController.removeValidSet(selectedIndices)
+    Logger.trace("GameController", "Removing valid set")
+    local board = GameModel.getBoard()
+    -- Sort in reverse order so indices remain valid during removal
+    table.sort(selectedIndices, function(a, b)
+        return a > b
+    end)
+    -- Remove the cards from board and add to discard pile
+    for _, idx in ipairs(selectedIndices) do
+        local cardRef = GameModel.removeCardAtPosition(idx)
+        if cardRef then
+            GameModel.addToDiscardPile(cardRef)
+        end
+    end
+end
 
+-- Toggle hint mode
+function GameController.toggleHint()
+    if GameModel.isHintActive() then
+        GameModel.clearHint()
+        return
+    end
+
+    local board = GameModel.getBoard()
+    local currentSetSize = GameModel.getCurrentSetSize()
+    local validSet = RulesService.findValidSetOfSize(board, currentSetSize)
+    if validSet then
+        GameModel.setHint(validSet)
+    end
+end
 
 -- module return
-return GameController 
+return GameController
 

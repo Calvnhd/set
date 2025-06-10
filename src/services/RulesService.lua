@@ -88,7 +88,59 @@ function RulesService.isValidSetOfSize(cardRefs, setSize)
     local bFillValid = checkAttributeArray(fills)
     Logger.trace("RulesService", "Color: ".. tostring(bColorValid).." | Shape: "..tostring(bShapeValid).." | Number: "..tostring(bNumberValid).." | Fill: "..tostring(bFillValid))
     -- It's a valid set only if ALL attributes pass the check
-    return colorValid and shapeValid and numberValid and fillValid
+    return bColorValid and bShapeValid and bNumberValid and bFillValid
+end
+
+-- Find a valid set on the board (variable size)
+function RulesService.findValidSetOfSize(board, setSize)
+    -- Count cards on the board
+    -- Tracking card indices allows recognition of empty slots
+    local cardCount = 0
+    local cardIndices = {}
+    for i = 1, #board do
+        if board[i] then
+            cardCount = cardCount + 1
+            table.insert(cardIndices, i)
+        end
+    end
+    -- Need at least setSize cards to form a set
+    if cardCount < setSize then
+        return nil
+    end
+    -- Generate all combinations of setSize cards
+    local function generateCombinations(arr, k)
+        local result = {}
+        local function combine(start, current)
+            if #current == k then
+                local combo = {}
+                for i, v in ipairs(current) do
+                    combo[i] = v
+                end
+                table.insert(result, combo)
+                return
+            end
+            for i = start, #arr do
+                table.insert(current, arr[i])
+                combine(i + 1, current)
+                table.remove(current)
+            end
+        end
+        combine(1, {})
+        return result
+    end
+    local combinations = generateCombinations(cardIndices, setSize)
+    -- Check each combination
+    for _, combo in ipairs(combinations) do
+        local cardRefs = {}
+        for i, idx in ipairs(combo) do
+            cardRefs[i] = board[idx]
+        end
+        if RulesService.isValidSetOfSize(cardRefs, setSize) then
+            return combo
+        end
+    end
+    -- No valid set found
+    return nil
 end
 
 -- Module return

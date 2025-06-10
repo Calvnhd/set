@@ -95,4 +95,20 @@ function CardModel.getAllData(cardRef)
     return nil
 end
 
+-- Convert card attributes to a formatted string for logging
+function CardModel.cardAttributesToString(cardRef)
+    if not cardRef or not cardRef._cardId then
+        return " (invalid card reference)"
+    end
+    local cardData = cardObjects[cardRef._cardId]
+    if not cardData then
+        return " (card data not found)"
+    end
+    return string.format(" | Color: %s | Shape: %s | Fill: %s | Number: %d", 
+        cardData.color, 
+        cardData.shape, 
+        cardData.fill, 
+        cardData.number)
+end
+
 return CardModel

@@ -3,6 +3,7 @@ local GameModel = {}
 
 -- required modules
 local Logger = require('core.Logger')
+local CardModel = require('models.CardModel')
 
 -- local variables
 local gameState = {
@@ -42,29 +43,31 @@ function GameModel.initializeRound(roundConfig)
     gameState.currentSetSize = roundConfig.setSize
 end
 
+-- State Getters
 function GameModel.getBoardSize()
-    -- consider using # if it's guaranteed to be initialized correctly
+    -- consider using #board if it's guaranteed to be initialized correctly
     return gameState.boardSize
 end
-
 function GameModel.getBoardDimensions()
     return gameState.boardColumns, gameState.boardRows
 end
-
 function GameModel.getBoard()
     return gameState.board
 end
-
 function GameModel.getHintCards()
     return gameState.hintCards
 end
-
 function GameModel.isHintActive()
     return gameState.bHintIsActive
 end
-
 function GameModel.hasGameEnded()
     return gameState.bGameEnded
+end
+function GameModel.getCurrentSetSize()
+    return gameState.currentSetSize
+end
+function GameModel.clearHint()
+    GameModel.setHint({})
 end
 
 -- Board management
@@ -87,18 +90,17 @@ function GameModel.getSelectedCards()
     return selected
 end
 
-function GameModel.getCurrentSetSize()
-    return gameState.currentSetSize
-end
-
-function GameModel.clearHint()
-    GameModel.setHint({})
-end
-
 -- Hint management
 function GameModel.setHint(cardIndices)
     gameState.hintCards = cardIndices or {}
     gameState.bHintIsActive = #gameState.hintCards > 0
+end
+
+-- Discard pile management
+function GameModel.addToDiscardPile(cardRef)
+    local cardStr = CardModel.cardAttributesToString(cardRef)
+    Logger.trace("GameModel", "Adding card to discard pile" .. cardStr)
+    table.insert(gameState.discardedCards, cardRef)
 end
 
 
