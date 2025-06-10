@@ -77,6 +77,15 @@ function GameModel.setCardAtPosition(index, cardRef)
     end
 end
 
+function GameModel.removeCardAtPosition(index)
+    if index >= 1 and index <= gameState.boardSize and gameState.board[index] then
+        local cardRef = gameState.board[index]
+        gameState.board[index] = nil
+        return cardRef
+    end
+    return nil
+end
+
 -- Get all selected cards on the board
 function GameModel.getSelectedCards()
     local selected = {}
@@ -99,10 +108,8 @@ end
 -- Discard pile management
 function GameModel.addToDiscardPile(cardRef)
     local cardStr = CardModel.cardAttributesToString(cardRef)
-    Logger.trace("GameModel", "Adding card to discard pile" .. cardStr)
+    Logger.trace("GameModel", "Adding card to discard pile:\t" .. cardStr)
     table.insert(gameState.discardedCards, cardRef)
 end
-
-
 
 return GameModel

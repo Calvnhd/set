@@ -86,7 +86,7 @@ function RulesService.isValidSetOfSize(cardRefs, setSize)
     local bShapeValid = checkAttributeArray(shapes)
     local bNumberValid = checkAttributeArray(numbers)
     local bFillValid = checkAttributeArray(fills)
-    Logger.trace("RulesService", "Color: ".. tostring(bColorValid).." | Shape: "..tostring(bShapeValid).." | Number: "..tostring(bNumberValid).." | Fill: "..tostring(bFillValid))
+    Logger.trace("RulesService", "Valid set attributes? - Color: ".. tostring(bColorValid).." | Shape: "..tostring(bShapeValid).." | Number: "..tostring(bNumberValid).." | Fill: "..tostring(bFillValid))
     -- It's a valid set only if ALL attributes pass the check
     return bColorValid and bShapeValid and bNumberValid and bFillValid
 end

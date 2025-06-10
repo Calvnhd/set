@@ -104,7 +104,7 @@ function CardModel.cardAttributesToString(cardRef)
     if not cardData then
         return " (card data not found)"
     end
-    return string.format(" | Color: %s | Shape: %s | Fill: %s | Number: %d", 
+    return string.format("| %s\t| %s\t| %s\t| number:%d\t", 
         cardData.color, 
         cardData.shape, 
         cardData.fill, 

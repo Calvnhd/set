@@ -175,7 +175,7 @@ function GameController.processSelectedCards()
         if bIsValid then
             -- Valid set - remove cards and increment score
             GameController.removeValidSet(selectedCards)
-            error("You've hit a dead end, Calvin")
+            Logger.error("You've hit a dead end, Calvin")
             -- GameModel.incrementScore()
             -- GameModel.incrementSetsFound()
             -- Check for round completion in both modes
@@ -224,7 +224,6 @@ function GameController.toggleHint()
         GameModel.clearHint()
         return
     end
-
     local board = GameModel.getBoard()
     local currentSetSize = GameModel.getCurrentSetSize()
     local validSet = RulesService.findValidSetOfSize(board, currentSetSize)
