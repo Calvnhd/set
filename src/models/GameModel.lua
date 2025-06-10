@@ -63,11 +63,44 @@ function GameModel.isHintActive()
     return gameState.bHintIsActive
 end
 
+function GameModel.hasGameEnded()
+    return gameState.bGameEnded
+end
+
 -- Board management
 function GameModel.setCardAtPosition(index, cardRef)
     if index >= 1 and index <= gameState.boardSize then
         gameState.board[index] = cardRef
     end
 end
+
+-- Get all selected cards on the board
+function GameModel.getSelectedCards()
+    local selected = {}
+    local CardModel = require('models.CardModel')
+    for i = 1, gameState.boardSize do
+        local cardRef = gameState.board[i]
+        if cardRef and CardModel.isSelected(cardRef) then
+            table.insert(selected, i)
+        end
+    end
+    return selected
+end
+
+function GameModel.getCurrentSetSize()
+    return gameState.currentSetSize
+end
+
+function GameModel.clearHint()
+    GameModel.setHint({})
+end
+
+-- Hint management
+function GameModel.setHint(cardIndices)
+    gameState.hintCards = cardIndices or {}
+    gameState.bHintIsActive = #gameState.hintCards > 0
+end
+
+
 
 return GameModel

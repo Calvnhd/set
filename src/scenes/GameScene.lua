@@ -10,6 +10,7 @@ local CardView = require('views.CardView')
 local GameUIView = require('views.GameUIView')
 local BoardView = require('views.BoardView')
 local Colors = require('config.ColorRegistry')
+local GameModel = require('models.GameModel')
 
 ---------------
 -- functions --
@@ -47,10 +48,15 @@ end
 function GameScene.drawAnimations()
 end
 
+-- Input handling.  Delegated by SceneManager.
 function GameScene.onKeyPressed(key)
-    Logger.trace("GameScene", "Game scene handling key: %s", key)
-    if key == "escape" then
-        love.event.quit()
+    Logger.trace("GameScene", "Handling key: %s", key)
+    GameController.onKeyPressed(key)
+end
+function GameScene.onMousePressed(x, y, button)
+    Logger.trace("GameScene", "Handling mouse press: (%d, %d) button %d", x, y, button)
+    if button == 1 then -- Left mouse button
+        GameController.onMousePressed(x, y, button)
     end
 end
 

@@ -77,7 +77,8 @@ function SceneManager.draw()
         currentScene.draw()
     end
 end
--- input events, delegates to current scene
+-- input events
+-- Invoked by InputManager emitting event. Delegates to current scene
 function SceneManager.onKeyPressed(key)
     if currentScene and currentScene.onKeyPressed then
         currentScene.onKeyPressed(key)
