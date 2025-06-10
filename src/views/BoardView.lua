@@ -1,8 +1,65 @@
--- Board View - Board layout and card positioning
-local CardView = require('views.cardView')
-local GameModel = require('models.gameModel')
-
+-- BoardView
 local BoardView = {}
+
+-- required modules
+local Logger = require('core.Logger')
+local Colors = require('config.ColorRegistry')
+local CardView = require('views.CardView')
+local GameModel = require('models.GameModel')
+
+---------------
+-- functions --
+---------------
+
+function BoardView.draw()
+    BoardView.drawBackground()
+    BoardView.drawCards()
+end
+
+function BoardView.drawBackground()
+    local layout = BoardView.calculateLayout()
+    local boardColumns, boardRows = GameModel.getBoardDimensions()
+    love.graphics.setColor(Colors.MAP.BOARD_BACKGROUND)
+    local boardPadding = layout.cardWidth * 0.15
+    local boardX = layout.startX - boardPadding
+    local boardY = layout.startY - boardPadding
+    local boardWidth = boardColumns * layout.cardWidth + (boardColumns - 1) * layout.marginX + 2 * boardPadding
+    local boardHeight = boardRows * layout.cardHeight + (boardRows - 1) * layout.marginY + 2 * boardPadding
+    love.graphics.rectangle("fill", boardX, boardY, boardWidth, boardHeight, 8, 8)
+end
+
+function BoardView.drawCards()
+    local layout = BoardView.calculateLayout()
+    local board = GameModel.getBoard()
+    local boardSize = GameModel.getBoardSize()
+    local boardColumns, boardRows = GameModel.getBoardDimensions()
+    local hintCards = GameModel.getHintCards()
+    local bHintIsActive = GameModel.isHintActive()
+
+    -- Helper function to check if a card index is part of the hint
+    local function isInHint(index)
+        for _, hintIndex in ipairs(hintCards) do
+            if hintIndex == index then
+                return true
+            end
+        end
+        return false
+    end
+    -- Draw each card on the board
+    for i = 1, boardSize do
+        local cardRef = board[i]
+        if cardRef then
+            local col = (i - 1) % boardColumns
+            local row = math.floor((i - 1) / boardColumns)
+
+            local x = layout.startX + col * (layout.cardWidth + layout.marginX)
+            local y = layout.startY + row * (layout.cardHeight + layout.marginY)
+
+            local bIsInHint = bHintIsActive and isInHint(i)
+            CardView.draw(cardRef, x, y, layout.cardWidth, layout.cardHeight, bIsInHint)
+        end
+    end
+end
 
 -- Calculate card layout dimensions and positions
 function BoardView.calculateLayout()
@@ -26,77 +83,19 @@ function BoardView.calculateLayout()
     }
 end
 
--- Draw the board background
-function BoardView.drawBackground()
-    local layout = BoardView.calculateLayout()
-    local BOARD_COLUMNS, BOARD_ROWS = GameModel.getBoardDimensions()
-
-    -- Draw a white rectangle board background
-    love.graphics.setColor(1, 1, 1) -- Pure white
-
-    local boardPadding = layout.cardWidth * 0.15
-    local boardX = layout.startX - boardPadding
-    local boardY = layout.startY - boardPadding
-    local boardWidth = BOARD_COLUMNS * layout.cardWidth + (BOARD_COLUMNS - 1) * layout.marginX + 2 * boardPadding
-    local boardHeight = BOARD_ROWS * layout.cardHeight + (BOARD_ROWS - 1) * layout.marginY + 2 * boardPadding
-
-    love.graphics.rectangle("fill", boardX, boardY, boardWidth, boardHeight, 8, 8)
-end
-
--- Draw all cards on the board
-function BoardView.drawCards()
-    local layout = BoardView.calculateLayout()
-    local board = GameModel.getBoard()
-    local boardSize = GameModel.getBoardSize()
-    local BOARD_COLUMNS, BOARD_ROWS = GameModel.getBoardDimensions()
-    local hintCards = GameModel.getHintCards()
-    local bHintIsActive = GameModel.isHintActive()
-
-    -- Helper function to check if a card index is part of the hint
-    local function isInHint(index)
-        for _, hintIndex in ipairs(hintCards) do
-            if hintIndex == index then
-                return true
-            end
-        end
-        return false
-    end
-
-    -- Draw each card on the board
-    for i = 1, boardSize do
-        local cardRef = board[i]
-        if cardRef then
-            local col = (i - 1) % BOARD_COLUMNS
-            local row = math.floor((i - 1) / BOARD_COLUMNS)
-
-            local x = layout.startX + col * (layout.cardWidth + layout.marginX)
-            local y = layout.startY + row * (layout.cardHeight + layout.marginY)
-
-            local bIsInHint = bHintIsActive and isInHint(i)
-            CardView.draw(cardRef, x, y, layout.cardWidth, layout.cardHeight, bIsInHint)
-        end
-    end
-end
-
--- Draw the complete board (background + cards)
-function BoardView.draw()
-    BoardView.drawBackground()
-    BoardView.drawCards()
-end
-
 -- Get the card position at a given board index
-function BoardView.getCardPosition(index)
-    local layout = BoardView.calculateLayout()
-    local BOARD_COLUMNS, BOARD_ROWS = GameModel.getBoardDimensions()
-
-    local col = (index - 1) % BOARD_COLUMNS
-    local row = math.floor((index - 1) / BOARD_COLUMNS)
-
-    local x = layout.startX + col * (layout.cardWidth + layout.marginX)
-    local y = layout.startY + row * (layout.cardHeight + layout.marginY)
-
-    return x, y, layout.cardWidth, layout.cardHeight
-end
+-- function BoardView.getCardPosition(index)
+--     local layout = BoardView.calculateLayout()
+--     local BOARD_COLUMNS, BOARD_ROWS = GameModel.getBoardDimensions()
+-- 
+--     local col = (index - 1) % BOARD_COLUMNS
+--     local row = math.floor((index - 1) / BOARD_COLUMNS)
+-- 
+--     local x = layout.startX + col * (layout.cardWidth + layout.marginX)
+--     local y = layout.startY + row * (layout.cardHeight + layout.marginY)
+-- 
+--     return x, y, layout.cardWidth, layout.cardHeight
+-- end
 
 -- Get the card at a given screen position
 function BoardView.getCardAtPosition(x, y)

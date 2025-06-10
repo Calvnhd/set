@@ -1,109 +1,83 @@
--- Card View - Card rendering with animation support
-local CardModel = require('models.cardModel')
-
+-- Game Scene - Main gameplay scene with full game functionality
 local CardView = {}
 
--- Store card images
+-- required modules
+local Logger = require('core.Logger')
+local Constants = require('config.Constants')
+local CardModel = require('models.CardModel')
+local Colors = require('config.ColorRegistry')
+
+-- local variables
 local cardImages = {}
+local symbolColors = Colors.SYMBOL_COLOR_MAPPING
+local cardColors = Colors.MAP.CARD
 
--- Centralized color definitions
-local COLORS = {
-    -- Symbol colors (standard)
-    symbol = {
-        red = {0.64, 0.19, 0.19},
-        green = {0.45, 0.65, 0.26},
-        blue = {0.30, 0.56, 0.72}
-    },
+---------------
+-- functions --
+---------------
 
-    -- Background complementary colors with opacity (R, G, B, Alpha)
-    background = {
-        red = {0.77, 0.51, 0.64, 0.2},
-        green = {0.81, 0.34, 0.24, 0.2},
-        blue = {0.9, 0.83, 0.70, 0.2}
-    },
-
-    -- Selection and UI colors
-    ui = {
-        selected = {0.9, 0.9, 0.7},
-        selectedBorder = {1, 1, 0},
-        hintBorder = {0, 0.8, 0.8},
-        normalBorder = {0, 0, 0}
-    }
-}
-
--- Load all card images
 function CardView.loadImages()
     cardImages = {
-        oval = {
-            solid = love.graphics.newImage("images/oval-fill-54x96.png"),
-            stripes = love.graphics.newImage("images/oval-stripes-54x96.png"),
-            empty = love.graphics.newImage("images/oval-empty-54x96.png")
+        [Constants.SHAPE.OVAL] = {
+            [Constants.FILL.SOLID] = love.graphics.newImage("images/oval-fill-54x96.png"),
+            [Constants.FILL.STRIPES] = love.graphics.newImage("images/oval-stripes-54x96.png"),
+            [Constants.FILL.EMPTY] = love.graphics.newImage("images/oval-empty-54x96.png")
         },
-        diamond = {
-            solid = love.graphics.newImage("images/diamond-fill-54x96.png"),
-            stripes = love.graphics.newImage("images/diamond-stripes-54x96.png"),
-            empty = love.graphics.newImage("images/diamond-empty-54x96.png")
+        [Constants.SHAPE.DIAMOND] = {
+            [Constants.FILL.SOLID] = love.graphics.newImage("images/diamond-fill-54x96.png"),
+            [Constants.FILL.STRIPES] = love.graphics.newImage("images/diamond-stripes-54x96.png"),
+            [Constants.FILL.EMPTY] = love.graphics.newImage("images/diamond-empty-54x96.png")
         },
-        squiggle = {
-            solid = love.graphics.newImage("images/squiggle-fill-54x96.png"),
-            stripes = love.graphics.newImage("images/squiggle-stripes-54x96.png"),
-            empty = love.graphics.newImage("images/squiggle-empty-54x96.png")
+        [Constants.SHAPE.SQUIGGLE] = {
+            [Constants.FILL.SOLID] = love.graphics.newImage("images/squiggle-fill-54x96.png"),
+            [Constants.FILL.STRIPES] = love.graphics.newImage("images/squiggle-stripes-54x96.png"),
+            [Constants.FILL.EMPTY] = love.graphics.newImage("images/squiggle-empty-54x96.png")
         }
     }
+    Logger.trace("CardView", "Card images loaded")
     return cardImages
-end
-
--- Helper function to get a pale complementary color for card background
-local function getPaleComplementaryColor(color)
-    if COLORS.background[color] then
-        local r = COLORS.background[color][1]
-        local g = COLORS.background[color][2]
-        local b = COLORS.background[color][3]
-        local a = COLORS.background[color][4] or 1.0
-        return r, g, b, a
-    else
-        return 1.0, 1.0, 1.0, 1.0
-    end
 end
 
 -- Draw a single card
 function CardView.draw(cardRef, x, y, width, height, bIsInHint)
     local cardData = CardModel._getInternalData(cardRef)
-
-    -- Draw card background with pale complementary color
+    if not cardData then
+        Logger.error("CardView", "no cardData!")
+        error("no cardData!")
+    end
     if cardData.bIsSelected then
-        love.graphics.setColor(unpack(COLORS.ui.selected))
+        love.graphics.setColor(unpack(cardColors.SELECTED_BACKGROUND))
     else
-        local r, g, b, a = getPaleComplementaryColor(cardData.color)
-        love.graphics.setColor(r, g, b, a)
+        love.graphics.setColor(unpack(cardColors.BACKGROUND))
     end
     love.graphics.rectangle("fill", x, y, width, height, 8, 8)
-
     -- Draw border
     if cardData.bIsSelected then
-        love.graphics.setColor(unpack(COLORS.ui.selectedBorder))
+        love.graphics.setColor(unpack(cardColors.SELECTED_BORDER))
         love.graphics.setLineWidth(4)
     elseif bIsInHint then
-        love.graphics.setColor(unpack(COLORS.ui.hintBorder))
+        love.graphics.setColor(unpack(cardColors.HINT_BORDER))
         love.graphics.setLineWidth(4)
     else
-        love.graphics.setColor(unpack(COLORS.ui.normalBorder))
+        love.graphics.setColor(unpack(cardColors.BORDER))
         love.graphics.setLineWidth(2)
     end
     love.graphics.rectangle("line", x, y, width, height, 8, 8)
-
-    -- Set color for symbols
-    if COLORS.symbol[cardData.color] then
-        love.graphics.setColor(unpack(COLORS.symbol[cardData.color]))
+    -- Set color for symbols based on the card's color
+    local symbolColor = symbolColors[cardData.color] or {0, 0, 0, 1}
+    love.graphics.setColor(unpack(symbolColor))
+     -- Ensure images are loaded
+    if not next(cardImages) then
+        Logger.info("CardView", "Images not yet loaded. Loading now...")
+        CardView.loadImages()
     end
-
     -- Get the image for this shape and fill
     local image = cardImages[cardData.shape][cardData.fill]
     if not image then
-        print("Warning: Missing image for " .. cardData.shape .. "-" .. cardData.fill)
+        Logger.error("CardView", "Missing image for " .. cardData.shape .. "-" .. cardData.fill)
+        error("Missing image for " .. cardData.shape .. "-" .. cardData.fill)
         return
     end
-
     -- Draw the symbols
     CardView.drawSymbols(image, cardData.number, x, y, width, height)
 end
@@ -167,12 +141,10 @@ function CardView.drawBurningCard(anim)
         love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
 
         -- Fade shapes toward black
-        local blackAmount = progress
-        if COLORS.symbol[anim.card.color] then
-            local symbolColor = COLORS.symbol[anim.card.color]
-            love.graphics.setColor(symbolColor[1] * (1 - blackAmount), symbolColor[2] * (1 - blackAmount),
-                symbolColor[3] * (1 - blackAmount), 1)
-        end
+        local blackAmount = progress 
+        local symbolColor = symbolColors[anim.card.color] or {0, 0, 0, 1}
+        love.graphics.setColor(symbolColor[1] * (1 - blackAmount), symbolColor[2] * (1 - blackAmount),
+            symbolColor[3] * (1 - blackAmount), 1)
 
     elseif phase == 2 then
         -- Phase 2: Card fades to bright orange/red
@@ -247,12 +219,10 @@ function CardView.drawFlashingRedCard(anim)
 
     love.graphics.setColor(1, 0.2, 0.2)
     love.graphics.setLineWidth(4)
-    love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8)
-
-    -- Set color for symbols
-    if COLORS.symbol[anim.card.color] then
-        love.graphics.setColor(unpack(COLORS.symbol[anim.card.color]))
-    end
+    love.graphics.rectangle("line", anim.x, anim.y, anim.width, anim.height, 8, 8) -- Set color for symbols based on the card's color
+    -- Use the mapped color or default to black if not found
+    local symbolColor = symbolColors[anim.card.color] or {0, 0, 0, 1}
+    love.graphics.setColor(unpack(symbolColor))
 
     local image = cardImages[anim.card.shape][anim.card.fill]
     if image then
