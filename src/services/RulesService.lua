@@ -94,7 +94,7 @@ end
 -- Find a valid set on the board (variable size)
 function RulesService.findValidSetOfSize(board, setSize)
     -- Count cards on the board
-    -- Tracking card indices allows recognition of empty slots
+    -- Tracking the card indices enables recognition of empty slots
     local cardCount = 0
     local cardIndices = {}
     for i = 1, #board do
@@ -106,41 +106,41 @@ function RulesService.findValidSetOfSize(board, setSize)
     -- Need at least setSize cards to form a set
     if cardCount < setSize then
         return nil
-    end
-    -- Generate all combinations of setSize cards
-    local function generateCombinations(arr, k)
-        local result = {}
-        local function combine(start, current)
+    end    
+    -- Find first valid combination using backtracking with early termination
+    local function findFirstValidCombination(arr, k)
+        local current = {}
+        local function backtrack(start)
             if #current == k then
-                local combo = {}
-                for i, v in ipairs(current) do
-                    combo[i] = v
+                -- Test this combination immediately
+                local cardRefs = {}
+                for i, idx in ipairs(current) do
+                    cardRefs[i] = board[idx]
                 end
-                table.insert(result, combo)
-                return
+                if RulesService.isValidSetOfSize(cardRefs, k) then
+                    -- Found a valid set! Return a copy of current indices
+                    local result = {}
+                    for i, v in ipairs(current) do
+                        result[i] = v
+                    end
+                    return result
+                end
+                return nil -- This combination didn't work, continue searching
             end
             for i = start, #arr do
                 table.insert(current, arr[i])
-                combine(i + 1, current)
+                local result = backtrack(i + 1)
+                if result then
+                    return result -- Propagate the found result up
+                end
                 table.remove(current)
             end
+            return nil
         end
-        combine(1, {})
-        return result
+        return backtrack(1)
     end
-    local combinations = generateCombinations(cardIndices, setSize)
-    -- Check each combination
-    for _, combo in ipairs(combinations) do
-        local cardRefs = {}
-        for i, idx in ipairs(combo) do
-            cardRefs[i] = board[idx]
-        end
-        if RulesService.isValidSetOfSize(cardRefs, setSize) then
-            return combo
-        end
-    end
-    -- No valid set found
-    return nil
+    
+    return findFirstValidCombination(cardIndices, setSize)
 end
 
 -- Module return
