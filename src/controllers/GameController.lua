@@ -44,9 +44,9 @@ end
 function GameController.initializeCurrentRound()
     local round = RoundState.RoundSequence[RoundState.currentRoundIndex]
     -- Debug print the config
-    -- Logger.trace("GameController", "--- BEGIN CONFIG ROUND DUMP ---")
-    -- GameController.debugPrintConfig(round)
-    -- Logger.trace("GameController", "--- END CONFIG ROUND DUMP ---")
+    Logger.trace("GameController", "--- BEGIN CONFIG ROUND DUMP ---")
+    GameController.debugPrintConfig(round)
+    Logger.trace("GameController", "--- END CONFIG ROUND DUMP ---")
     -- Apply configuration
     GameModel.initializeRound(round)
     DeckModel.createFromConfig(round)
@@ -85,25 +85,26 @@ function GameController.dealInitialCards()
     end
 end
 
--- function GameController.debugPrintConfig(config, indent)
---     indent = indent or 0
---     local indentStr = string.rep("  ", indent)
--- 
---     if type(config) ~= "table" then
---         Logger.trace("GameController", indentStr .. tostring(config))
---         return
---     end
--- 
---     for k, v in pairs(config) do
---         if type(v) == "table" then
---             Logger.trace("GameController", indentStr .. k .. " = {")
---             GameController.debugPrintConfig(v, indent + 1)
---             Logger.trace("GameController", indentStr .. "}")
---         else
---             Logger.trace("GameController", indentStr .. k .. " = " .. tostring(v))
---         end
---     end
--- end
+function GameController.debugPrintConfig(config, indent)
+    indent = indent or 0
+    local indentStr = string.rep("  ", indent)
+
+    if type(config) ~= "table" then
+        Logger.trace("GameController", indentStr .. tostring(config))
+        return
+    end
+
+    for k, v in pairs(config) do
+        if type(v) == "table" then
+            Logger.trace("GameController", indentStr .. k .. " = {")
+            GameController.debugPrintConfig(v, indent + 1)
+            Logger.trace("GameController", indentStr .. "}")
+        else
+            Logger.trace("GameController", indentStr .. k .. " = " .. tostring(v))
+        end
+    end
+end
+
 function GameController.onMousePressed(x, y, button)
     Logger.trace("GameController", "Handling mouse press: (%d, %d) button %d", x, y, button)
     local clickedCardIndex = BoardView.getCardAtPosition(x, y)
@@ -176,8 +177,8 @@ function GameController.processSelectedCards()
             -- Remove cards and increment score
             GameController.removeValidSet(selectedCards)
             GameModel.incrementScore()
+            GameController.isRoundComplete()
             Logger.error("You've hit a dead end, Calvin")
-            -- GameController.checkRoundCompletion()
         else
             -- Animate flash red and decrement score
             -- GameController.animateInvalidSet(selectedCards)
@@ -227,6 +228,46 @@ function GameController.toggleHint()
     local validSet = RulesService.findValidSetOfSize(board, currentSetSize)
     if validSet then
         GameModel.setHint(validSet)
+    end
+end
+
+-- Check if the current round is complete
+function GameController.isRoundComplete()
+    local board = GameModel.getBoard()
+    local currentSetSize = GameModel.getCurrentSetSize()
+
+    -- Check if there are any valid sets remaining on the board
+    local bValidSetOnBoard = RulesService.findValidSetOfSize(board, currentSetSize)
+    if bValidSetOnBoard then
+        Logger.info("GameController", "Valid sets possible with remaining board cards")
+        return false
+    end
+
+    local allAvailableCards = {}
+    -- Add board cards to available cards
+    for i = 1, #board do
+        if board[i] then
+            table.insert(allAvailableCards, board[i])
+        end
+    end
+    if not DeckModel.isEmpty() then
+        -- There are cards in deck, combine with board to check for possible sets
+        local deckCards = DeckModel.getRemainingCards()
+        -- Add remaining deck cards to available cards
+        for i = 1, #deckCards do
+            table.insert(allAvailableCards, deckCards[i])
+        end
+    end
+    -- Check if any valid set exists in the combined pool
+    Logger.error("GameController", "I don't think findValidSetOfSize works with a full deck. Just board.  Cos of indices checking")
+    local bCanFormValidSet = RulesService.findValidSetOfSize(allAvailableCards, currentSetSize)
+
+    if bCanFormValidSet then
+        Logger.info("GameController", "Valid sets possible with remaining deck cards")
+        return false
+    else
+        Logger.info("GameController", "Round complete - no valid sets possible with remaining cards")
+        return true
     end
 end
 

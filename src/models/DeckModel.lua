@@ -132,4 +132,8 @@ function DeckModel.isEmpty()
     return #cards == 0
 end
 
+function DeckModel.getRemainingCards()
+    return cards
+end
+
 return DeckModel
