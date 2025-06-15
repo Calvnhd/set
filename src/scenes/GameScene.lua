@@ -1,0 +1,63 @@
+-- Game Scene - Main gameplay scene with full game functionality
+local GameScene = {}
+
+-- required modules
+local EventManager = require('core.EventManager')
+local Events = require('config.EventRegistry')
+local Logger = require('core.Logger')
+local GameController = require('controllers.GameController')
+local CardView = require('views.CardView')
+local GameUIView = require('views.GameUIView')
+local BoardView = require('views.BoardView')
+local Colors = require('config.ColorRegistry')
+local GameModel = require('models.GameModel')
+
+---------------
+-- functions --
+---------------
+
+function GameScene.enter(gameMode)
+    Logger.info("GameScene", "Entering game scene")
+    if not gameMode then
+        Logger.error("GameScene", "No gameMode specified")
+        error("No gameMode specified")
+    end
+    Logger.info("GameScene", "Loading gameMode " .. gameMode)
+    -- Initialize game controller
+    GameController.initialize()
+    -- Setup new game with specified mode
+    GameController.setUpNewGame(gameMode)
+end
+
+function GameScene.exit()
+    Logger.info("GameScene", "Exiting game scene")
+end
+
+-- Draw the game
+function GameScene.draw()
+    -- Set background color
+    love.graphics.setBackgroundColor(Colors.MAP.BACKGROUND)
+    -- Draw board
+    BoardView.draw()
+    -- Draw animations
+    GameScene.drawAnimations()
+    -- Draw UI elements
+    GameUIView.draw()
+end
+
+function GameScene.drawAnimations()
+end
+
+-- Input handling.  Delegated by SceneManager.
+function GameScene.onKeyPressed(key)
+    Logger.trace("GameScene", "Handling key: %s", key)
+    GameController.onKeyPressed(key)
+end
+function GameScene.onMousePressed(x, y, button)
+    Logger.trace("GameScene", "Handling mouse press: (%d, %d) button %d", x, y, button)
+    if button == 1 then -- Left mouse button
+        GameController.onMousePressed(x, y, button)
+    end
+end
+
+return GameScene

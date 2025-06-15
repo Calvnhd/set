@@ -1,15 +1,21 @@
 -- Menu View - Main menu interface
-local Logger = require('core.logger')
-
 local MenuView = {}
 
--- UI elements
+-- required modules
+local Logger = require('core.Logger')
+local Colors = require('config.ColorRegistry')
+
+-----------------
+-- UI elements --
+-----------------
+
 local classicButton = {
     x = 0,
     y = 0,
     width = 200,
     height = 60,
-    text = "Classic Mode"
+    text = "Classic Mode",
+    color = Colors.MAP.MENU_BUTTONS
 }
 
 local rogueButton = {
@@ -17,8 +23,13 @@ local rogueButton = {
     y = 0,
     width = 200,
     height = 60,
-    text = "Rogue Mode"
+    text = "Rogue Mode",
+    color = Colors.MAP.MENU_BUTTONS
 }
+
+---------------
+-- functions --
+---------------
 
 -- Initialize menu layout
 function MenuView.initialize()
@@ -34,32 +45,30 @@ function MenuView.initialize()
 
     rogueButton.x = windowWidth / 2 - rogueButton.width / 2
     rogueButton.y = startY + 60 + buttonSpacing
-    Logger.trace("MenuView initialized")
+    Logger.trace("MenuView", "MenuView initialized")
 end
 
 -- Draw the menu
 function MenuView.draw()
     -- Draw the menu background
-    love.graphics.clear(0.34, 0.45, 0.47)
-
+    love.graphics.clear(Colors.MAP.BACKGROUND)
     -- Set the font for the menu title
     love.graphics.setFont(love.graphics.newFont(32))
-
     -- Draw the title
-    love.graphics.setColor(1, 1, 1) -- White
-    love.graphics.printf("Welcome to the Set Game!", 0, 100, love.graphics.getWidth(), "center")
+    love.graphics.setColor(Colors.MAP.TEXT)
+    love.graphics.printf("Welcome to Set!", 0, 100, love.graphics.getWidth(), "center")
 
     -- Draw the classic mode button
-    love.graphics.setColor(0.2, 0.6, 0.2) -- Green
+    love.graphics.setColor(classicButton.color)
     love.graphics.rectangle("fill", classicButton.x, classicButton.y, classicButton.width, classicButton.height, 8, 8)
 
     -- Draw the rogue mode button
-    love.graphics.setColor(0.6, 0.2, 0.6) -- Purple
+    love.graphics.setColor(rogueButton.color)
     love.graphics.rectangle("fill", rogueButton.x, rogueButton.y, rogueButton.width, rogueButton.height, 8, 8)
 
     -- Set the font for the button text
     love.graphics.setFont(love.graphics.newFont(20))
-    love.graphics.setColor(1, 1, 1) -- White
+    love.graphics.setColor(Colors.MAP.TEXT)
 
     -- Draw button texts
     love.graphics.printf(classicButton.text, classicButton.x, classicButton.y + 18, classicButton.width, "center")
@@ -67,10 +76,10 @@ function MenuView.draw()
 
     -- Draw mode descriptions
     love.graphics.setFont(love.graphics.newFont(14))
-    love.graphics.setColor(0.8, 0.8, 0.8) -- Light gray
-    love.graphics.printf("Traditional Set with all cards", classicButton.x, classicButton.y + 65, classicButton.width,
+    love.graphics.setColor(Colors.MAP.TEXT)
+    love.graphics.printf("Traditional", classicButton.x, classicButton.y + 65, classicButton.width,
         "center")
-    love.graphics.printf("Progressive tutorial mode", rogueButton.x, rogueButton.y + 65, rogueButton.width, "center")
+    love.graphics.printf("Progressive", rogueButton.x, rogueButton.y + 65, rogueButton.width, "center")
 end
 
 -- Check if classic mode button was clicked

@@ -2,12 +2,20 @@
 local CardModel = {}
 CardModel.__index = CardModel
 
+-- required modules
+local Logger = require('core.Logger')
+
 -- Card objects cache - storing internal data for all created cards
 local cardObjects = {}
 local nextCardId = 1
 
+---------------
+-- functions --
+---------------
+
 -- Create a new card with the given attributes
 function CardModel.create(color, shape, number, fill)
+    -- Logger.trace("Creating card: "..number..", "..color..", "..shape..", "..fill)
     -- Generate a unique ID for this card
     local id = nextCardId
     nextCardId = nextCardId + 1
@@ -85,6 +93,19 @@ function CardModel.getAllData(cardRef)
         }
     end
     return nil
+end
+
+-- Convert card attributes to a formatted string for logging
+function CardModel.cardAttributesToString(cardRef)
+    if not cardRef or not cardRef._cardId then
+        return " (invalid card reference)"
+    end
+    local cardData = cardObjects[cardRef._cardId]
+    if not cardData then
+        return " (card data not found)"
+    end
+    return
+        string.format("| number:%d\t| %s\t| %s\t| %s", cardData.number, cardData.color, cardData.fill, cardData.shape)
 end
 
 return CardModel
