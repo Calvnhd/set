@@ -85,9 +85,12 @@ function RulesService.isValidSetOfSize(cardRefs, setSize)
     local bShapeValid = checkAttributeArray(shapes)
     local bNumberValid = checkAttributeArray(numbers)
     local bFillValid = checkAttributeArray(fills)
-    Logger.trace("RulesService", "Valid set attributes? - Color: ".. tostring(bColorValid).." | Shape: "..tostring(bShapeValid).." | Number: "..tostring(bNumberValid).." | Fill: "..tostring(bFillValid))
     -- It's a valid set only if ALL attributes pass the check
-    return bColorValid and bShapeValid and bNumberValid and bFillValid
+    local bIsValid = bColorValid and bShapeValid and bNumberValid and bFillValid
+    if bIsValid then
+        Logger.trace("RulesService", "Valid set found!")
+    end
+    return bIsValid
 end
 
 -- Find a valid set on the board (variable size)
@@ -105,7 +108,7 @@ function RulesService.findValidSetOfSize(board, setSize)
     -- Need at least setSize cards to form a set
     if cardCount < setSize then
         return nil
-    end    
+    end
     -- Find first valid combination using backtracking with early termination
     local function findFirstValidCombination(arr, k)
         local current = {}
@@ -138,7 +141,7 @@ function RulesService.findValidSetOfSize(board, setSize)
         end
         return backtrack(1)
     end
-    
+
     return findFirstValidCombination(cardIndices, setSize)
 end
 

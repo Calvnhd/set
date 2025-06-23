@@ -132,45 +132,54 @@ function GameController.onKeyPressed(key)
     -- quit game at any time
     if key == "escape" then
         love.event.quit()
+        return
     end
-    -- If game has ended, only respond to spacebar to start a new game
-    if GameModel.hasGameEnded() then
-        if key == "space" then
-            GameController.setupNewGame()
+    -- space is the default confirm button
+    if key == "space" then
+        if GameModel.hasGameEnded() then
+            Logger.info("GameController", "Game over, man")
             return
-        else
-            return -- Ignore all other keypresses in game end state
         end
-    end
-    -- Player finds a set
-    if key == "s" then
         local selectedCards = GameModel.getSelectedCards()
+        if #selectedCards == 0 then
+            GameController.processNoSelectedCards()
+            return
+        end
         local setSize = GameModel.getCurrentSetSize()
         if #selectedCards == setSize then
             GameController.processSelectedCards()
             return
         end
-        Logger.trace("GameController", "Must select %d cards to make a set. Clearing selection.", setSize)
+        -- reset state
+        GameController.clearCardSelection()
+        return
     end
     -- Clear card selection on any other key input
     GameController.clearCardSelection()
-    if key == "h" then
+    if key == "f" then
         GameController.toggleHint()
+        return
     end
-    -- take a card from the deck and it to the board 
-    GameController.addCardToBoardFromDeck()
+    -- take a card from the deck and add it to the board 
+    if key == "d" then
+        GameController.addCardToBoardFromDeck()
+        return
+    end
 end
 
 -- Takes a new card from deck and adds it to the board
 function GameController.addCardToBoardFromDeck()
     local emptyPosition = GameModel.findEmptyPosition()
     if not emptyPosition then
-        return    
+        Logger.info("GameController", "No empty positions on board")
+        return
     end
     local cardRef = DeckModel.takeCard()
     if cardRef then
         GameModel.setCardAtPosition(emptyPosition, cardRef)
         GameModel.clearHint()
+    else
+        Logger.info("GameController", "Deck is empty, cannot add more cards")
     end
 end
 
@@ -196,9 +205,39 @@ function GameController.processSelectedCards()
             Logger.error("You've hit a dead end, Calvin")
         else
             -- Animate flash red and decrement score
-            -- GameController.animateInvalidSet(selectedCards)
+            -- @TODO GameController.animateInvalidSet(selectedCards)
             GameModel.decrementScore()
         end
+    end
+end
+
+function GameController.processNoSelectedCards()
+    GameController.isRoundComplete()
+    local selectedCards = GameModel.getSelectedCards()
+    local board = GameModel.getBoard()
+    local currentSetSize = GameModel.getCurrentSetSize()
+    if #selectedCards ~= 0 then
+        Logger.error("GameController", "Why are you calling processNoSelectedCards when there are cards selected?")
+        error("Why are you calling processNoSelectedCards when there are cards selected?")
+    end
+    Logger.trace("GameController", "No selected cards")
+    local emptySlot = GameModel.findEmptyPosition()
+    if emptySlot ~= nil then
+        Logger.info("GameController", "The board is not full.  Deal a new card instead.")
+        return
+    end
+    -- Player calls 'No Set'
+    -- Check if there are any valid sets remaining on the board
+    local validSetIndices = RulesService.findValidSetOfSize(board, currentSetSize)
+    if validSetIndices then
+        Logger.info("GameController", "Player loss - found valid set on board")
+        -- Remove the valid set and decrement score
+        GameController.removeValidSet(validSetIndices)
+        GameModel.decrementScore()
+    else
+        Logger.info("GameController", "Player win - no valid sets on board")
+        GameModel.incrementScore()
+        -- do some kinda shuffling
     end
 end
 
@@ -274,7 +313,9 @@ function GameController.isRoundComplete()
         end
     end
     -- Check if any valid set exists in the combined pool
-    Logger.error("GameController", "I don't think findValidSetOfSize works with a full deck. Just board.  Cos of indices checking")
+    -- @TODO
+    Logger.warning("GameController",
+        "Confirm: I don't think findValidSetOfSize works with a full deck. Just board.  Cos of indices checking")
     local bCanFormValidSet = RulesService.findValidSetOfSize(allAvailableCards, currentSetSize)
 
     if bCanFormValidSet then

@@ -110,7 +110,6 @@ function DeckModel.takeCard()
         return card
     else
         Logger.error("DeckModel", "DeckModel.takeCard() returning nil")
-        error("DeckModel.takeCard() returning nil")
         return nil
     end
 end
