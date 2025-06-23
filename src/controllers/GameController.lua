@@ -157,6 +157,21 @@ function GameController.onKeyPressed(key)
     if key == "h" then
         GameController.toggleHint()
     end
+    -- take a card from the deck and it to the board 
+    GameController.addCardToBoardFromDeck()
+end
+
+-- Takes a new card from deck and adds it to the board
+function GameController.addCardToBoardFromDeck()
+    local emptyPosition = GameModel.findEmptyPosition()
+    if not emptyPosition then
+        return    
+    end
+    local cardRef = DeckModel.takeCard()
+    if cardRef then
+        GameModel.setCardAtPosition(emptyPosition, cardRef)
+        GameModel.clearHint()
+    end
 end
 
 -- Process selected cards (validate and remove if valid set)

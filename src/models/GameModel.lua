@@ -97,6 +97,16 @@ function GameModel.getSelectedCards()
     return selected
 end
 
+-- Find first empty position on board
+function GameModel.findEmptyPosition()
+    for i = 1, gameState.boardSize do
+        if not gameState.board[i] then
+            return i
+        end
+    end
+    return nil
+end
+
 -- Hint management
 function GameModel.setHint(cardIndices)
     gameState.hintCards = cardIndices or {}
