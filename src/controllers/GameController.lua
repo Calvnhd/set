@@ -51,7 +51,7 @@ function GameController.initializeCurrentRound()
     GameModel.initializeRound(round)
     DeckModel.createFromConfig(round)
     DeckModel.shuffle()
-    GameController.dealInitialCards()
+    GameController.dealFullBoard()
     -- Check initial board state.  Probably move this into config validation
     -- GameController.checkRoundCompletion()
 end
@@ -73,14 +73,21 @@ function GameController.fetchRoundSequence(sequenceType)
     return sequence
 end
 
-function GameController.dealInitialCards()
-    Logger.trace("GameController", "dealing initial cards")
+function GameController.dealFullBoard()
+    Logger.trace("GameController", "dealing cards to fill board")
+    local board = GameModel.getBoard()
     local boardSize = GameModel.getBoardSize()
     for i = 1, boardSize do
-        local cardRef = DeckModel.takeCard()
-        if cardRef then
-            local cardData = CardModel._getInternalData(cardRef)
-            GameModel.setCardAtPosition(i, cardRef)
+        -- Only deal to empty positions
+        if not board[i] then
+            local cardRef = DeckModel.takeCard()
+            if cardRef then
+                local cardData = CardModel._getInternalData(cardRef)
+                GameModel.setCardAtPosition(i, cardRef)
+            else
+                Logger.warning("GameController", "Deck ran out of cards while dealing to board")
+                break
+            end
         end
     end
 end
@@ -224,6 +231,7 @@ function GameController.processNoSelectedCards()
     local emptySlot = GameModel.findEmptyPosition()
     if emptySlot ~= nil then
         Logger.info("GameController", "The board is not full.  Deal a new card instead.")
+        GameController.dealFullBoard()
         return
     end
     -- Player calls 'No Set'
@@ -238,7 +246,30 @@ function GameController.processNoSelectedCards()
         Logger.info("GameController", "Player win - no valid sets on board")
         GameModel.incrementScore()
         -- do some kinda shuffling
+        GameController.reDealBoard()
     end
+end
+
+function GameController.reDealBoard()
+    Logger.trace("GameController", "Re-dealing board")
+    local board = GameModel.getBoard()
+    local boardSize = GameModel.getBoardSize()
+    -- Remove all cards from board and return them to deck
+    for i = 1, boardSize do
+        local cardRef = board[i]
+        if cardRef then
+            -- Clear selection state before returning to deck
+            CardModel.setSelected(cardRef, false)
+            -- Remove from board and return to deck
+            GameModel.removeCardAtPosition(i)
+            DeckModel.returnCard(cardRef)
+        end
+    end
+    -- Shuffle the deck to randomize card order
+    DeckModel.shuffle()
+    GameController.dealFullBoard()
+    -- Clear any active hints since the board has changed
+    GameModel.clearHint()
 end
 
 -- Clear all card selections

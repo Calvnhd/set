@@ -116,7 +116,7 @@ end
 
 -- Return a card to the deck
 function DeckModel.returnCard(cardRef)
-    Logger.trace("DeckModel", "Returning card to deck")
+    Logger.trace("DeckModel", string.format("Removed card from deck.  %d cards remaining", #cards))
     -- DeckModel.printDeck()
     table.insert(cards, cardRef)
 end
