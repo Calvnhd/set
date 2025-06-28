@@ -20,7 +20,7 @@ local DEFAULT_FILL = {Constants.FILL.EMPTY, Constants.FILL.SOLID, Constants.FILL
 
 -- function DeckModel.printDeck()
 --     Logger.trace("DeckModel", "--- BEGIN DECK DUMP ---")
---     Logger.trace("DeckModel", string.format("Deck contains %d cards", #cards))
+--     Logger.trace("DeckModel", string.format("Deck contains %d\tcards", #cards))
 --     
 --     for i, cardRef in ipairs(cards) do
 --         if not cardRef then
@@ -103,10 +103,10 @@ end
 function DeckModel.takeCard()
     if #cards > 0 then
         local card = table.remove(cards, 1)
-        Logger.trace("DeckModel", string.format("Removed card from deck.  %d cards remaining", #cards))
         if card then
             local cardData = CardModel._getInternalData(card)
         end
+        Logger.trace("DeckModel", string.format("Removed card from deck \t| %d\tcards", #cards))
         return card
     else
         Logger.error("DeckModel", "DeckModel.takeCard() returning nil")
@@ -116,9 +116,9 @@ end
 
 -- Return a card to the deck
 function DeckModel.returnCard(cardRef)
-    Logger.trace("DeckModel", string.format("Removed card from deck.  %d cards remaining", #cards))
     -- DeckModel.printDeck()
     table.insert(cards, cardRef)
+    Logger.trace("DeckModel", string.format("Returned card to deck \t| %d\tcards", #cards))
 end
 
 -- Get the number of cards remaining in the deck

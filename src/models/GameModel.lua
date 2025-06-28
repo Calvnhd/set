@@ -67,11 +67,23 @@ end
 function GameModel.clearHint()
     GameModel.setHint({})
 end
+function GameModel.countCardsOnBoard()
+    -- Count actual cards on board (non-nil entries)
+    local cardCount = 0
+    for i = 1, gameState.boardSize do
+        if gameState.board[i] then
+            cardCount = cardCount + 1
+        end
+    end
+    return cardCount
+end
 
 -- Board management
 function GameModel.setCardAtPosition(index, cardRef)
     if index >= 1 and index <= gameState.boardSize then
         gameState.board[index] = cardRef
+        local cardCount = GameModel.countCardsOnBoard()
+        Logger.trace("GameModel", string.format("Added board card i:%d\t| %d\tcards", index, cardCount))
     end
 end
 
@@ -79,6 +91,8 @@ function GameModel.removeCardAtPosition(index)
     if index >= 1 and index <= gameState.boardSize and gameState.board[index] then
         local cardRef = gameState.board[index]
         gameState.board[index] = nil
+        local cardCount = GameModel.countCardsOnBoard()
+        Logger.trace("GameModel", string.format("Removed board card i:%d\t| %d\tcards", index, cardCount))
         return cardRef
     end
     return nil
@@ -115,9 +129,8 @@ end
 
 -- Discard pile management
 function GameModel.addToDiscardPile(cardRef)
-    local cardStr = CardModel.cardAttributesToString(cardRef)
-    Logger.trace("GameModel", "Adding card to discard pile:\t" .. cardStr)
     table.insert(gameState.discardedCards, cardRef)
+    Logger.trace("GameModel", string.format("Added to discard pile\t| %d\tcards", #gameState.discardedCards))
 end
 
 -- Score management

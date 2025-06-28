@@ -34,61 +34,20 @@ RoundDefinitions.classic = {{
 }}
 
 -- Mulitple rounds with progressive attribute introduction
+-- A single round of classic Set for standard play
 RoundDefinitions.rogue = {{
-    id = "tutorial_1",
-    name = "Getting Started",
-    description = "Learn the basics with simple 3-card sets",
+    id = "rogue",
+    name = "Let's gooo!!",
+    description = "Traditional Set rules with all attributes",
     attributes = {
-        number = {1, 2},
-        color = {colors.GREEN, colors.BLUE},
-        shape = {shapes.DIAMOND, shapes.OVAL},
-        fill = {fill.EMPTY, fill.SOLID}
-    },
-    setSize = 3,
-    boardSize = {
-        columns = 2,
-        rows = 2
-    },
-    scoring = {
-        validSet = 1,
-        invalidSet = -1,
-        noSetCorrect = 1,
-        noSetIncorrect = -1
-    }
-}, {
-    id = "tutorial_2",
-    name = "Add Red Color",
-    description = "More color variety with 3-card sets",
-    attributes = {
-        number = {1, 2},
+        number = {1, 2, 3},
         color = {colors.GREEN, colors.BLUE, colors.RED},
-        shape = {shapes.DIAMOND},
-        fill = {fill.EMPTY, fill.SOLID}
+        shape = {shapes.DIAMOND, shapes.OVAL, shapes.SQUIGGLE},
+        fill = {fill.EMPTY, fill.SOLID, fill.STRIPES}
     },
     setSize = 3,
     boardSize = {
-        columns = 3,
-        rows = 3
-    },
-    scoring = {
-        validSet = 1,
-        invalidSet = -1,
-        noSetCorrect = 1,
-        noSetIncorrect = -1
-    }
-}, {
-    id = "tutorial_3",
-    name = "Add Oval Shape",
-    description = "Introducing shape variety",
-    attributes = {
-        number = {1, 2},
-        color = {colors.GREEN, colors.BLUE, colors.RED},
-        shape = {shapes.DIAMOND, shapes.OVAL},
-        fill = {fill.EMPTY, fill.SOLID}
-    },
-    setSize = 3,
-    boardSize = {
-        columns = 3,
+        columns = 4,
         rows = 3
     },
     scoring = {
