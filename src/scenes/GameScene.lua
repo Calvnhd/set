@@ -11,6 +11,8 @@ local GameUIView = require('views.GameUIView')
 local BoardView = require('views.BoardView')
 local Colors = require('config.ColorRegistry')
 local GameModel = require('models.GameModel')
+local AnimationService = require('services.AnimationService')
+
 
 ---------------
 -- functions --
@@ -30,6 +32,7 @@ function GameScene.enter(gameMode)
 end
 
 function GameScene.exit()
+    AnimationService.clearAll()
     Logger.info("GameScene", "Exiting game scene")
 end
 
@@ -45,7 +48,24 @@ function GameScene.draw()
     GameUIView.draw()
 end
 
+-- Draw all active animations
 function GameScene.drawAnimations()
+    local animations = AnimationService.getAnimations()
+
+    -- @todo this should be using some kinda anim type enum
+    for _, anim in ipairs(animations) do
+        Logger.trace("GameScene","drawAnimations found an animation")
+        if anim.type == "burn" then
+            -- CardView.drawBurningCard(anim)
+        elseif anim.type == "flashRed" then
+            CardView.drawFlashingRedCard(anim)
+        end
+    end
+end
+
+-- Update game state
+function GameScene.update(dt)
+    AnimationService.update(dt)
 end
 
 -- Input handling.  Delegated by SceneManager.

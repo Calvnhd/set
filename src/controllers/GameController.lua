@@ -11,6 +11,7 @@ local RoundDefinitions = require('config.RoundDefinitions')
 local ConfigValidator = require('services.ConfigValidator')
 local BoardView = require('views.BoardView')
 local RulesService = require('services.RulesService')
+local AnimationService = require('services.AnimationService')
 
 -- Round state
 local RoundState = {
@@ -212,9 +213,30 @@ function GameController.processSelectedCards()
             Logger.error("You've hit a dead end, Calvin")
         else
             -- Animate flash red and decrement score
-            -- @TODO GameController.animateInvalidSet(selectedCards)
+            GameController.animateInvalidSet(selectedCards)
             GameModel.decrementScore()
         end
+    end
+end
+
+-- Animate invalid set (flash red)
+function GameController.animateInvalidSet(selectedIndices)
+    local board = GameModel.getBoard()
+    local animationsCompleted = 0
+
+    for _, index in ipairs(selectedIndices) do
+        local cardRef = board[index]
+        local x, y, width, height = BoardView.getCardPosition(index)
+        AnimationService.createFlashRedAnimation(cardRef, x, y, width, height, function()
+            Logger.trace("GameController","red flash anim complete")
+            -- animationsCompleted = animationsCompleted + 1
+            --if animationsCompleted == #selectedIndices then
+                -- Deselect all cards after animation completes
+                --for _, idx in ipairs(selectedIndices) do
+                --  CardModel.setSelected(board[idx], false)
+                -- end
+            --end
+        end)
     end
 end
 

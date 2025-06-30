@@ -84,18 +84,18 @@ function BoardView.calculateLayout()
 end
 
 -- Get the card position at a given board index
--- function BoardView.getCardPosition(index)
---     local layout = BoardView.calculateLayout()
---     local BOARD_COLUMNS, BOARD_ROWS = GameModel.getBoardDimensions()
--- 
---     local col = (index - 1) % BOARD_COLUMNS
---     local row = math.floor((index - 1) / BOARD_COLUMNS)
--- 
---     local x = layout.startX + col * (layout.cardWidth + layout.marginX)
---     local y = layout.startY + row * (layout.cardHeight + layout.marginY)
--- 
---     return x, y, layout.cardWidth, layout.cardHeight
--- end
+function BoardView.getCardPosition(index)
+    local layout = BoardView.calculateLayout()
+    local BOARD_COLUMNS, BOARD_ROWS = GameModel.getBoardDimensions()
+
+    local col = (index - 1) % BOARD_COLUMNS
+    local row = math.floor((index - 1) / BOARD_COLUMNS)
+
+    local x = layout.startX + col * (layout.cardWidth + layout.marginX)
+    local y = layout.startY + row * (layout.cardHeight + layout.marginY)
+
+    return x, y, layout.cardWidth, layout.cardHeight
+end
 
 -- Get the card at a given screen position
 function BoardView.getCardAtPosition(x, y)
