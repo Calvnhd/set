@@ -1,7 +1,7 @@
 -- Logger - Centralized logging system with file output and level filtering
 local Logger = {}
 
--- Log levels (higher numbers = more severe)
+-- Log Levels
 local LOG_LEVELS = {
     TRACE = 1,
     INFO = 2,
@@ -9,8 +9,9 @@ local LOG_LEVELS = {
     ERROR = 4
 }
 
--- Log level names for output
+-- String representation of level names for output
 local LEVEL_NAMES = {
+
     [LOG_LEVELS.TRACE] = "TRACE",
     [LOG_LEVELS.INFO] = "INFO",
     [LOG_LEVELS.WARNING] = "WARNING",
@@ -21,14 +22,12 @@ local LEVEL_NAMES = {
 -- Note that the only directory that love.filesystem will write to is %APPDATA%/LOVE/  
 -- see https://love2d.org/wiki/love.filesystem
 local config = {
-    bEnabled = true, -- Global logging enable/disable
-    minLevel = LOG_LEVELS.TRACE, -- Minimum level to log
-    logFile = "/logs/set.log", -- Log file path
-    bWriteToConsole = true, -- Also output to console
-    bIncludeTimestamp = true, -- Include timestamps
-    bIncludeLevel = true, -- Include log level in output
-    maxFileSize = 1024 * 1024, -- 1MB max file size
-    bRotateFiles = true -- Enable log rotation
+    bEnabled = true,
+    minLevel = LOG_LEVELS.TRACE,
+    logFile = "/logs/set.log",
+    bWriteToConsole = true,
+    maxFileSize = 1024 * 1024,
+    bRotateFiles = true
 }
 
 -- Internal state 
@@ -40,33 +39,27 @@ function Logger.initialize()
     if bInitialized then
         return true
     end
-
     -- Create logs directory if it doesn't exist
     local bDirSuccess = love.filesystem.createDirectory("logs")
-    print()
     if not bDirSuccess then
         print("[LOGGER] Warning: Could not create logs directory")
     end
-
     -- Try to open log file for writing
     logFileHandle = love.filesystem.newFile(config.logFile)
     local bOpenSuccess, error = logFileHandle:open("w")
-
     if not bOpenSuccess then
         print("[LOGGER] Failed to open log file:", error)
         logFileHandle = nil
         -- Continue without file logging - graceful fallback
-    end
-
-    bInitialized = true
-    Logger.info("Logger initialized - " .. config.logFile)
+    end    bInitialized = true
+    Logger.info("LOGGER", "Initialized - %s", config.logFile)
     return true
 end
 
 -- Shutdown the logging system
 function Logger.shutdown()
     if logFileHandle then
-        Logger.info("Logger shutting down")
+        Logger.info("LOGGER", "Shutting down")
         logFileHandle:close()
         logFileHandle = nil
     end
@@ -74,26 +67,35 @@ function Logger.shutdown()
 end
 
 -- Core logging function with level filtering and formatting
-local function writeLog(level, message, ...)
+local function writeLog(level, originOrMessage, messageOrArg, ...)
     -- Early return for performance when logging is disabled
     if not config.bEnabled then
         return
     end
-
     -- Level-based filtering before message formatting
     if level < config.minLevel then
         return
     end
-
     -- Lazy initialization of file handles
     if not bInitialized then
         Logger.initialize()
     end
-
-    -- Format the message with variadic arguments (printf-style)
+    
+    -- Handle both new and old calling patterns
+    local origin = "X"
+    local message = originOrMessage
+    local args = {...}
+    
+    -- If there are at least two arguments, the first is origin and the second is message
+    if messageOrArg ~= nil then
+        origin = originOrMessage
+        message = messageOrArg
+        -- args stays the same
+    end
+      -- Format the message with variadic arguments (printf-style)
     local formattedMessage = message
-    if select('#', ...) > 0 then
-        local bFormatSuccess, result = pcall(string.format, message, ...)
+    if #args > 0 then
+        local bFormatSuccess, result = pcall(string.format, message, unpack(args))
         if bFormatSuccess then
             formattedMessage = result
         else
@@ -101,25 +103,13 @@ local function writeLog(level, message, ...)
             formattedMessage = message .. " [FORMAT ERROR: " .. result .. "]"
         end
     end
-
-    -- Build the log line with timestamp and level
-    local logLine = ""
-
-    if config.bIncludeTimestamp then
-        logLine = logLine .. "[" .. os.date("%Y-%m-%d %H:%M:%S") .. "] "
-    end
-
-    if config.bIncludeLevel then
-        logLine = logLine .. "[" .. LEVEL_NAMES[level] .. "] "
-    end
-
-    logLine = logLine .. formattedMessage
-
+    
+    -- Build the log line with timestamp, origin, and level
+    local logLine = "[" .. os.date("%Y-%m-%d %H:%M:%S") .. "][" .. origin .. "][" .. LEVEL_NAMES[level] .. "] " .. formattedMessage
     -- Dual output capability - console
     if config.bWriteToConsole then
         print(logLine)
     end
-
     -- Dual output capability - file
     if logFileHandle then
         -- Log rotation when files exceed size limits
@@ -129,7 +119,6 @@ local function writeLog(level, message, ...)
                 Logger._rotateLogFile()
             end
         end
-
         local bWriteSuccess = logFileHandle:write(logLine .. "\n")
         if bWriteSuccess then
             logFileHandle:flush() -- Ensure immediate write
@@ -138,58 +127,17 @@ local function writeLog(level, message, ...)
 end
 
 -- Public API functions
-function Logger.trace(message, ...)
-    writeLog(LOG_LEVELS.TRACE, message, ...)
+function Logger.trace(originOrMessage, messageOrArg, ...)
+    writeLog(LOG_LEVELS.TRACE, originOrMessage, messageOrArg, ...)
 end
-
-function Logger.info(message, ...)
-    writeLog(LOG_LEVELS.INFO, message, ...)
+function Logger.info(originOrMessage, messageOrArg, ...)
+    writeLog(LOG_LEVELS.INFO, originOrMessage, messageOrArg, ...)
 end
-
-function Logger.warning(message, ...)
-    writeLog(LOG_LEVELS.WARNING, message, ...)
+function Logger.warning(originOrMessage, messageOrArg, ...)
+    writeLog(LOG_LEVELS.WARNING, originOrMessage, messageOrArg, ...)
 end
-
-function Logger.error(message, ...)
-    writeLog(LOG_LEVELS.ERROR, message, ...)
-end
-
--- Configuration functions
-function Logger.setEnabled(bEnabled)
-    config.bEnabled = bEnabled
-    if bEnabled then
-        Logger.info("Logging enabled")
-    end
-end
-
-function Logger.isEnabled()
-    return config.bEnabled
-end
-
-function Logger.setMinLevel(level)
-    config.minLevel = level
-    Logger.info("Minimum log level set to: " .. LEVEL_NAMES[level])
-end
-
-function Logger.setLogFile(filename)
-    if logFileHandle then
-        logFileHandle:close()
-    end
-    config.logFile = filename
-    bInitialized = false
-    Logger.initialize()
-end
-
-function Logger.setConsoleOutput(bEnabled)
-    config.bWriteToConsole = bEnabled
-end
-
-function Logger.setIncludeTimestamp(bEnabled)
-    config.bIncludeTimestamp = bEnabled
-end
-
-function Logger.setIncludeLevel(bEnabled)
-    config.bIncludeLevel = bEnabled
+function Logger.error(originOrMessage, messageOrArg, ...)
+    writeLog(LOG_LEVELS.ERROR, originOrMessage, messageOrArg, ...)
 end
 
 -- Log file rotation with proper file handle management
@@ -203,7 +151,7 @@ function Logger._rotateLogFile()
 
     -- Create backup filename with timestamp
     local timestamp = os.date("%Y%m%d_%H%M%S")
-    local backupName = "logs/game_" .. timestamp .. ".log"
+    local backupName = "logs/set_" .. timestamp .. ".log"
 
     -- Read current log content and write to backup
     local currentContent = love.filesystem.read(config.logFile)
@@ -218,13 +166,5 @@ function Logger._rotateLogFile()
         logFileHandle = nil
     end
 end
-
--- Get current configuration (for debugging)
-function Logger.getConfig()
-    return config
-end
-
--- Export log levels for external use
-Logger.LEVELS = LOG_LEVELS
 
 return Logger
